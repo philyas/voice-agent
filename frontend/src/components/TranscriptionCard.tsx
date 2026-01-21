@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Globe, Languages, Plus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -81,9 +82,16 @@ export function TranscriptionCard({
   const [currentText, setCurrentText] = useState(text);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+  const [loadingTargetLanguage, setLoadingTargetLanguage] = useState<string | null>(null);
   const [localEnrichments, setLocalEnrichments] = useState<EnrichmentData[]>(enrichments);
   const [newItemText, setNewItemText] = useState('');
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle SSR - only render portal on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update currentText when text prop changes
   useEffect(() => {
@@ -216,6 +224,7 @@ export function TranscriptionCard({
     if (!onEnrich || loadingType) return;
     
     setLoadingType(type);
+    setLoadingTargetLanguage(targetLanguage || null);
     setIsAddingItem(false);
     setNewItemText('');
     try {
@@ -224,6 +233,7 @@ export function TranscriptionCard({
       setShowTranslationDropdown(false);
     } finally {
       setLoadingType(null);
+      setLoadingTargetLanguage(null);
     }
   };
 
@@ -280,8 +290,40 @@ export function TranscriptionCard({
   const activeContent = activeEnrichmentData?.content || null;
   const activeEnrichmentId = activeEnrichmentData?.id;
 
+  // Get the enrichment label for loading modal
+  const loadingEnrichment = loadingType ? ENRICHMENT_OPTIONS.find(opt => opt.type === loadingType) : null;
+  const loadingLanguage = loadingTargetLanguage ? LANGUAGES.find(lang => lang.code === loadingTargetLanguage) : null;
+  const loadingLabel = loadingType === 'translation' && loadingLanguage
+    ? `Übersetzung ins ${loadingLanguage.name}`
+    : loadingEnrichment?.label || 'Verarbeite Transkription';
+
   return (
-    <div className="bg-dark-850 border border-dark-700 rounded-2xl animate-fade-in-up">
+    <>
+      {/* Loading Overlay Modal - Rendered via Portal to body */}
+      {mounted && loadingType && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-6">
+                <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                KI-Verarbeitung läuft...
+              </h3>
+              <p className="text-dark-300 text-sm mb-1">
+                {loadingLabel}
+              </p>
+              <p className="text-dark-500 text-xs">
+                Bitte warten Sie, während die KI die Inhalte generiert
+              </p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      <div className="bg-dark-850 border border-dark-700 rounded-2xl animate-fade-in-up">
       {/* Header */}
       <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between overflow-hidden rounded-t-2xl">
         <button
@@ -625,5 +667,6 @@ export function TranscriptionCard({
         </div>
       )}
     </div>
+    </>
   );
 }
