@@ -212,6 +212,16 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
   }
 
   /**
+   * Update enrichment content
+   * @param {string} id - Enrichment UUID
+   * @param {Object} data - Update data
+   * @returns {Promise<Object|null>}
+   */
+  async updateEnrichment(id, data) {
+    return enrichmentModel.update(id, { content: data.content });
+  }
+
+  /**
    * Delete enrichment
    * @param {string} id - Enrichment UUID
    * @returns {Promise<boolean>}

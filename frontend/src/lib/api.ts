@@ -167,6 +167,17 @@ export const api = {
     return handleResponse(response);
   },
 
+  async updateEnrichment(id: string, content: string): Promise<ApiResponse<Enrichment>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/enrichments/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    });
+    return handleResponse(response);
+  },
+
   async deleteEnrichment(id: string): Promise<ApiResponse<void>> {
     const response = await fetch(`${API_BASE_URL}/api/v1/enrichments/${id}`, {
       method: 'DELETE',

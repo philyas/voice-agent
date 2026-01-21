@@ -21,10 +21,53 @@ export default function HistoryPage() {
   const [emailToSend, setEmailToSend] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [localEnrichments, setLocalEnrichments] = useState<Transcription['enrichments']>([]);
 
   useEffect(() => {
     loadRecordings();
   }, []);
+
+  // Update localEnrichments when transcription changes
+  useEffect(() => {
+    if (transcription?.enrichments) {
+      setLocalEnrichments(transcription.enrichments);
+    } else {
+      setLocalEnrichments([]);
+    }
+  }, [transcription]);
+
+  /**
+   * Toggle a checkbox in markdown content
+   */
+  const toggleCheckbox = async (enrichmentId: string, content: string, checkboxIndex: number) => {
+    const checkboxRegex = /- \[([ x])\]/g;
+    let currentIndex = 0;
+    
+    const newContent = content.replace(checkboxRegex, (match, checkState) => {
+      if (currentIndex === checkboxIndex) {
+        currentIndex++;
+        return checkState === ' ' ? '- [x]' : '- [ ]';
+      }
+      currentIndex++;
+      return match;
+    });
+
+    // Update local state immediately
+    setLocalEnrichments(prev => 
+      prev?.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Save to backend
+    try {
+      await api.updateEnrichment(enrichmentId, newContent);
+    } catch (error) {
+      // Revert on error
+      setLocalEnrichments(prev => 
+        prev?.map(e => e.id === enrichmentId ? { ...e, content } : e)
+      );
+      console.error('Failed to save checkbox state:', error);
+    }
+  };
 
   const handleView = useCallback(async (recording: Recording) => {
     setSelectedRecording(recording);
@@ -354,13 +397,13 @@ export default function HistoryPage() {
                         </div>
                       )}
 
-                      {transcription.enrichments && transcription.enrichments.length > 0 && (
+                      {localEnrichments && localEnrichments.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-white mb-3">
-                            Enrichments ({transcription.enrichments.length})
+                            Enrichments ({localEnrichments.length})
                           </h4>
                           <div className="space-y-3">
-                            {transcription.enrichments.map((enrichment) => (
+                            {localEnrichments.map((enrichment) => (
                               <div
                                 key={enrichment.id}
                                 className="bg-gold-500/5 border border-gold-500/10 rounded-xl p-4"
@@ -370,8 +413,57 @@ export default function HistoryPage() {
                                     {enrichment.type}
                                   </span>
                                 </div>
-                                <div className="prose prose-sm prose-invert max-w-none prose-headings:text-white prose-p:text-dark-300 prose-strong:text-white prose-em:text-dark-200 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-300 prose-ol:text-dark-300 prose-li:text-dark-300 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-400 prose-blockquote:border-dark-600">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <div 
+                                  className="enrichment-content prose prose-sm prose-invert max-w-none prose-headings:text-white prose-p:text-dark-300 prose-strong:text-white prose-em:text-dark-200 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-300 prose-ol:text-dark-300 prose-li:text-dark-300 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-400 prose-blockquote:border-dark-600"
+                                  data-enrichment-id={enrichment.id}
+                                >
+                                  <ReactMarkdown 
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                      li: ({ children, className, ...props }) => {
+                                        const isTaskItem = className?.includes('task-list-item');
+                                        
+                                        if (isTaskItem) {
+                                          return (
+                                            <li 
+                                              className={`${className || ''} cursor-pointer hover:bg-dark-800/50 rounded px-1 -mx-1 transition-colors`}
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                const container = (e.currentTarget as HTMLElement).closest('.enrichment-content');
+                                                if (container) {
+                                                  const enrichmentId = container.getAttribute('data-enrichment-id');
+                                                  const allTaskItems = container.querySelectorAll('.task-list-item');
+                                                  const idx = Array.from(allTaskItems).indexOf(e.currentTarget as HTMLElement);
+                                                  if (idx !== -1 && enrichmentId) {
+                                                    toggleCheckbox(enrichmentId, enrichment.content, idx);
+                                                  }
+                                                }
+                                              }}
+                                              {...props}
+                                            >
+                                              {children}
+                                            </li>
+                                          );
+                                        }
+                                        
+                                        return <li className={className} {...props}>{children}</li>;
+                                      },
+                                      input: ({ type, checked, disabled, ...props }) => {
+                                        if (type === 'checkbox') {
+                                          return (
+                                            <input
+                                              type="checkbox"
+                                              checked={checked}
+                                              readOnly
+                                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
+                                              {...props}
+                                            />
+                                          );
+                                        }
+                                        return <input type={type} checked={checked} disabled={disabled} {...props} />;
+                                      },
+                                    }}
+                                  >
                                     {enrichment.content}
                                   </ReactMarkdown>
                                 </div>

@@ -130,6 +130,21 @@ export default function Home() {
     [processing.transcription, processing.recordingId, router]
   );
 
+  const handleEnrichmentUpdate = useCallback(
+    async (enrichmentId: string, content: string) => {
+      const response = await api.updateEnrichment(enrichmentId, content);
+      if (response.data) {
+        setProcessing((prev) => ({
+          ...prev,
+          enrichments: prev.enrichments.map((e) =>
+            e.id === enrichmentId ? { ...e, content } : e
+          ),
+        }));
+      }
+    },
+    []
+  );
+
   const handleReset = useCallback(() => {
     resetRecording();
     setProcessing({
@@ -317,6 +332,7 @@ export default function Home() {
                   }));
                 }
               }}
+              onEnrichmentUpdate={handleEnrichmentUpdate}
               enrichments={processing.enrichments}
             />
           </section>

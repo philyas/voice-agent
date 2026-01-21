@@ -7,16 +7,20 @@ import remarkGfm from 'remark-gfm';
 import type { EnrichmentType } from '@/lib/api';
 import { api } from '@/lib/api';
 
+interface EnrichmentData {
+  id?: string;
+  type: string;
+  content: string;
+}
+
 interface TranscriptionCardProps {
   text: string;
   transcriptionId?: string;
   isLoading?: boolean;
   onEnrich?: (type: EnrichmentType, targetLanguage?: string) => Promise<void>;
   onUpdate?: (text: string) => Promise<void>;
-  enrichments?: Array<{
-    type: string;
-    content: string;
-  }>;
+  onEnrichmentUpdate?: (enrichmentId: string, content: string) => Promise<void>;
+  enrichments?: EnrichmentData[];
 }
 
 // Language options with flag Unicode regional indicators
@@ -59,6 +63,7 @@ export function TranscriptionCard({
   isLoading = false,
   onEnrich,
   onUpdate,
+  onEnrichmentUpdate,
   enrichments = [],
 }: TranscriptionCardProps) {
   const [activeEnrichment, setActiveEnrichment] = useState<string | null>(null);
@@ -71,11 +76,57 @@ export function TranscriptionCard({
   const [currentText, setCurrentText] = useState(text);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+  const [localEnrichments, setLocalEnrichments] = useState<EnrichmentData[]>(enrichments);
 
   // Update currentText when text prop changes
   useEffect(() => {
     setCurrentText(text);
   }, [text]);
+
+  // Update localEnrichments when enrichments prop changes
+  useEffect(() => {
+    setLocalEnrichments(enrichments);
+  }, [enrichments]);
+
+  /**
+   * Toggle a checkbox in markdown content
+   * Finds the nth checkbox and toggles between [ ] and [x]
+   */
+  const toggleCheckbox = async (enrichmentId: string | undefined, content: string, checkboxIndex: number) => {
+    if (!enrichmentId) return;
+
+    // Find all checkboxes in the content
+    const checkboxRegex = /- \[([ x])\]/g;
+    let currentIndex = 0;
+    
+    const newContent = content.replace(checkboxRegex, (match, checkState) => {
+      if (currentIndex === checkboxIndex) {
+        currentIndex++;
+        // Toggle the checkbox
+        return checkState === ' ' ? '- [x]' : '- [ ]';
+      }
+      currentIndex++;
+      return match;
+    });
+
+    // Update local state immediately for instant feedback
+    setLocalEnrichments(prev => 
+      prev.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Save to backend
+    if (onEnrichmentUpdate) {
+      try {
+        await onEnrichmentUpdate(enrichmentId, newContent);
+      } catch (error) {
+        // Revert on error
+        setLocalEnrichments(prev => 
+          prev.map(e => e.id === enrichmentId ? { ...e, content } : e)
+        );
+        console.error('Failed to save checkbox state:', error);
+      }
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -148,9 +199,11 @@ export function TranscriptionCard({
     }
   };
 
-  const activeContent = activeEnrichment
-    ? enrichments.find((e) => e.type === activeEnrichment)?.content
+  const activeEnrichmentData = activeEnrichment
+    ? localEnrichments.find((e) => e.type === activeEnrichment)
     : null;
+  const activeContent = activeEnrichmentData?.content || null;
+  const activeEnrichmentId = activeEnrichmentData?.id;
 
   return (
     <div className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden animate-fade-in-up">
@@ -257,8 +310,56 @@ export function TranscriptionCard({
 
               {/* Enriched Content */}
               {activeContent && (
-                <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <div className="enrichment-content prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      // Custom list item to handle checkbox clicks
+                      li: ({ children, className, node, ...props }) => {
+                        const isTaskItem = className?.includes('task-list-item');
+                        
+                        if (isTaskItem && activeEnrichmentId) {
+                          return (
+                            <li 
+                              className={`${className || ''} cursor-pointer hover:bg-dark-800/50 rounded px-1 -mx-1 transition-colors`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                // Find the checkbox index
+                                const container = (e.currentTarget as HTMLElement).closest('.enrichment-content');
+                                if (container) {
+                                  const allTaskItems = container.querySelectorAll('.task-list-item');
+                                  const idx = Array.from(allTaskItems).indexOf(e.currentTarget as HTMLElement);
+                                  if (idx !== -1) {
+                                    toggleCheckbox(activeEnrichmentId, activeContent, idx);
+                                  }
+                                }
+                              }}
+                              {...props}
+                            >
+                              {children}
+                            </li>
+                          );
+                        }
+                        
+                        return <li className={className} {...props}>{children}</li>;
+                      },
+                      // Style checkboxes
+                      input: ({ type, checked, disabled, ...props }) => {
+                        if (type === 'checkbox') {
+                          return (
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              readOnly
+                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
+                              {...props}
+                            />
+                          );
+                        }
+                        return <input type={type} checked={checked} disabled={disabled} {...props} />;
+                      },
+                    }}
+                  >
                     {activeContent}
                   </ReactMarkdown>
                 </div>
@@ -290,7 +391,7 @@ export function TranscriptionCard({
             {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary, isTranslation }) => {
               if (isTranslation) {
                 // Translation dropdown
-                const translationEnrichments = enrichments.filter((e) => e.type === 'translation');
+                const translationEnrichments = localEnrichments.filter((e) => e.type === 'translation');
                 const isLoadingTranslation = loadingType === 'translation';
 
                 return (
@@ -339,7 +440,7 @@ export function TranscriptionCard({
               }
 
               // Regular buttons
-              const hasEnrichment = enrichments.some((e) => e.type === type);
+              const hasEnrichment = localEnrichments.some((e) => e.type === type);
               const isActive = activeEnrichment === type;
               const isLoadingThis = loadingType === type;
 

@@ -37,6 +37,13 @@ router.get('/', enrichmentController.getAll.bind(enrichmentController));
 router.get('/:id', enrichmentController.getById.bind(enrichmentController));
 
 /**
+ * @route   PATCH /api/v1/enrichments/:id
+ * @desc    Update enrichment content (e.g., toggle checkboxes)
+ * @access  Public
+ */
+router.patch('/:id', enrichmentController.update.bind(enrichmentController));
+
+/**
  * @route   DELETE /api/v1/enrichments/:id
  * @desc    Delete an enrichment
  * @access  Public

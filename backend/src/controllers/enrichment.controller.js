@@ -59,6 +59,35 @@ class EnrichmentController {
   }
 
   /**
+   * Update enrichment content
+   * PATCH /api/v1/enrichments/:id
+   */
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { content } = req.body;
+      
+      if (content === undefined) {
+        throw new ApiError(400, 'Content is required');
+      }
+
+      const enrichment = await enrichmentService.updateEnrichment(id, { content });
+      
+      if (!enrichment) {
+        throw new ApiError(404, 'Enrichment not found');
+      }
+
+      res.json({
+        success: true,
+        data: enrichment,
+        message: 'Enrichment updated successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Delete enrichment
    * DELETE /api/v1/enrichments/:id
    */

@@ -42,6 +42,7 @@ router.get('/', (req, res) => {
         'GET /enrichments': 'Get all enrichments',
         'GET /enrichments/:id': 'Get enrichment by ID',
         'GET /enrichments/types': 'Get available types',
+        'PATCH /enrichments/:id': 'Update enrichment content',
         'DELETE /enrichments/:id': 'Delete enrichment',
       },
     },

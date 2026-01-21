@@ -430,6 +430,7 @@ http://localhost:4000/api/v1
 | GET | `/enrichments` | Alle Enrichments |
 | GET | `/enrichments/:id` | Einzelnes Enrichment |
 | GET | `/enrichments/types` | Verfügbare Typen |
+| PATCH | `/enrichments/:id` | Enrichment-Content aktualisieren |
 | DELETE | `/enrichments/:id` | Enrichment löschen |
 
 ### Enrichment-Typen
