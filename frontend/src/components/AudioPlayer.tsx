@@ -6,43 +6,94 @@ import { Play, Pause, RotateCcw } from 'lucide-react';
 interface AudioPlayerProps {
   audioUrl: string;
   onReset?: () => void;
+  fallbackDuration?: number; // Duration in seconds as fallback
 }
 
-export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(fallbackDuration || 0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    // Reset error and duration when URL changes
+    setError(null);
+    setDuration(fallbackDuration || 0);
+    setCurrentTime(0);
+    setIsPlaying(false);
+
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => setDuration(audio.duration);
+    const handleLoadedMetadata = () => {
+      const audioDuration = audio.duration;
+      // Only set duration if it's a valid number (not Infinity or NaN)
+      if (isFinite(audioDuration) && !isNaN(audioDuration) && audioDuration > 0) {
+        setDuration(audioDuration);
+      } else if (fallbackDuration) {
+        // Use fallback duration if audio metadata is invalid
+        setDuration(fallbackDuration);
+      }
+      setError(null);
+    };
     const handleEnded = () => setIsPlaying(false);
+    const handleError = (e: Event) => {
+      const audioElement = e.target as HTMLAudioElement;
+      let errorMsg = 'Fehler beim Laden der Audio-Datei';
+      
+      if (audioElement.error) {
+        switch (audioElement.error.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            errorMsg = 'Audio-Wiedergabe wurde abgebrochen';
+            break;
+          case MediaError.MEDIA_ERR_NETWORK:
+            errorMsg = 'Netzwerkfehler beim Laden der Audio-Datei';
+            break;
+          case MediaError.MEDIA_ERR_DECODE:
+            errorMsg = 'Audio-Datei konnte nicht decodiert werden';
+            break;
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMsg = 'Audio-Format wird nicht unterstützt';
+            break;
+        }
+      }
+      setError(errorMsg);
+      setIsPlaying(false);
+      console.error('Audio error:', audioElement.error);
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
-  }, [audioUrl]);
+  }, [audioUrl, fallbackDuration]);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
-      audio.play();
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('Play error:', err);
+        setError('Fehler beim Abspielen der Audio-Datei');
+        setIsPlaying(false);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +106,10 @@ export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
   };
 
   const formatTime = (time: number) => {
+    // Handle invalid time values
+    if (!isFinite(time) || isNaN(time) || time < 0) {
+      return '0:00';
+    }
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -64,7 +119,18 @@ export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
 
   return (
     <div className="bg-dark-850 border border-dark-700 rounded-2xl p-5">
-      <audio ref={audioRef} src={audioUrl} />
+      <audio 
+        ref={audioRef} 
+        src={audioUrl}
+        crossOrigin="anonymous"
+        preload="metadata"
+      />
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
       
       <div className="flex items-center gap-4">
         <button
@@ -86,7 +152,7 @@ export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
           <input
             type="range"
             min={0}
-            max={duration || 0}
+            max={isFinite(duration) && duration > 0 ? duration : 100}
             value={currentTime}
             onChange={handleSeek}
             className="w-full absolute opacity-0 cursor-pointer"

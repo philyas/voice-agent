@@ -13,6 +13,9 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   
+  // Transpile packages that use ESM
+  transpilePackages: ['react-markdown', 'remark-gfm'],
+  
   // Disable image optimization for static export
   images: {
     unoptimized: true,

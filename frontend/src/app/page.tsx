@@ -283,7 +283,7 @@ export default function Home() {
                 <div>
                   <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-lg">
                     {processing.step === 'uploading' && 'Aufnahme wird hochgeladen...'}
-                    {processing.step === 'transcribing' && 'Wird transkribiert mit Whisper...'}
+                    {processing.step === 'transcribing' && 'Wird transkribiert...'}
                   </p>
                   <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1">
                     Bitte warten Sie einen Moment

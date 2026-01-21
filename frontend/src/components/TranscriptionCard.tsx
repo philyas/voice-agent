@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { EnrichmentType } from '@/lib/api';
 
 interface TranscriptionCardProps {
@@ -65,7 +67,6 @@ export function TranscriptionCard({
           </div>
           <div>
             <h3 className="font-semibold text-white">Transkription</h3>
-            <p className="text-sm text-dark-400">OpenAI Whisper</p>
           </div>
         </div>
         <button
@@ -90,10 +91,16 @@ export function TranscriptionCard({
         ) : (
           <>
             {/* Original or Enriched Text */}
-            <div className="prose prose-invert max-w-none">
-              <p className="text-dark-200 whitespace-pre-wrap leading-relaxed text-[15px]">
-                {activeContent || text}
-              </p>
+            <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
+              {activeContent ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {activeContent}
+                </ReactMarkdown>
+              ) : (
+                <p className="text-dark-200 whitespace-pre-wrap leading-relaxed text-[15px]">
+                  {text}
+                </p>
+              )}
             </div>
 
             {/* Back to original button */}
@@ -116,7 +123,6 @@ export function TranscriptionCard({
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-gold-500" />
             <span className="text-sm font-semibold text-white">KI-Anreicherung</span>
-            <span className="text-xs text-dark-500">GPT-4o-mini</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {ENRICHMENT_OPTIONS.map(({ type, label, icon }) => {

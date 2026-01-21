@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic } from 'lucide-react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api, type Recording, type Transcription } from '@/lib/api';
-import { StatusMessage } from '@/components';
+import { StatusMessage, AudioPlayer } from '@/components';
 
 export default function HistoryPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -251,6 +253,17 @@ export default function HistoryPage() {
                     </div>
                   </div>
 
+                  {/* Audio Player */}
+                  <div className="mb-6">
+                    <label className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-3 block">
+                      Audio
+                    </label>
+                    <AudioPlayer 
+                      audioUrl={api.getRecordingAudioUrl(selectedRecording.id)}
+                      fallbackDuration={selectedRecording.duration_ms ? selectedRecording.duration_ms / 1000 : undefined}
+                    />
+                  </div>
+
                   {transcription ? (
                     <div className="border-t border-dark-700 pt-6">
                       <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
@@ -278,13 +291,12 @@ export default function HistoryPage() {
                                   <span className="text-xs font-semibold text-gold-500 uppercase tracking-wider">
                                     {enrichment.type}
                                   </span>
-                                  <span className="text-xs text-dark-500">
-                                    {enrichment.model_used}
-                                  </span>
                                 </div>
-                                <p className="text-sm text-dark-300 leading-relaxed">
-                                  {enrichment.content}
-                                </p>
+                                <div className="prose prose-sm prose-invert max-w-none prose-headings:text-white prose-p:text-dark-300 prose-strong:text-white prose-em:text-dark-200 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-300 prose-ol:text-dark-300 prose-li:text-dark-300 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-400 prose-blockquote:border-dark-600">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {enrichment.content}
+                                  </ReactMarkdown>
+                                </div>
                               </div>
                             ))}
                           </div>

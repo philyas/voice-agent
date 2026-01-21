@@ -74,9 +74,9 @@ async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
 
 export const api = {
   // Health check
-  async health(): Promise<{ success: boolean; message: string }> {
+  async health(): Promise<ApiResponse<{ message: string; timestamp: string }>> {
     const response = await fetch(`${API_BASE_URL}/health`);
-    return handleResponse(response);
+    return handleResponse<{ message: string; timestamp: string }>(response);
   },
 
   // Recordings
@@ -106,6 +106,10 @@ export const api = {
       method: 'DELETE',
     });
     return handleResponse(response);
+  },
+
+  getRecordingAudioUrl(id: string): string {
+    return `${API_BASE_URL}/api/v1/recordings/${id}/audio`;
   },
 
   async transcribeRecording(id: string, language = 'de'): Promise<ApiResponse<Transcription>> {

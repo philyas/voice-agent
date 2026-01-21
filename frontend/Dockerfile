@@ -10,7 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+# Using --no-cache to ensure fresh install when package.json changes
+RUN npm install --no-optional
 
 # Copy application code
 COPY . .

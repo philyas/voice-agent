@@ -65,13 +65,6 @@ router.get('/stats', recordingController.getStats.bind(recordingController));
 router.get('/', recordingController.getAll.bind(recordingController));
 
 /**
- * @route   GET /api/v1/recordings/:id
- * @desc    Get recording by ID
- * @access  Public
- */
-router.get('/:id', recordingController.getById.bind(recordingController));
-
-/**
  * @route   POST /api/v1/recordings
  * @desc    Upload new audio recording
  * @access  Public
@@ -79,11 +72,25 @@ router.get('/:id', recordingController.getById.bind(recordingController));
 router.post('/', upload.single('audio'), recordingController.create.bind(recordingController));
 
 /**
+ * @route   GET /api/v1/recordings/:id/audio
+ * @desc    Download/stream audio file
+ * @access  Public
+ */
+router.get('/:id/audio', recordingController.getAudio.bind(recordingController));
+
+/**
  * @route   POST /api/v1/recordings/:id/transcribe
  * @desc    Transcribe a recording using Whisper
  * @access  Public
  */
 router.post('/:id/transcribe', recordingController.transcribe.bind(recordingController));
+
+/**
+ * @route   GET /api/v1/recordings/:id
+ * @desc    Get recording by ID
+ * @access  Public
+ */
+router.get('/:id', recordingController.getById.bind(recordingController));
 
 /**
  * @route   DELETE /api/v1/recordings/:id

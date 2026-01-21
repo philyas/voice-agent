@@ -145,6 +145,78 @@ class RecordingController {
       next(error);
     }
   }
+
+  /**
+   * Download/stream audio file
+   * GET /api/v1/recordings/:id/audio
+   */
+  async getAudio(req, res, next) {
+    try {
+      const { id } = req.params;
+      
+      const filePath = await recordingService.getRecordingFilePath(id);
+      
+      if (!filePath) {
+        throw new ApiError(404, 'Recording not found');
+      }
+
+      const recording = await recordingService.getRecordingById(id);
+      if (!recording) {
+        throw new ApiError(404, 'Recording not found');
+      }
+
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Check if file exists
+      try {
+        await fs.promises.access(filePath);
+      } catch {
+        throw new ApiError(404, 'Audio file not found');
+      }
+
+      const stat = await fs.promises.stat(filePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Range');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
+
+      // Handle Range requests for audio streaming
+      if (range) {
+        const parts = range.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(filePath, { start, end });
+        
+        const head = {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': recording.mime_type,
+        };
+        
+        res.writeHead(206, head);
+        file.pipe(res);
+      } else {
+        // Full file request
+        const head = {
+          'Content-Length': fileSize,
+          'Content-Type': recording.mime_type,
+          'Accept-Ranges': 'bytes',
+        };
+        
+        res.writeHead(200, head);
+        fs.createReadStream(filePath).pipe(res);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new RecordingController();
