@@ -1,8 +1,10 @@
 require('dotenv').config();
 
+const http = require('http');
 const app = require('./app');
 const { env } = require('./config/env');
 const db = require('./config/database');
+const { setupWebSocketServer } = require('./routes/realtime.routes');
 
 const PORT = env.PORT || 4000;
 
@@ -13,9 +15,16 @@ async function startServer() {
     await db.raw('SELECT 1');
     console.log('✅ Database connection established');
 
-    app.listen(PORT, () => {
+    // Create HTTP server
+    const server = http.createServer(app);
+
+    // Setup WebSocket server for live transcription
+    setupWebSocketServer(server);
+
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📝 Environment: ${env.NODE_ENV}`);
+      console.log(`🔌 WebSocket server ready for live transcription`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);

@@ -701,18 +701,21 @@ export default function HistoryPage() {
           {/* Detail-Ansicht */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
             {selectedRecording ? (
-              <div className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden h-full flex flex-col">
+              <div 
+                key={selectedRecording.id}
+                className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden h-full flex flex-col transition-smooth animate-fade-in"
+              >
                 <div className="px-6 py-5 border-b border-dark-700">
                   <h2 className="text-lg font-semibold text-white">Aufnahme-Details</h2>
                 </div>
                 
                 <div className="p-6 overflow-y-auto flex-1">
-                  <div className="space-y-5 mb-6">
-                    <div>
+                  <div className="space-y-5 mb-6 transition-smooth">
+                    <div className="transition-smooth">
                       <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
                         Dateiname
                       </label>
-                      <p className="text-white mt-1">{selectedRecording.original_filename}</p>
+                      <p className="text-white mt-1 transition-all duration-300">{selectedRecording.original_filename}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -739,7 +742,7 @@ export default function HistoryPage() {
                   </div>
 
                   {/* Audio Player */}
-                  <div className="mb-6">
+                  <div className="mb-6 transition-smooth">
                     <label className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-3 block">
                       Audio
                     </label>
@@ -750,7 +753,7 @@ export default function HistoryPage() {
                   </div>
 
                   {transcription ? (
-                    <div className="border-t border-dark-700 pt-6">
+                    <div className="border-t border-dark-700 pt-6 transition-smooth">
                       <button
                         onClick={() => setIsTranscriptionExpanded(!isTranscriptionExpanded)}
                         className="w-full flex items-center justify-between mb-3 text-sm font-semibold text-white hover:text-gold-500 transition-colors"
@@ -760,14 +763,14 @@ export default function HistoryPage() {
                           Transkription
                         </div>
                         {isTranscriptionExpanded ? (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-4 h-4 transition-transform duration-300" />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-4 h-4 transition-transform duration-300" />
                         )}
                       </button>
                       
                       {isTranscriptionExpanded && (
-                        <div className="bg-dark-900/50 rounded-xl p-4 mb-5">
+                        <div className="bg-dark-900/50 rounded-xl p-4 mb-5 transition-smooth animate-fade-in">
                           <p className="text-dark-300 text-sm leading-relaxed whitespace-pre-wrap">
                             {transcription.text}
                           </p>
@@ -775,15 +778,16 @@ export default function HistoryPage() {
                       )}
 
                       {localEnrichments && localEnrichments.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-white mb-3">
+                        <div className="transition-smooth">
+                          <h4 className="text-sm font-semibold text-white mb-3 transition-all duration-300">
                             Enrichments ({localEnrichments.length})
                           </h4>
                           <div className="space-y-3">
-                            {localEnrichments.map((enrichment) => (
+                            {localEnrichments.map((enrichment, index) => (
                               <div
                                 key={enrichment.id}
-                                className="bg-gold-500/5 border border-gold-500/10 rounded-xl p-4"
+                                className="bg-gold-500/5 border border-gold-500/10 rounded-xl p-4 transition-smooth animate-fade-in"
+                                style={{ animationDelay: `${index * 50}ms` }}
                               >
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-xs font-semibold text-gold-500 uppercase tracking-wider">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useLiveTranscription } from '@/hooks/useLiveTranscription';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
@@ -26,6 +27,7 @@ export default function Home() {
     duration,
     audioBlob,
     audioUrl,
+    audioStream,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -33,6 +35,14 @@ export default function Home() {
     resetRecording,
     error: recorderError,
   } = useAudioRecorder();
+
+  const {
+    liveText,
+    isConnected: isTranscribing,
+    error: transcriptionError,
+    startTranscription,
+    stopTranscription,
+  } = useLiveTranscription();
 
   const { isElectron, platform, notifyRecordingState } = useElectron();
   const router = useRouter();
@@ -65,6 +75,15 @@ export default function Home() {
   useEffect(() => {
     notifyRecordingState(isRecording);
   }, [isRecording, notifyRecordingState]);
+
+  // Start live transcription when recording starts
+  useEffect(() => {
+    if (isRecording && audioStream && !isPaused) {
+      startTranscription(audioStream, 'de');
+    } else if (!isRecording || isPaused) {
+      stopTranscription();
+    }
+  }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -204,12 +223,14 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Error Messages */}
-        {(recorderError || processing.error) && (
+        {(recorderError || processing.error || transcriptionError) && (
           <div className="mb-8">
             <StatusMessage
               type="error"
-              message={recorderError || processing.error || ''}
-              onClose={() => setProcessing((prev) => ({ ...prev, error: null }))}
+              message={recorderError || processing.error || transcriptionError || ''}
+              onClose={() => {
+                setProcessing((prev) => ({ ...prev, error: null }));
+              }}
             />
           </div>
         )}
@@ -221,29 +242,52 @@ export default function Home() {
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (
-                <div className="mb-8 text-center animate-fade-in">
-                  <span className="text-6xl font-light tracking-tight font-mono bg-gradient-to-br from-gold-400 via-gold-300 to-gold-500 bg-clip-text text-transparent">
+                <div className="mb-8 text-center w-full transition-smooth animate-fade-in">
+                  <span className="text-6xl font-light tracking-tight font-mono bg-gradient-to-br from-gold-400 via-gold-300 to-gold-500 bg-clip-text text-transparent transition-all duration-300">
                     {formatDuration(duration)}
                   </span>
-                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-2 font-medium">
+                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-2 font-medium transition-all duration-300">
                     {isPaused ? 'Pausiert' : 'Aufnahme läuft...'}
                   </p>
+                  
+                  {/* Live Transcription Display */}
+                  {liveText && (
+                    <div className="mt-6 max-w-2xl mx-auto transition-smooth animate-fade-in">
+                      <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-gold-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranscribing ? 'bg-gold-500 animate-pulse' : 'bg-dark-500'}`} />
+                          <p className="text-xs font-medium bg-gradient-to-r from-gold-400/80 to-gold-500/80 bg-clip-text text-transparent">
+                            Live-Transkription
+                          </p>
+                        </div>
+                        <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300">
+                          {liveText || (isTranscribing ? 'Höre zu...' : '')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {transcriptionError && (
+                    <div className="mt-4 text-sm text-red-400 transition-smooth animate-fade-in">
+                      {transcriptionError}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Instruction Text */}
               {!isRecording && !audioUrl && (
-                <div className="mb-10 text-center max-w-md">
-                  <h2 className="text-2xl font-semibold mb-3 bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent">
+                <div className="mb-10 text-center max-w-md transition-smooth animate-fade-in">
+                  <h2 className="text-2xl font-semibold mb-3 bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent transition-all duration-300">
                     Bereit für die Aufnahme
                   </h2>
-                  <p className="bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent leading-relaxed">
+                  <p className="bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent leading-relaxed transition-all duration-300">
                     Klicke auf den Button, um eine Sprachaufnahme zu starten. 
                     Deine Aufnahme wird automatisch transkribiert und kann mit KI angereichert werden.
                   </p>
                   {/* Hotkey Hint for Electron */}
                   {isElectron && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-sm text-dark-500">
+                    <div className="mt-4 flex items-center justify-center gap-2 text-sm text-dark-500 transition-all duration-300">
                       <Keyboard className="w-4 h-4" />
                       <span>
                         Hotkey: <kbd className="px-2 py-1 bg-gradient-to-br from-dark-800 to-dark-850 border border-gold-500/20 rounded text-gold-400 font-mono text-xs">
@@ -270,7 +314,7 @@ export default function Home() {
 
               {/* Audio Player (after recording) */}
               {audioUrl && !isRecording && (
-                <div className="w-full max-w-lg animate-fade-in-up">
+                <div className="w-full max-w-lg transition-smooth animate-fade-in">
                   <AudioPlayer audioUrl={audioUrl} onReset={handleReset} />
                 </div>
               )}
@@ -280,7 +324,7 @@ export default function Home() {
 
         {/* Process Button */}
         {audioUrl && !isRecording && processing.step === 'idle' && (
-          <section className="mb-10 animate-fade-in-up">
+          <section className="mb-10 transition-smooth animate-fade-in">
             <button
               onClick={processRecording}
               className="w-full py-5 px-8 bg-gradient-to-r from-gold-500 via-gold-400 via-gold-500 to-gold-600 text-dark-950 rounded-2xl font-semibold shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-3 btn-shine relative overflow-hidden group"
@@ -294,20 +338,20 @@ export default function Home() {
 
         {/* Processing Status */}
         {isProcessing && (
-          <section className="mb-10 animate-fade-in">
-            <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-2xl p-8 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-gold-500/5 pointer-events-none" />
+          <section className="mb-10 transition-smooth animate-fade-in">
+            <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-2xl p-8 relative overflow-hidden transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-gold-500/5 pointer-events-none transition-all duration-300" />
               <div className="flex items-center gap-5 relative z-10">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full border-2 border-dark-700/50" />
-                  <div className="absolute inset-0 w-14 h-14 rounded-full border-2 border-gold-500/30 border-t-gold-500 border-r-gold-400 animate-spin" />
+                  <div className="w-14 h-14 rounded-full border-2 border-dark-700/50 transition-all duration-300" />
+                  <div className="absolute inset-0 w-14 h-14 rounded-full border-2 border-gold-500/30 border-t-gold-500 border-r-gold-400 animate-spin transition-all duration-300" />
                 </div>
                 <div>
-                  <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-lg">
+                  <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-lg transition-all duration-300">
                     {processing.step === 'uploading' && 'Aufnahme wird hochgeladen...'}
                     {processing.step === 'transcribing' && 'Wird transkribiert...'}
                   </p>
-                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1">
+                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1 transition-all duration-300">
                     Bitte warten Sie einen Moment
                   </p>
                 </div>
@@ -318,7 +362,7 @@ export default function Home() {
 
         {/* Transcription Result */}
         {processing.transcription && (
-          <section className="mb-10">
+          <section className="mb-10 transition-smooth animate-fade-in">
             <TranscriptionCard
               text={processing.transcription.text}
               transcriptionId={processing.transcription.id}
@@ -340,10 +384,10 @@ export default function Home() {
 
         {/* New Recording Button (after transcription) */}
         {processing.step === 'done' && (
-          <section className="animate-fade-in">
+          <section className="transition-smooth animate-fade-in">
             <button
               onClick={handleReset}
-              className="w-full py-4 px-6 bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 rounded-xl font-medium hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
+              className="w-full py-4 px-6 bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 rounded-xl font-medium hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-300"
             >
               Neue Aufnahme starten
             </button>

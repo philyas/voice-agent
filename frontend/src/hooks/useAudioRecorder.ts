@@ -8,6 +8,7 @@ interface UseAudioRecorderReturn {
   duration: number;
   audioBlob: Blob | null;
   audioUrl: string | null;
+  audioStream: MediaStream | null;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
@@ -148,6 +149,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     duration,
     audioBlob,
     audioUrl,
+    audioStream: streamRef.current,
     startRecording,
     stopRecording,
     pauseRecording,
