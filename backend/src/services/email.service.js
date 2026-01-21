@@ -6,6 +6,7 @@
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
+const { marked } = require('marked');
 
 class EmailService {
   constructor() {
@@ -77,6 +78,14 @@ class EmailService {
             .transcription { background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #d4a853; margin-top: 10px; }
             .enrichment { background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #b8942d; margin-top: 10px; margin-bottom: 15px; }
             .enrichment-type { color: #b8942d; font-weight: bold; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
+            .enrichment h1, .enrichment h2, .enrichment h3, .enrichment h4, .enrichment h5, .enrichment h6 { color: #333; margin-top: 20px; margin-bottom: 10px; font-weight: bold; }
+            .enrichment h2 { font-size: 20px; border-bottom: 2px solid #d4a853; padding-bottom: 5px; }
+            .enrichment h3 { font-size: 18px; }
+            .enrichment ul, .enrichment ol { margin: 10px 0; padding-left: 25px; }
+            .enrichment li { margin: 5px 0; }
+            .enrichment p { margin: 10px 0; }
+            .enrichment code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+            .enrichment pre { background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
             .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
           </style>
         </head>
@@ -112,10 +121,12 @@ class EmailService {
         `;
 
         enrichments.forEach((enrichment) => {
+          // Convert Markdown to HTML
+          const enrichmentHtml = marked.parse(enrichment.content || '');
           htmlContent += `
             <div class="enrichment">
               <div class="enrichment-type">${enrichment.type}</div>
-              <div>${enrichment.content.replace(/\n/g, '<br>')}</div>
+              <div>${enrichmentHtml}</div>
             </div>
           `;
         });
