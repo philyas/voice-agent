@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -14,6 +14,7 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
   const [transcription, setTranscription] = useState<Transcription | null>(null);
+  const [isTranscriptionExpanded, setIsTranscriptionExpanded] = useState(false);
 
   useEffect(() => {
     loadRecordings();
@@ -68,6 +69,7 @@ export default function HistoryPage() {
   const handleView = async (recording: Recording) => {
     setSelectedRecording(recording);
     setTranscription(null);
+    setIsTranscriptionExpanded(false);
     await loadTranscription(recording.id);
   };
 
@@ -266,15 +268,28 @@ export default function HistoryPage() {
 
                   {transcription ? (
                     <div className="border-t border-dark-700 pt-6">
-                      <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gold-500" />
-                        Transkription
-                      </h3>
-                      <div className="bg-dark-900/50 rounded-xl p-4 mb-5">
-                        <p className="text-dark-300 text-sm leading-relaxed whitespace-pre-wrap">
-                          {transcription.text}
-                        </p>
-                      </div>
+                      <button
+                        onClick={() => setIsTranscriptionExpanded(!isTranscriptionExpanded)}
+                        className="w-full flex items-center justify-between mb-3 text-sm font-semibold text-white hover:text-gold-500 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gold-500" />
+                          Transkription
+                        </div>
+                        {isTranscriptionExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
+                      
+                      {isTranscriptionExpanded && (
+                        <div className="bg-dark-900/50 rounded-xl p-4 mb-5">
+                          <p className="text-dark-300 text-sm leading-relaxed whitespace-pre-wrap">
+                            {transcription.text}
+                          </p>
+                        </div>
+                      )}
 
                       {transcription.enrichments && transcription.enrichments.length > 0 && (
                         <div>

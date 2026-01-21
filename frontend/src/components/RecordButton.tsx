@@ -29,7 +29,7 @@ export function RecordButton({
         className="group relative w-24 h-24 rounded-full bg-gradient-to-br from-gold-400 via-gold-500 via-gold-400 to-gold-600 text-dark-950 shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center btn-shine overflow-hidden"
         aria-label="Aufnahme starten"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-gold-300/50 via-transparent to-gold-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gold-300/50 via-transparent to-gold-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
         <div className="absolute inset-1 rounded-full bg-gradient-to-br from-gold-400 via-gold-500 to-gold-600 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
         <Mic className="w-10 h-10 relative z-10" strokeWidth={1.5} />
       </button>
@@ -57,7 +57,8 @@ export function RecordButton({
           className="relative w-24 h-24 rounded-full bg-gradient-to-br from-gold-400 via-gold-500 via-gold-400 to-gold-600 text-dark-950 shadow-gold-lg flex items-center justify-center recording-pulse overflow-hidden group"
           aria-label="Aufnahme stoppen"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-gold-300/30 via-transparent to-gold-600/30 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold-300/30 via-transparent to-gold-600/30 animate-pulse rounded-full" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full" />
           <Square className="w-8 h-8 fill-current relative z-10" />
         </button>
         
