@@ -2,11 +2,17 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: 'Voice Agent - Sprachaufnahme & KI-Transkription',
   description: 'Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anreicherung von Spracheingaben.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -15,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de">
-      <body className={inter.className}>{children}</body>
+    <html lang="de" className="dark">
+      <body className={`${inter.variable} font-sans antialiased`}>{children}</body>
     </html>
   );
 }

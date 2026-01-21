@@ -60,29 +60,39 @@ export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-md">
+    <div className="bg-dark-850 border border-dark-700 rounded-2xl p-5">
       <audio ref={audioRef} src={audioUrl} />
       
       <div className="flex items-center gap-4">
         <button
           onClick={togglePlayPause}
-          className="w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 transition-colors"
+          className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 text-dark-950 flex items-center justify-center hover:shadow-gold transition-all duration-200 btn-shine"
           aria-label={isPlaying ? 'Pause' : 'Abspielen'}
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
         </button>
 
         <div className="flex-1">
+          {/* Progress bar container */}
+          <div className="relative h-1.5 bg-dark-700 rounded-full overflow-hidden mb-2">
+            <div 
+              className="absolute h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full transition-all duration-100"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
           <input
             type="range"
             min={0}
             max={duration || 0}
             value={currentTime}
             onChange={handleSeek}
-            className="w-full h-2 bg-gray-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+            className="w-full absolute opacity-0 cursor-pointer"
+            style={{ marginTop: '-14px', height: '20px' }}
           />
-          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <div className="flex justify-between text-xs text-dark-400 font-medium">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -91,10 +101,10 @@ export function AudioPlayer({ audioUrl, onReset }: AudioPlayerProps) {
         {onReset && (
           <button
             onClick={onReset}
-            className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+            className="w-10 h-10 rounded-full bg-dark-800 border border-dark-700 text-dark-400 flex items-center justify-center hover:text-white hover:border-dark-600 transition-all duration-200"
             aria-label="Zurücksetzen"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
         )}
       </div>

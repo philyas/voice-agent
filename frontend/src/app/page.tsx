@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Mic, Upload, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Mic, Upload, Loader2, History, Sparkles } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
@@ -114,27 +115,36 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-10 backdrop-blur-lg bg-white/80 dark:bg-slate-900/80 border-b border-gray-200 dark:border-slate-700">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-              <Mic className="w-5 h-5 text-white" />
+      <header className="sticky top-0 z-50 glass border-b border-dark-700/50">
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold">
+                <Mic className="w-6 h-6 text-dark-950" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Voice Agent</h1>
+                <p className="text-sm text-dark-400">
+                  Sprachaufnahme & KI-Transkription
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Voice Agent</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Sprachaufnahme & KI-Transkription
-              </p>
-            </div>
+            <Link
+              href="/history"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600 transition-all duration-200"
+            >
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">Historie</span>
+            </Link>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Error Messages */}
         {(recorderError || processing.error) && (
-          <div className="mb-6">
+          <div className="mb-8">
             <StatusMessage
               type="error"
               message={recorderError || processing.error || ''}
@@ -144,16 +154,16 @@ export default function Home() {
         )}
 
         {/* Recording Section */}
-        <section className="mb-8">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8">
+        <section className="mb-10">
+          <div className="bg-dark-850 border border-dark-700 rounded-3xl p-10 card-hover">
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (
-                <div className="mb-6 text-center">
-                  <span className="text-4xl font-mono font-bold text-gray-900 dark:text-white">
+                <div className="mb-8 text-center animate-fade-in">
+                  <span className="text-6xl font-light text-white tracking-tight font-mono">
                     {formatDuration(duration)}
                   </span>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-dark-400 mt-2 font-medium">
                     {isPaused ? 'Pausiert' : 'Aufnahme läuft...'}
                   </p>
                 </div>
@@ -161,18 +171,19 @@ export default function Home() {
 
               {/* Instruction Text */}
               {!isRecording && !audioUrl && (
-                <div className="mb-6 text-center">
-                  <p className="text-gray-600 dark:text-gray-300 mb-2">
-                    Klicke auf den Button, um eine Aufnahme zu starten
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Tipp: Nutze <kbd className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs">Strg + Shift + R</kbd> als Hotkey
+                <div className="mb-10 text-center max-w-md">
+                  <h2 className="text-2xl font-semibold text-white mb-3">
+                    Bereit für die Aufnahme
+                  </h2>
+                  <p className="text-dark-400 leading-relaxed">
+                    Klicke auf den Button, um eine Sprachaufnahme zu starten. 
+                    Deine Aufnahme wird automatisch transkribiert und kann mit KI angereichert werden.
                   </p>
                 </div>
               )}
 
               {/* Record Button */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <RecordButton
                   isRecording={isRecording}
                   isPaused={isPaused}
@@ -186,7 +197,7 @@ export default function Home() {
 
               {/* Audio Player (after recording) */}
               {audioUrl && !isRecording && (
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-lg animate-fade-in-up">
                   <AudioPlayer audioUrl={audioUrl} onReset={handleReset} />
                 </div>
               )}
@@ -196,12 +207,12 @@ export default function Home() {
 
         {/* Process Button */}
         {audioUrl && !isRecording && processing.step === 'idle' && (
-          <section className="mb-8">
+          <section className="mb-10 animate-fade-in-up">
             <button
               onClick={processRecording}
-              className="w-full py-4 px-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
+              className="w-full py-5 px-8 bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 text-dark-950 rounded-2xl font-semibold shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-3 btn-shine"
             >
-              <Upload className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" />
               Aufnahme verarbeiten & transkribieren
             </button>
           </section>
@@ -209,16 +220,19 @@ export default function Home() {
 
         {/* Processing Status */}
         {isProcessing && (
-          <section className="mb-8">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
-              <div className="flex items-center gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <section className="mb-10 animate-fade-in">
+            <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8">
+              <div className="flex items-center gap-5">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-full border-2 border-dark-700" />
+                  <div className="absolute inset-0 w-14 h-14 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+                </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-semibold text-white text-lg">
                     {processing.step === 'uploading' && 'Aufnahme wird hochgeladen...'}
                     {processing.step === 'transcribing' && 'Wird transkribiert mit Whisper...'}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-dark-400 mt-1">
                     Bitte warten Sie einen Moment
                   </p>
                 </div>
@@ -229,7 +243,7 @@ export default function Home() {
 
         {/* Transcription Result */}
         {processing.transcription && (
-          <section className="mb-8">
+          <section className="mb-10">
             <TranscriptionCard
               text={processing.transcription.text}
               onEnrich={handleEnrich}
@@ -240,10 +254,10 @@ export default function Home() {
 
         {/* New Recording Button (after transcription) */}
         {processing.step === 'done' && (
-          <section>
+          <section className="animate-fade-in">
             <button
               onClick={handleReset}
-              className="w-full py-3 px-6 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+              className="w-full py-4 px-6 bg-dark-800 border border-dark-700 text-dark-300 rounded-xl font-medium hover:text-white hover:border-dark-600 transition-all duration-200"
             >
               Neue Aufnahme starten
             </button>
@@ -252,8 +266,10 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        <p>Voice Agent - Powered by OpenAI Whisper & GPT-4o-mini</p>
+      <footer className="py-8 text-center border-t border-dark-800">
+        <p className="text-sm text-dark-500">
+          Voice Agent — Powered by <span className="text-gold-500">OpenAI Whisper</span> & <span className="text-gold-500">GPT-4o-mini</span>
+        </p>
       </footer>
     </main>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Sparkles, Loader2, Copy, Check } from 'lucide-react';
+import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight } from 'lucide-react';
 import type { EnrichmentType } from '@/lib/api';
 
 interface TranscriptionCardProps {
@@ -56,16 +56,21 @@ export function TranscriptionCard({
     : null;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden animate-fade-in">
+    <div className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden animate-fade-in-up">
       {/* Header */}
-      <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary-500" />
-          <h3 className="font-medium text-gray-900 dark:text-white">Transkription</h3>
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center">
+            <FileText className="w-5 h-5 text-gold-500" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Transkription</h3>
+            <p className="text-sm text-dark-400">OpenAI Whisper</p>
+          </div>
         </div>
         <button
           onClick={() => handleCopy(activeContent || text)}
-          className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+          className="p-2.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
           aria-label="Kopieren"
         >
           {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -73,17 +78,20 @@ export function TranscriptionCard({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-6">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-            <span className="ml-2 text-gray-600 dark:text-gray-300">Transkribiere...</span>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
+              <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+            </div>
+            <span className="mt-4 text-dark-300 font-medium">Transkribiere...</span>
           </div>
         ) : (
           <>
             {/* Original or Enriched Text */}
-            <div className="prose dark:prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+            <div className="prose prose-invert max-w-none">
+              <p className="text-dark-200 whitespace-pre-wrap leading-relaxed text-[15px]">
                 {activeContent || text}
               </p>
             </div>
@@ -92,9 +100,10 @@ export function TranscriptionCard({
             {activeEnrichment && (
               <button
                 onClick={() => setActiveEnrichment(null)}
-                className="mt-3 text-sm text-primary-500 hover:text-primary-600 transition-colors"
+                className="mt-4 flex items-center gap-1 text-sm text-gold-500 hover:text-gold-400 transition-colors"
               >
-                ← Original anzeigen
+                <ChevronRight className="w-4 h-4 rotate-180" />
+                Original anzeigen
               </button>
             )}
           </>
@@ -103,12 +112,11 @@ export function TranscriptionCard({
 
       {/* Enrichment Options */}
       {!isLoading && text && onEnrich && (
-        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700 border-t border-gray-200 dark:border-slate-600">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              KI-Anreicherung
-            </span>
+        <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-gold-500" />
+            <span className="text-sm font-semibold text-white">KI-Anreicherung</span>
+            <span className="text-xs text-dark-500">GPT-4o-mini</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {ENRICHMENT_OPTIONS.map(({ type, label, icon }) => {
@@ -122,20 +130,20 @@ export function TranscriptionCard({
                   onClick={() => hasEnrichment ? setActiveEnrichment(type) : handleEnrich(type)}
                   disabled={isLoadingThis}
                   className={`
-                    px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+                    px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
                     ${isActive
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 shadow-gold'
                       : hasEnrichment
-                        ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800'
-                        : 'bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500'
+                        ? 'bg-dark-800 border border-gold-500/30 text-gold-400 hover:border-gold-500/50'
+                        : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
                     }
-                    ${isLoadingThis ? 'opacity-50 cursor-wait' : ''}
+                    ${isLoadingThis ? 'opacity-70 cursor-wait' : ''}
                   `}
                 >
                   {isLoadingThis ? (
-                    <Loader2 className="w-4 h-4 animate-spin inline mr-1" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <span className="mr-1">{icon}</span>
+                    <span>{icon}</span>
                   )}
                   {label}
                 </button>
