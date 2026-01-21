@@ -217,7 +217,7 @@ export default function Home() {
         {/* Recording Section */}
         <section className="mb-10">
           <div className="group bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-3xl p-10 relative overflow-hidden transition-all duration-300 hover:border-gold-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(212,168,83,0.15),0_0_30px_rgba(212,168,83,0.05)]">
-            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:via-gold-500/3 group-hover:to-gold-500/5 transition-all duration-500 pointer-events-none rounded-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:via-gold-500/3 group-hover:to-gold-500/5 transition-all duration-500 pointer-events-none" />
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (

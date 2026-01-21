@@ -44,7 +44,7 @@ export function RecordButton({
         className="w-14 h-14 rounded-full bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-white shadow-dark hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 hover:border-gold-500/40 transition-all duration-200 flex items-center justify-center group"
         aria-label={isPaused ? 'Fortsetzen' : 'Pausieren'}
       >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/10 group-hover:via-gold-500/5 group-hover:to-gold-500/10 transition-all duration-200" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/10 group-hover:via-gold-500/5 group-hover:to-gold-500/10 transition-all duration-200" />
         <div className="relative z-10">
           {isPaused ? <Play className="w-5 h-5 ml-0.5" /> : <Pause className="w-5 h-5" />}
         </div>
@@ -58,7 +58,7 @@ export function RecordButton({
           aria-label="Aufnahme stoppen"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-gold-300/30 via-transparent to-gold-600/30 animate-pulse rounded-full" />
-          <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full" />
           <Square className="w-8 h-8 fill-current relative z-10" />
         </button>
         
