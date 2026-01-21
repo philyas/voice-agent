@@ -117,11 +117,12 @@ class TranscriptionController {
   async enrich(req, res, next) {
     try {
       const { id } = req.params;
-      const { type = 'summary', customPrompt, temperature } = req.body;
+      const { type = 'summary', customPrompt, temperature, targetLanguage } = req.body;
 
       const result = await enrichmentService.enrichTranscription(id, type, {
         customPrompt,
         temperature,
+        targetLanguage,
       });
 
       res.status(201).json({

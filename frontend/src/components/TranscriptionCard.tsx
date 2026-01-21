@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine } from 'lucide-react';
+import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Globe, Languages } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { EnrichmentType } from '@/lib/api';
@@ -11,7 +11,7 @@ interface TranscriptionCardProps {
   text: string;
   transcriptionId?: string;
   isLoading?: boolean;
-  onEnrich?: (type: EnrichmentType) => Promise<void>;
+  onEnrich?: (type: EnrichmentType, targetLanguage?: string) => Promise<void>;
   onUpdate?: (text: string) => Promise<void>;
   enrichments?: Array<{
     type: string;
@@ -19,8 +19,38 @@ interface TranscriptionCardProps {
   }>;
 }
 
-const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean }[] = [
-  { type: 'complete', label: 'Notizen erstellen', icon: <FilePenLine className="w-4 h-4" />, isPrimary: true },
+// Language options with flag Unicode regional indicators
+const LANGUAGES = [
+  { code: 'en', name: 'Englisch', flag: '🇬🇧' },
+  { code: 'es', name: 'Spanisch', flag: '🇪🇸' },
+  { code: 'fr', name: 'Französisch', flag: '🇫🇷' },
+  { code: 'it', name: 'Italienisch', flag: '🇮🇹' },
+  { code: 'pt', name: 'Portugiesisch', flag: '🇵🇹' },
+  { code: 'nl', name: 'Niederländisch', flag: '🇳🇱' },
+  { code: 'pl', name: 'Polnisch', flag: '🇵🇱' },
+  { code: 'ru', name: 'Russisch', flag: '🇷🇺' },
+  { code: 'ja', name: 'Japanisch', flag: '🇯🇵' },
+  { code: 'zh', name: 'Chinesisch', flag: '🇨🇳' },
+  { code: 'ko', name: 'Koreanisch', flag: '🇰🇷' },
+  { code: 'ar', name: 'Arabisch', flag: '🇸🇦' },
+  { code: 'tr', name: 'Türkisch', flag: '🇹🇷' },
+  { code: 'sv', name: 'Schwedisch', flag: '🇸🇪' },
+  { code: 'da', name: 'Dänisch', flag: '🇩🇰' },
+  { code: 'no', name: 'Norwegisch', flag: '🇳🇴' },
+  { code: 'fi', name: 'Finnisch', flag: '🇫🇮' },
+  { code: 'cs', name: 'Tschechisch', flag: '🇨🇿' },
+  { code: 'hu', name: 'Ungarisch', flag: '🇭🇺' },
+  { code: 'ro', name: 'Rumänisch', flag: '🇷🇴' },
+];
+
+const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean; isTranslation?: boolean }[] = [
+  { type: 'complete', label: 'Komplett-Analyse', icon: <FilePenLine className="w-4 h-4" />, isPrimary: true },
+  { type: 'summary', label: 'Zusammenfassung', icon: <FileTextIcon className="w-4 h-4" /> },
+  { type: 'formatted', label: 'Formatiert', icon: <Wand2 className="w-4 h-4" /> },
+  { type: 'notes', label: 'Notizen', icon: <List className="w-4 h-4" /> },
+  { type: 'action_items', label: 'Aufgaben', icon: <CheckSquare className="w-4 h-4" /> },
+  { type: 'key_points', label: 'Kernpunkte', icon: <Target className="w-4 h-4" /> },
+  { type: 'translation', label: 'Übersetzung', icon: <Languages className="w-4 h-4" />, isTranslation: true },
 ];
 
 export function TranscriptionCard({
@@ -39,22 +69,41 @@ export function TranscriptionCard({
   const [editedTranscriptionText, setEditedTranscriptionText] = useState('');
   const [isSavingTranscription, setIsSavingTranscription] = useState(false);
   const [currentText, setCurrentText] = useState(text);
+  const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
 
   // Update currentText when text prop changes
   useEffect(() => {
     setCurrentText(text);
   }, [text]);
 
-  const handleEnrich = async (type: EnrichmentType) => {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showTranslationDropdown && !(event.target as Element).closest('.relative')) {
+        setShowTranslationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTranslationDropdown]);
+
+  const handleEnrich = async (type: EnrichmentType, targetLanguage?: string) => {
     if (!onEnrich || loadingType) return;
     
     setLoadingType(type);
     try {
-      await onEnrich(type);
+      await onEnrich(type, targetLanguage);
       setActiveEnrichment(type);
+      setShowTranslationDropdown(false);
     } finally {
       setLoadingType(null);
     }
+  };
+
+  const handleTranslation = (language: typeof LANGUAGES[0]) => {
+    setSelectedLanguage(language);
+    handleEnrich('translation', language.code);
   };
 
   const handleCopy = async (content: string) => {
@@ -238,7 +287,58 @@ export function TranscriptionCard({
             <span className="text-sm font-semibold text-white">KI-Verarbeitung</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary }) => {
+            {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary, isTranslation }) => {
+              if (isTranslation) {
+                // Translation dropdown
+                const translationEnrichments = enrichments.filter((e) => e.type === 'translation');
+                const isLoadingTranslation = loadingType === 'translation';
+
+                return (
+                  <div key={type} className="relative">
+                    <button
+                      onClick={() => setShowTranslationDropdown(!showTranslationDropdown)}
+                      disabled={isLoadingTranslation}
+                      className={`
+                        px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
+                        ${translationEnrichments.length > 0
+                          ? 'bg-dark-800 border border-gold-500/30 text-gold-400 hover:border-gold-500/50'
+                          : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
+                        }
+                        ${isLoadingTranslation ? 'opacity-70 cursor-wait' : ''}
+                      `}
+                    >
+                      {isLoadingTranslation ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          {icon}
+                          {label}
+                          <ChevronDown className="w-3 h-3 ml-1" />
+                        </>
+                      )}
+                    </button>
+                    {showTranslationDropdown && !isLoadingTranslation && (
+                      <div className="absolute top-full left-0 mt-2 bg-dark-850 border border-dark-700 rounded-xl shadow-lg z-50 min-w-[200px] max-h-64 overflow-y-auto">
+                        {LANGUAGES.map((lang) => {
+                          const hasLangEnrichment = translationEnrichments.some((e) => e.type === 'translation');
+                          return (
+                            <button
+                              key={lang.code}
+                              onClick={() => handleTranslation(lang)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-dark-300 hover:text-white hover:bg-dark-800 flex items-center gap-3 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                            >
+                              <span className="text-lg">{lang.flag}</span>
+                              <span>{lang.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Regular buttons
               const hasEnrichment = enrichments.some((e) => e.type === type);
               const isActive = activeEnrichment === type;
               const isLoadingThis = loadingType === type;

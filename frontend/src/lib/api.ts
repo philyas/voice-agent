@@ -148,14 +148,15 @@ export const api = {
   async enrichTranscription(
     id: string,
     type: EnrichmentType,
-    customPrompt?: string
+    customPrompt?: string,
+    targetLanguage?: string
   ): Promise<ApiResponse<Enrichment>> {
     const response = await fetch(`${API_BASE_URL}/api/v1/transcriptions/${id}/enrich`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ type, customPrompt }),
+      body: JSON.stringify({ type, customPrompt, targetLanguage }),
     });
     return handleResponse(response);
   },

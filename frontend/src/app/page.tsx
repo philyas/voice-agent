@@ -110,10 +110,10 @@ export default function Home() {
   }, [audioBlob]);
 
   const handleEnrich = useCallback(
-    async (type: EnrichmentType) => {
+    async (type: EnrichmentType, targetLanguage?: string) => {
       if (!processing.transcription || !processing.recordingId) return;
 
-      const response = await api.enrichTranscription(processing.transcription.id, type);
+      const response = await api.enrichTranscription(processing.transcription.id, type, undefined, targetLanguage);
 
       if (response.data) {
         setProcessing((prev) => ({

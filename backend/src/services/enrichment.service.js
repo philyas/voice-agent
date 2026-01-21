@@ -74,9 +74,35 @@ Antworte auf Deutsch.`,
       maxTokens: 1000,
     },
     translation: {
-      system: `Du bist ein professioneller Übersetzer.
-Übersetze den folgenden Text ins Englische.
-Behalte den Ton und die Bedeutung bei.`,
+      system: (targetLanguage = 'en') => {
+        const languageNames = {
+          en: 'Englische',
+          es: 'Spanische',
+          fr: 'Französische',
+          it: 'Italienische',
+          pt: 'Portugiesische',
+          nl: 'Niederländische',
+          pl: 'Polnische',
+          ru: 'Russische',
+          ja: 'Japanische',
+          zh: 'Chinesische',
+          ko: 'Koreanische',
+          ar: 'Arabische',
+          tr: 'Türkische',
+          sv: 'Schwedische',
+          da: 'Dänische',
+          no: 'Norwegische',
+          fi: 'Finnische',
+          cs: 'Tschechische',
+          hu: 'Ungarische',
+          ro: 'Rumänische',
+        };
+        const langName = languageNames[targetLanguage] || 'Englische';
+        return `Du bist ein professioneller Übersetzer.
+Übersetze den folgenden Text ins ${langName}.
+Behalte den Ton und die Bedeutung bei.
+Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
+      },
       maxTokens: 2000,
     },
   };
@@ -122,7 +148,12 @@ Behalte den Ton und die Bedeutung bei.`,
       maxTokens = options.maxTokens || 1500;
     } else {
       const promptConfig = EnrichmentService.PROMPTS[type];
-      systemPrompt = promptConfig.system;
+      // Handle translation with target language
+      if (type === 'translation' && typeof promptConfig.system === 'function') {
+        systemPrompt = promptConfig.system(options.targetLanguage || 'en');
+      } else {
+        systemPrompt = promptConfig.system;
+      }
       maxTokens = promptConfig.maxTokens;
     }
 
