@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
@@ -34,6 +35,7 @@ export default function Home() {
   } = useAudioRecorder();
 
   const { isElectron, platform, notifyRecordingState } = useElectron();
+  const router = useRouter();
 
   const [processing, setProcessing] = useState<ProcessingState>({
     step: 'idle',
@@ -109,7 +111,7 @@ export default function Home() {
 
   const handleEnrich = useCallback(
     async (type: EnrichmentType) => {
-      if (!processing.transcription) return;
+      if (!processing.transcription || !processing.recordingId) return;
 
       const response = await api.enrichTranscription(processing.transcription.id, type);
 
@@ -118,9 +120,14 @@ export default function Home() {
           ...prev,
           enrichments: [...prev.enrichments, response.data!],
         }));
+
+        // If it's a complete enrichment, redirect to history with the recording selected
+        if (type === 'complete') {
+          router.push(`/history?recording=${processing.recordingId}`);
+        }
       }
     },
-    [processing.transcription]
+    [processing.transcription, processing.recordingId, router]
   );
 
   const handleReset = useCallback(() => {

@@ -12,6 +12,29 @@ class EnrichmentService {
    * Predefined prompts for different enrichment types
    */
   static PROMPTS = {
+    complete: {
+      system: `Du bist ein professioneller Assistent für Textverarbeitung und Dokumentation.
+Analysiere den folgenden transkribierten Text und erstelle eine vollständige, gut strukturierte Aufbereitung im Markdown-Format.
+
+Deine Ausgabe MUSS folgende Abschnitte enthalten (in dieser Reihenfolge):
+
+## Zusammenfassung
+Eine kurze, prägnante Zusammenfassung des Inhalts (2-4 Sätze).
+
+## Kernpunkte
+Die wichtigsten Erkenntnisse und Hauptaussagen als nummerierte Liste.
+
+## Aufgaben / To-Dos
+Alle erwähnten oder abgeleiteten Aufgaben als Checkliste mit [ ]. Falls keine Aufgaben erkennbar sind, schreibe "Keine konkreten Aufgaben erkannt."
+
+## Notizen & Anmerkungen
+Weitere relevante Details, Kontext oder Anmerkungen in strukturierter Form mit Aufzählungspunkten.
+
+WICHTIG: Verwende KEINE Emojis in der Ausgabe. Nutze nur reines Markdown mit Überschriften, Listen und Formatierung.
+Formatiere alles sauber in Markdown. Korrigiere offensichtliche Sprachfehler, aber verändere den Inhalt nicht.
+Antworte auf Deutsch.`,
+      maxTokens: 3000,
+    },
     summary: {
       system: `Du bist ein Assistent, der präzise Zusammenfassungen erstellt. 
 Fasse den folgenden transkribierten Text kurz und prägnant zusammen. 

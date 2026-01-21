@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api, type Recording, type Transcription } from '@/lib/api';
 import { StatusMessage, AudioPlayer } from '@/components';
 
 export default function HistoryPage() {
+  const searchParams = useSearchParams();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +21,24 @@ export default function HistoryPage() {
   useEffect(() => {
     loadRecordings();
   }, []);
+
+  const handleView = useCallback(async (recording: Recording) => {
+    setSelectedRecording(recording);
+    setTranscription(null);
+    setIsTranscriptionExpanded(false);
+    await loadTranscription(recording.id);
+  }, []);
+
+  // Auto-select recording from query parameter
+  useEffect(() => {
+    const recordingId = searchParams.get('recording');
+    if (recordingId && recordings.length > 0) {
+      const recording = recordings.find((r) => r.id === recordingId);
+      if (recording && recording.id !== selectedRecording?.id) {
+        handleView(recording);
+      }
+    }
+  }, [searchParams, recordings, selectedRecording, handleView]);
 
   const loadRecordings = async () => {
     try {
@@ -64,13 +84,6 @@ export default function HistoryPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen');
     }
-  };
-
-  const handleView = async (recording: Recording) => {
-    setSelectedRecording(recording);
-    setTranscription(null);
-    setIsTranscriptionExpanded(false);
-    await loadTranscription(recording.id);
   };
 
   const formatDate = (dateString: string) => {

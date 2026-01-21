@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X } from 'lucide-react';
+import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { EnrichmentType } from '@/lib/api';
@@ -19,13 +19,8 @@ interface TranscriptionCardProps {
   }>;
 }
 
-const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: string }[] = [
-  { type: 'summary', label: 'Zusammenfassung', icon: '📝' },
-  { type: 'formatted', label: 'Formatiert', icon: '✨' },
-  { type: 'notes', label: 'Notizen', icon: '📋' },
-  { type: 'action_items', label: 'Aufgaben', icon: '✅' },
-  { type: 'key_points', label: 'Kernpunkte', icon: '🎯' },
-  { type: 'translation', label: 'Englisch', icon: '🌐' },
+const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean }[] = [
+  { type: 'complete', label: 'Notizen erstellen', icon: <FilePenLine className="w-4 h-4" />, isPrimary: true },
 ];
 
 export function TranscriptionCard({
@@ -240,10 +235,10 @@ export function TranscriptionCard({
         <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-gold-500" />
-            <span className="text-sm font-semibold text-white">KI-Anreicherung</span>
+            <span className="text-sm font-semibold text-white">KI-Verarbeitung</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {ENRICHMENT_OPTIONS.map(({ type, label, icon }) => {
+            {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary }) => {
               const hasEnrichment = enrichments.some((e) => e.type === type);
               const isActive = activeEnrichment === type;
               const isLoadingThis = loadingType === type;
@@ -259,7 +254,9 @@ export function TranscriptionCard({
                       ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 shadow-gold'
                       : hasEnrichment
                         ? 'bg-dark-800 border border-gold-500/30 text-gold-400 hover:border-gold-500/50'
-                        : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
+                        : isPrimary
+                          ? 'bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/40 text-gold-400 hover:from-gold-500/30 hover:to-gold-600/30 hover:border-gold-500/60'
+                          : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
                     }
                     ${isLoadingThis ? 'opacity-70 cursor-wait' : ''}
                   `}
@@ -267,7 +264,7 @@ export function TranscriptionCard({
                   {isLoadingThis ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <span>{icon}</span>
+                    icon
                   )}
                   {label}
                 </button>

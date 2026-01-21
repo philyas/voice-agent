@@ -60,7 +60,7 @@ interface Enrichment {
   updated_at: string;
 }
 
-type EnrichmentType = 'summary' | 'formatted' | 'notes' | 'action_items' | 'key_points' | 'translation' | 'custom';
+type EnrichmentType = 'complete' | 'summary' | 'formatted' | 'notes' | 'action_items' | 'key_points' | 'translation' | 'custom';
 
 async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const data = await response.json();
