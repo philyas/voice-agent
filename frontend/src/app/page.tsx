@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { Mic, Upload, Loader2, History, Sparkles } from 'lucide-react';
+import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
 
@@ -32,6 +33,8 @@ export default function Home() {
     error: recorderError,
   } = useAudioRecorder();
 
+  const { isElectron, platform, notifyRecordingState } = useElectron();
+
   const [processing, setProcessing] = useState<ProcessingState>({
     step: 'idle',
     recordingId: null,
@@ -39,6 +42,27 @@ export default function Home() {
     enrichments: [],
     error: null,
   });
+
+  // Handle hotkey-triggered recording
+  const handleHotkeyStartRecording = useCallback(() => {
+    if (!isRecording && processing.step === 'idle') {
+      startRecording();
+    }
+  }, [isRecording, processing.step, startRecording]);
+
+  const handleHotkeyStopRecording = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    }
+  }, [isRecording, stopRecording]);
+
+  // Listen for hotkey events from Electron
+  useHotkeyListener(handleHotkeyStartRecording, handleHotkeyStopRecording);
+
+  // Notify Electron of recording state changes
+  useEffect(() => {
+    notifyRecordingState(isRecording);
+  }, [isRecording, notifyRecordingState]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -123,7 +147,15 @@ export default function Home() {
                 <Mic className="w-6 h-6 text-dark-950" strokeWidth={1.5} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Voice Agent</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-white">Voice Agent</h1>
+                  {isElectron && (
+                    <span className="px-2 py-0.5 text-xs bg-dark-700 text-gold-500 rounded-full flex items-center gap-1">
+                      <Monitor className="w-3 h-3" />
+                      Desktop
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-dark-400">
                   Sprachaufnahme & KI-Transkription
                 </p>
@@ -179,6 +211,17 @@ export default function Home() {
                     Klicke auf den Button, um eine Sprachaufnahme zu starten. 
                     Deine Aufnahme wird automatisch transkribiert und kann mit KI angereichert werden.
                   </p>
+                  {/* Hotkey Hint for Electron */}
+                  {isElectron && (
+                    <div className="mt-4 flex items-center justify-center gap-2 text-sm text-dark-500">
+                      <Keyboard className="w-4 h-4" />
+                      <span>
+                        Hotkey: <kbd className="px-2 py-1 bg-dark-800 rounded text-gold-500 font-mono text-xs">
+                          {platform === 'darwin' ? '⌘' : 'Ctrl'}+Shift+V
+                        </kbd>
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -20,10 +20,11 @@ Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribie
 
 ## 🛠 Tech Stack
 
-### Frontend
+### Frontend & Desktop
 | Technologie | Beschreibung |
 |-------------|--------------|
 | Next.js 14 | React Framework mit App Router |
+| Electron | Desktop-Runtime für Windows, macOS, Linux |
 | TypeScript | Type-safe JavaScript |
 | Tailwind CSS | Utility-first CSS |
 | Lucide React | Icon Library |
@@ -50,6 +51,8 @@ Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribie
 
 ## ✨ Features
 
+- 🖥️ **Desktop-App** - Native Anwendung für Windows, macOS und Linux
+- ⌨️ **Globale Hotkeys** - `Cmd/Ctrl+Shift+V` zum Aktivieren von überall
 - 🎤 **Sprachaufnahme** - Browser-basierte Audioaufnahme
 - 📝 **Transkription** - Automatische Umwandlung via OpenAI Whisper
 - 🤖 **KI-Anreicherung** - Verschiedene Enrichment-Typen mit GPT-4o-mini:
@@ -59,7 +62,16 @@ Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribie
   - Aufgaben-Extraktion
   - Kernpunkte
   - Übersetzung
+- 🔔 **System-Tray** - App läuft im Hintergrund
 - 🗄️ **Persistenz** - PostgreSQL Datenbank für alle Daten
+
+## ⌨️ Hotkeys
+
+| Tastenkombination | Aktion |
+|-------------------|--------|
+| `Cmd/Ctrl+Shift+V` | App aktivieren & Aufnahme starten |
+| `Escape` | Aufnahme stoppen (wenn fokussiert) |
+| `Cmd/Ctrl+Shift+H` | App anzeigen/verstecken |
 
 ## 🏗 Architektur
 
@@ -117,12 +129,15 @@ voice-agent/
 ├── .gitignore
 ├── README.md
 │
-├── frontend/                    # Next.js Frontend
+├── frontend/                    # Next.js + Electron Frontend
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── next.config.js
 │   ├── tailwind.config.ts
 │   ├── tsconfig.json
+│   ├── electron/                # Electron Main Process
+│   │   ├── main.js              # Electron Entry Point
+│   │   └── preload.js           # IPC Bridge
 │   └── src/
 │       ├── app/
 │       │   ├── layout.tsx       # Root Layout
@@ -134,7 +149,8 @@ voice-agent/
 │       │   ├── TranscriptionCard.tsx
 │       │   └── StatusMessage.tsx
 │       ├── hooks/
-│       │   └── useAudioRecorder.ts
+│       │   ├── useAudioRecorder.ts
+│       │   └── useElectron.ts   # Electron Integration
 │       └── lib/
 │           └── api.ts           # API Client
 │
@@ -184,7 +200,30 @@ voice-agent/
 
 ## 🚀 Quick Start
 
-### Mit Docker (Empfohlen)
+### Desktop-App (Empfohlen)
+
+```bash
+# 1. Repository klonen
+git clone <repository-url>
+cd voice-agent
+
+# 2. Environment konfigurieren
+cp .env.example .env
+# Trage deinen OpenAI API Key in .env ein
+
+# 3. Backend starten (mit Docker)
+docker-compose up -d db backend
+
+# 4. Migrationen ausführen
+docker-compose exec backend npm run migrate
+
+# 5. Desktop-App starten
+cd frontend
+npm install
+npm run electron:dev
+```
+
+### Mit Docker (Web-Version)
 
 ```bash
 # 1. Repository klonen
@@ -239,6 +278,21 @@ npm run dev
 | frontend | 3000 | Next.js App |
 | backend | 4000 | Express API |
 | db | 5432 | PostgreSQL |
+
+### Desktop-App Befehle
+
+```bash
+cd frontend
+
+# Development-Modus (Next.js + Electron)
+npm run electron:dev
+
+# Production-Build erstellen
+npm run electron:build
+
+# Electron direkt starten (Next.js muss laufen)
+npm run electron:start
+```
 
 ### Docker Befehle
 

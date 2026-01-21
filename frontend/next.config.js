@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  output: 'export', // Static export for Electron
   
   // Environment variables
   env: {
@@ -12,6 +12,14 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  
+  // Disable image optimization for static export
+  images: {
+    unoptimized: true,
+  },
+  
+  // Trailing slash for static export compatibility
+  trailingSlash: true,
 };
 
 module.exports = nextConfig;

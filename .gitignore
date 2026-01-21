@@ -9,6 +9,13 @@ out/
 dist/
 build/
 
+# Electron
+dist-electron/
+*.dmg
+*.AppImage
+*.exe
+*.snap
+
 # Environment files
 .env
 .env.local
