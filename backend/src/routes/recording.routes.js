@@ -7,6 +7,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const recordingController = require('../controllers/recording.controller');
+const emailController = require('../controllers/email.controller');
 
 const router = express.Router();
 
@@ -98,5 +99,12 @@ router.get('/:id', recordingController.getById.bind(recordingController));
  * @access  Public
  */
 router.delete('/:id', recordingController.delete.bind(recordingController));
+
+/**
+ * @route   POST /api/v1/recordings/:id/send-email
+ * @desc    Send recording via email
+ * @access  Public
+ */
+router.post('/:id/send-email', emailController.sendRecordingEmail.bind(emailController));
 
 module.exports = router;

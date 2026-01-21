@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -17,6 +17,10 @@ export default function HistoryPage() {
   const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
   const [transcription, setTranscription] = useState<Transcription | null>(null);
   const [isTranscriptionExpanded, setIsTranscriptionExpanded] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailToSend, setEmailToSend] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     loadRecordings();
@@ -83,6 +87,42 @@ export default function HistoryPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen');
+    }
+  };
+
+  const handleSendEmail = async (recording: Recording) => {
+    setSelectedRecording(recording);
+    setEmailToSend('');
+    setEmailSuccess(null);
+    
+    // Load transcription if not already loaded
+    if (!transcription || transcription.recording_id !== recording.id) {
+      await loadTranscription(recording.id);
+    }
+    
+    setEmailModalOpen(true);
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRecording || !emailToSend.trim()) return;
+
+    setSendingEmail(true);
+    setEmailSuccess(null);
+    setError(null);
+
+    try {
+      await api.sendRecordingEmail(selectedRecording.id, emailToSend.trim());
+      setEmailSuccess('E-Mail wurde erfolgreich versendet!');
+      setTimeout(() => {
+        setEmailModalOpen(false);
+        setEmailToSend('');
+        setEmailSuccess(null);
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Versenden der E-Mail');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -210,6 +250,16 @@ export default function HistoryPage() {
                         aria-label="Anzeigen"
                       >
                         <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendEmail(recording);
+                        }}
+                        className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200"
+                        aria-label="Per E-Mail teilen"
+                      >
+                        <Mail className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => {
@@ -354,6 +404,98 @@ export default function HistoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {emailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-dark-850 border border-dark-700 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Aufnahme per E-Mail teilen</h2>
+              <button
+                onClick={() => {
+                  setEmailModalOpen(false);
+                  setEmailToSend('');
+                  setEmailSuccess(null);
+                }}
+                className="p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                aria-label="Schließen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {emailSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-8 h-8 text-gold-500" />
+                </div>
+                <p className="text-gold-500 font-medium">{emailSuccess}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-dark-400 mb-2">
+                    E-Mail-Adresse
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={emailToSend}
+                    onChange={(e) => setEmailToSend(e.target.value)}
+                    placeholder="empfaenger@example.com"
+                    required
+                    className="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 transition-all duration-200"
+                  />
+                </div>
+
+                <div className="bg-dark-900/50 border border-dark-700 rounded-xl p-4 text-sm text-dark-300">
+                  <p className="mb-2 font-medium text-dark-400">Die E-Mail enthält:</p>
+                  <ul className="list-disc list-inside space-y-1 text-dark-400">
+                    <li>Audio-Datei als Anhang</li>
+                    {selectedRecording?.transcription_text && (
+                      <li>Transkription</li>
+                    )}
+                    {transcription?.enrichments && transcription.enrichments.length > 0 && (
+                      <li>{transcription.enrichments.length} Enrichment(s)</li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailModalOpen(false);
+                      setEmailToSend('');
+                      setEmailSuccess(null);
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 font-medium"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sendingEmail || !emailToSend.trim()}
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium shadow-gold hover:shadow-gold-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {sendingEmail ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-dark-950 border-t-transparent rounded-full animate-spin" />
+                        Wird gesendet...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        Senden
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

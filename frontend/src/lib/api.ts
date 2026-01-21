@@ -173,6 +173,18 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  // Email
+  async sendRecordingEmail(recordingId: string, email: string): Promise<ApiResponse<{ messageId: string }>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/recordings/${recordingId}/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
 };
 
 export type { Recording, Transcription, Enrichment, EnrichmentType, ApiResponse };

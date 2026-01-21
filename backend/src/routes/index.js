@@ -27,6 +27,7 @@ router.get('/', (req, res) => {
         'GET /recordings/:id': 'Get recording by ID',
         'POST /recordings': 'Upload new audio recording',
         'POST /recordings/:id/transcribe': 'Transcribe recording',
+        'POST /recordings/:id/send-email': 'Send recording via email',
         'DELETE /recordings/:id': 'Delete recording',
       },
       transcriptions: {
