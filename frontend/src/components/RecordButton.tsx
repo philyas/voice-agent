@@ -58,7 +58,7 @@ export function RecordButton({
           aria-label="Aufnahme stoppen"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-gold-300/30 via-transparent to-gold-600/30 animate-pulse rounded-full" />
-          <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-3xl" />
           <Square className="w-8 h-8 fill-current relative z-10" />
         </button>
         
