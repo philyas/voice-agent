@@ -361,6 +361,7 @@ export default function Home() {
               }}
               onEnrichmentUpdate={handleEnrichmentUpdate}
               enrichments={processing.enrichments}
+              allowManualItems={false}
             />
           </section>
         )}

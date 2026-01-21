@@ -21,6 +21,7 @@ interface TranscriptionCardProps {
   onUpdate?: (text: string) => Promise<void>;
   onEnrichmentUpdate?: (enrichmentId: string, content: string) => Promise<void>;
   enrichments?: EnrichmentData[];
+  allowManualItems?: boolean; // Whether to allow manual addition of items for list-type enrichments
 }
 
 // Language options with flag Unicode regional indicators
@@ -68,6 +69,7 @@ export function TranscriptionCard({
   onUpdate,
   onEnrichmentUpdate,
   enrichments = [],
+  allowManualItems = true,
 }: TranscriptionCardProps) {
   const [activeEnrichment, setActiveEnrichment] = useState<string | null>(null);
   const [loadingType, setLoadingType] = useState<string | null>(null);
@@ -439,15 +441,15 @@ export function TranscriptionCard({
                   {/* Empty state message for list-type enrichments */}
                   {!activeContent && activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (
                     <p className="text-dark-400 text-sm italic mb-4">
-                      {activeEnrichment === 'action_items' ? 'Keine Aufgaben vorhanden. Füge manuell welche hinzu.' :
-                       activeEnrichment === 'notes' ? 'Keine Notizen vorhanden. Füge manuell welche hinzu.' :
-                       activeEnrichment === 'key_points' ? 'Keine Kernpunkte vorhanden. Füge manuell welche hinzu.' : 
+                      {activeEnrichment === 'action_items' ? 'Keine Aufgaben vorhanden.' :
+                       activeEnrichment === 'notes' ? 'Keine Notizen vorhanden.' :
+                       activeEnrichment === 'key_points' ? 'Keine Kernpunkte vorhanden.' : 
                        'Keine Einträge vorhanden.'}
                     </p>
                   )}
 
-                  {/* Add item button for list-type enrichments */}
-                  {LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (activeEnrichmentId || transcriptionId) && (
+                  {/* Add item button for list-type enrichments - only if allowManualItems is true */}
+                  {allowManualItems && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (activeEnrichmentId || transcriptionId) && (
                     <div className={activeContent ? "mt-4 pt-4 border-t border-dark-700" : ""}>
                       {isAddingItem ? (
                         <div className="flex gap-2">
@@ -586,7 +588,6 @@ export function TranscriptionCard({
               const hasEnrichment = localEnrichments.some((e) => e.type === type);
               const isActive = activeEnrichment === type;
               const isLoadingThis = loadingType === type;
-              const isListType = LIST_ENRICHMENT_TYPES.includes(type as typeof LIST_ENRICHMENT_TYPES[number]);
 
               return (
                 <button
@@ -594,12 +595,8 @@ export function TranscriptionCard({
                   onClick={() => {
                     setIsAddingItem(false);
                     setNewItemText('');
-                    // For list types without enrichment, just show the add UI (don't trigger AI)
-                    if (isListType && !hasEnrichment) {
-                      setActiveEnrichment(type);
-                    } else {
-                      hasEnrichment ? setActiveEnrichment(type) : handleEnrich(type);
-                    }
+                    // If enrichment exists, show it; otherwise trigger AI generation
+                    hasEnrichment ? setActiveEnrichment(type) : handleEnrich(type);
                   }}
                   disabled={isLoadingThis}
                   className={`
