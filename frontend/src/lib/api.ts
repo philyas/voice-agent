@@ -225,6 +225,23 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/api/v1/recordings/${recordingId}/export/google-docs`);
     return handleResponse(response);
   },
+
+  // Google Docs Integration
+  async getGoogleDocsAuthUrl(): Promise<ApiResponse<{ authUrl: string }>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/google-docs/auth`);
+    return handleResponse(response);
+  },
+
+  async createGoogleDoc(recordingId: string, tokens: any): Promise<ApiResponse<{ documentId: string; documentUrl: string; title: string }>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/google-docs/create/${recordingId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ tokens }),
+    });
+    return handleResponse(response);
+  },
 };
 
 export type { Recording, Transcription, Enrichment, EnrichmentType, ApiResponse };

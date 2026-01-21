@@ -7,6 +7,7 @@ const express = require('express');
 const recordingRoutes = require('./recording.routes');
 const transcriptionRoutes = require('./transcription.routes');
 const enrichmentRoutes = require('./enrichment.routes');
+const googleDocsRoutes = require('./google-docs.routes');
 const { router: realtimeRoutes } = require('./realtime.routes');
 
 const router = express.Router();
@@ -55,6 +56,7 @@ router.get('/', (req, res) => {
 router.use('/recordings', recordingRoutes);
 router.use('/transcriptions', transcriptionRoutes);
 router.use('/enrichments', enrichmentRoutes);
+router.use('/google-docs', googleDocsRoutes);
 router.use('/realtime', realtimeRoutes);
 
 module.exports = router;

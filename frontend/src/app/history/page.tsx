@@ -35,6 +35,8 @@ export default function HistoryPage() {
   const [googleDocsModalOpen, setGoogleDocsModalOpen] = useState(false);
   const [googleDocsContent, setGoogleDocsContent] = useState<string>('');
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const [googleTokens, setGoogleTokens] = useState<any>(null);
+  const [creatingGoogleDoc, setCreatingGoogleDoc] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -601,18 +603,62 @@ export default function HistoryPage() {
     setShareMenuOpen(null);
 
     try {
-      const response = await api.exportGoogleDocs(recording.id);
-      if (response.data) {
-        setGoogleDocsContent(response.data.html);
-        setGoogleDocsModalOpen(true);
-        setCopiedToClipboard(false);
+      // Check if we already have tokens (in production, store in secure storage)
+      let tokens = googleTokens;
+      
+      // Try to get tokens from localStorage (simple storage - not secure for production)
+      if (!tokens) {
+        const storedTokens = localStorage.getItem('google_docs_tokens');
+        if (storedTokens) {
+          tokens = JSON.parse(storedTokens);
+          setGoogleTokens(tokens);
+        }
+      }
+
+      if (tokens && tokens.access_token) {
+        // We have tokens, create document directly
+        await createGoogleDocWithTokens(recording, tokens);
+      } else {
+        // No tokens, start OAuth flow
+        const authResponse = await api.getGoogleDocsAuthUrl();
+        if (authResponse.data?.authUrl) {
+          // Store recording ID in sessionStorage for after OAuth callback
+          sessionStorage.setItem('pending_google_docs_recording', recording.id);
+          // Open OAuth window
+          window.location.href = authResponse.data.authUrl;
+        } else {
+          throw new Error('Google OAuth ist nicht konfiguriert. Bitte kontaktieren Sie den Administrator.');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Google Docs Export');
-    } finally {
       setExportingGoogleDocs(false);
     }
   };
+
+  const createGoogleDocWithTokens = async (recording: Recording, tokens: any) => {
+    setCreatingGoogleDoc(true);
+    setError(null);
+
+    try {
+      const response = await api.createGoogleDoc(recording.id, tokens);
+      if (response.data) {
+        // Store tokens for future use
+        localStorage.setItem('google_docs_tokens', JSON.stringify(tokens));
+        setGoogleTokens(tokens);
+        
+        // Show success and open document
+        alert(`Dokument erfolgreich erstellt!\n\nTitel: ${response.data.title}\n\nDas Dokument wird jetzt in einem neuen Tab geöffnet.`);
+        window.open(response.data.documentUrl, '_blank');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des Dokuments');
+    } finally {
+      setCreatingGoogleDoc(false);
+      setExportingGoogleDocs(false);
+    }
+  };
+
 
   const handleCopyToClipboard = async () => {
     try {
@@ -817,13 +863,15 @@ export default function HistoryPage() {
                               onClick={() => {
                                 handleExportGoogleDocs(recording);
                               }}
-                              disabled={exportingGoogleDocs}
+                              disabled={exportingGoogleDocs || creatingGoogleDoc}
                               className="w-full px-4 py-3 text-left text-sm text-dark-300 hover:bg-gold-500/20 hover:text-gold-300 border-l-4 border-l-transparent hover:border-l-gold-500 transition-all duration-150 flex items-center gap-3 group cursor-pointer active:bg-gold-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-dark-300 disabled:hover:border-l-transparent"
                             >
-                              {exportingGoogleDocs ? (
+                              {exportingGoogleDocs || creatingGoogleDoc ? (
                                 <>
                                   <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                                  <span className="flex-1 font-medium">Wird vorbereitet...</span>
+                                  <span className="flex-1 font-medium">
+                                    {creatingGoogleDoc ? 'Erstelle Dokument...' : 'Wird vorbereitet...'}
+                                  </span>
                                 </>
                               ) : (
                                 <>
