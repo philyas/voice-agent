@@ -610,9 +610,10 @@ export default function HistoryPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Liste der Aufnahmen */}
-          <div className="space-y-4">
+          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-10rem)] flex flex-col">
+            <div className="overflow-y-auto flex-1 space-y-4 pr-2">
             {recordings.length === 0 ? (
-              <div className="bg-dark-850 border border-dark-700 rounded-2xl p-10 text-center">
+              <div className="bg-dark-850 border border-dark-700 rounded-2xl p-10 text-center flex items-center justify-center min-h-full">
                 <div className="w-16 h-16 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center mx-auto mb-5">
                   <Mic className="w-8 h-8 text-dark-500" />
                 </div>
@@ -696,10 +697,11 @@ export default function HistoryPage() {
                 </div>
               ))
             )}
+            </div>
           </div>
 
           {/* Detail-Ansicht */}
-          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-10rem)]">
             {selectedRecording ? (
               <div 
                 key={selectedRecording.id}
