@@ -61,18 +61,6 @@ export function RecordButton({
           <div className="absolute inset-0 bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full" />
           <Square className="w-8 h-8 fill-current relative z-10" />
         </button>
-        
-        {/* Waveform visualization */}
-        {!isPaused && (
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-end gap-1.5 h-8">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="w-1.5 bg-gradient-to-t from-gold-600 via-gold-500 to-gold-400 rounded-full waveform-bar"
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Spacer to balance the layout */}

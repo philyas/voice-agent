@@ -7,7 +7,7 @@ import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'luci
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useLiveTranscription } from '@/hooks/useLiveTranscription';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
-import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage } from '@/components';
+import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
 
 type ProcessingStep = 'idle' | 'uploading' | 'transcribing' | 'done';
@@ -77,13 +77,14 @@ export default function Home() {
   }, [isRecording, notifyRecordingState]);
 
   // Start live transcription when recording starts
-  useEffect(() => {
-    if (isRecording && audioStream && !isPaused) {
-      startTranscription(audioStream, 'de');
-    } else if (!isRecording || isPaused) {
-      stopTranscription();
-    }
-  }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription]);
+  // DISABLED: Live transcription is kept in code but not used in client
+  // useEffect(() => {
+  //   if (isRecording && audioStream && !isPaused) {
+  //     startTranscription(audioStream, 'de');
+  //   } else if (!isRecording || isPaused) {
+  //     stopTranscription();
+  //   }
+  // }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -250,8 +251,18 @@ export default function Home() {
                     {isPaused ? 'Pausiert' : 'Aufnahme läuft...'}
                   </p>
                   
+                  {/* Waveform Visualization */}
+                  <div className="mt-6 max-w-3xl mx-auto transition-smooth animate-fade-in">
+                    <Waveform 
+                      audioStream={audioStream} 
+                      isRecording={isRecording}
+                      isPaused={isPaused}
+                    />
+                  </div>
+                  
                   {/* Live Transcription Display */}
-                  {liveText && (
+                  {/* DISABLED: Live transcription display is kept in code but not shown in client */}
+                  {/* {liveText && (
                     <div className="mt-6 max-w-2xl mx-auto transition-smooth animate-fade-in">
                       <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-gold-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
                         <div className="flex items-center gap-2 mb-3">
@@ -271,7 +282,7 @@ export default function Home() {
                     <div className="mt-4 text-sm text-red-400 transition-smooth animate-fade-in">
                       {transcriptionError}
                     </div>
-                  )}
+                  )} */}
                 </div>
               )}
 
@@ -315,7 +326,13 @@ export default function Home() {
               {/* Audio Player (after recording) */}
               {audioUrl && !isRecording && (
                 <div className="w-full max-w-lg transition-smooth animate-fade-in">
-                  <AudioPlayer audioUrl={audioUrl} onReset={handleReset} />
+                  <div className="mb-4 text-center">
+                    <p className="text-sm text-dark-400 mb-1">Aufnahmedauer</p>
+                    <p className="text-2xl font-light font-mono text-gold-400">
+                      {formatDuration(duration)}
+                    </p>
+                  </div>
+                  <AudioPlayer audioUrl={audioUrl} onReset={handleReset} fallbackDuration={duration} />
                 </div>
               )}
             </div>

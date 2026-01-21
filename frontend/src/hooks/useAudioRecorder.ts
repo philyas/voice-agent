@@ -24,6 +24,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -57,6 +58,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       });
 
       streamRef.current = stream;
+      setAudioStream(stream);
 
       // Determine best audio format
       let mimeType = 'audio/webm;codecs=opus';
@@ -92,6 +94,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         // Stop all tracks
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+          setAudioStream(null);
         }
       };
 
@@ -136,8 +140,13 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
     setAudioBlob(null);
     setAudioUrl(null);
+    setAudioStream(null);
     setDuration(0);
     setError(null);
     chunksRef.current = [];
@@ -149,7 +158,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     duration,
     audioBlob,
     audioUrl,
-    audioStream: streamRef.current,
+    audioStream,
     startRecording,
     stopRecording,
     pauseRecording,
