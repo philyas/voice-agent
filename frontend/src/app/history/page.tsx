@@ -844,217 +844,231 @@ export default function HistoryPage() {
                                   </div>
                                 ) : (
                                   <div className="space-y-4">
-                                    {parseEnrichmentSections(enrichment.content).map((section, sectionIdx) => (
-                                      <div key={sectionIdx} className="space-y-2">
-                                        {/* Section Header */}
-                                        <h3 className="text-sm font-semibold text-white border-b border-dark-700 pb-1">
-                                          {section.title}
-                                        </h3>
-                                        
-                                        {/* Text Content (for sections like Zusammenfassung) */}
-                                        {section.textContent && !section.isListSection && (
-                                          <div className="group relative">
-                                            {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === section.textStartIndex ? (
-                                              <div className="space-y-2">
-                                                <textarea
-                                                  value={editingItemInfo.text}
-                                                  onChange={(e) => setEditingItemInfo({ ...editingItemInfo, text: e.target.value })}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Escape') {
-                                                      setEditingItemInfo(null);
-                                                    }
-                                                  }}
-                                                  className="w-full bg-dark-900 border border-gold-500/50 rounded px-3 py-2 text-sm text-dark-200 focus:outline-none focus:border-gold-500 resize-none"
-                                                  rows={4}
-                                                  autoFocus
-                                                />
-                                                <div className="flex items-center gap-2">
-                                                  <button
-                                                    onClick={() => updateTextContent(enrichment.id, enrichment.content, section.textStartIndex, section.textEndIndex, editingItemInfo.text)}
-                                                    className="px-3 py-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 text-sm flex items-center gap-1"
-                                                  >
-                                                    <Check className="w-3 h-3" />
-                                                    Speichern
-                                                  </button>
-                                                  <button
-                                                    onClick={() => setEditingItemInfo(null)}
-                                                    className="px-3 py-1 rounded bg-dark-700 text-dark-400 hover:text-white text-sm flex items-center gap-1"
-                                                  >
-                                                    <X className="w-3 h-3" />
-                                                    Abbrechen
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            ) : (
-                                              <div className="group relative">
-                                                <p 
-                                                  className="text-sm text-dark-300 leading-relaxed cursor-pointer hover:bg-dark-800/30 rounded px-2 py-1 -mx-2 transition-colors"
-                                                  onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
-                                                >
-                                                  {section.textContent}
-                                                </p>
-                                                <button
-                                                  onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
-                                                  className="absolute top-1 right-1 p-1 rounded bg-dark-800/80 border border-dark-700 text-dark-400 hover:text-gold-400 hover:border-gold-500/30 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                  title="Bearbeiten"
-                                                >
-                                                  <Edit2 className="w-3 h-3" />
-                                                </button>
-                                              </div>
-                                            )}
+                                    {(() => {
+                                      const sections = parseEnrichmentSections(enrichment.content);
+                                      // If no sections found (for simple enrichments like summary, formatted, etc.), show raw content
+                                      if (sections.length === 0 || (sections.length === 1 && !sections[0].title)) {
+                                        return (
+                                          <div className="prose prose-invert prose-sm max-w-none text-dark-300 text-sm leading-relaxed">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                              {enrichment.content}
+                                            </ReactMarkdown>
                                           </div>
-                                        )}
+                                        );
+                                      }
+                                      // Otherwise show sections (for complete enrichments)
+                                      return sections.map((section, sectionIdx) => (
+                                        <div key={sectionIdx} className="space-y-2">
+                                          {/* Section Header */}
+                                          <h3 className="text-sm font-semibold text-white border-b border-dark-700 pb-1">
+                                            {section.title}
+                                          </h3>
                                         
-                                        {/* List Items */}
-                                        {section.isListSection && (
-                                          <>
-                                            {section.items.length > 0 && (
-                                              <ul className="space-y-1">
-                                                {section.items.map((item, itemIdx) => (
-                                            <li 
-                                              key={itemIdx}
-                                              className="group flex items-start gap-2 py-1 px-2 -mx-2 rounded-lg hover:bg-dark-800/50 transition-colors"
-                                            >
-                                              {/* Checkbox or bullet */}
-                                              {item.isCheckbox ? (
-                                                <button
-                                                  onClick={() => {
-                                                    // Calculate the checkbox index (count of checkboxes before this line)
-                                                    const lines = enrichment.content.split('\n');
-                                                    let checkboxIdx = 0;
-                                                    for (let i = 0; i < item.lineIndex; i++) {
-                                                      if (/^- \[[ x]\]/.test(lines[i])) {
-                                                        checkboxIdx++;
-                                                      }
-                                                    }
-                                                    toggleCheckbox(enrichment.id, enrichment.content, checkboxIdx);
-                                                  }}
-                                                  className="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
-                                                  style={{
-                                                    backgroundColor: item.isChecked ? '#d4a853' : 'transparent',
-                                                    borderColor: item.isChecked ? '#d4a853' : '#4a4a4a',
-                                                  }}
-                                                >
-                                                  {item.isChecked && (
-                                                    <Check className="w-3 h-3 text-dark-900" />
-                                                  )}
-                                                </button>
-                                              ) : item.isNumbered ? (
-                                                <span className="text-gold-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
-                                                  {itemIdx + 1}.
-                                                </span>
-                                              ) : (
-                                                <span className="text-gold-500 mt-1 flex-shrink-0">•</span>
-                                              )}
-                                              
-                                              {/* Item content - editable */}
-                                              {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === item.lineIndex ? (
-                                                <div className="flex-1 flex items-center gap-2">
-                                                  <input
-                                                    type="text"
+                                          {/* Text Content (for sections like Zusammenfassung) */}
+                                          {section.textContent && !section.isListSection && (
+                                            <div className="group relative">
+                                              {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === section.textStartIndex ? (
+                                                <div className="space-y-2">
+                                                  <textarea
                                                     value={editingItemInfo.text}
                                                     onChange={(e) => setEditingItemInfo({ ...editingItemInfo, text: e.target.value })}
                                                     onKeyDown={(e) => {
-                                                      if (e.key === 'Enter') {
-                                                        updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text);
-                                                      } else if (e.key === 'Escape') {
+                                                      if (e.key === 'Escape') {
                                                         setEditingItemInfo(null);
                                                       }
                                                     }}
+                                                    className="w-full bg-dark-900 border border-gold-500/50 rounded px-3 py-2 text-sm text-dark-200 focus:outline-none focus:border-gold-500 resize-none"
+                                                    rows={4}
+                                                    autoFocus
+                                                  />
+                                                  <div className="flex items-center gap-2">
+                                                    <button
+                                                      onClick={() => updateTextContent(enrichment.id, enrichment.content, section.textStartIndex, section.textEndIndex, editingItemInfo.text)}
+                                                      className="px-3 py-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 text-sm flex items-center gap-1"
+                                                    >
+                                                      <Check className="w-3 h-3" />
+                                                      Speichern
+                                                    </button>
+                                                    <button
+                                                      onClick={() => setEditingItemInfo(null)}
+                                                      className="px-3 py-1 rounded bg-dark-700 text-dark-400 hover:text-white text-sm flex items-center gap-1"
+                                                    >
+                                                      <X className="w-3 h-3" />
+                                                      Abbrechen
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <div className="group relative">
+                                                  <p 
+                                                    className="text-sm text-dark-300 leading-relaxed cursor-pointer hover:bg-dark-800/30 rounded px-2 py-1 -mx-2 transition-colors"
+                                                    onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
+                                                  >
+                                                    {section.textContent}
+                                                  </p>
+                                                  <button
+                                                    onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
+                                                    className="absolute top-1 right-1 p-1 rounded bg-dark-800/80 border border-dark-700 text-dark-400 hover:text-gold-400 hover:border-gold-500/30 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Bearbeiten"
+                                                  >
+                                                    <Edit2 className="w-3 h-3" />
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                          
+                                          {/* List Items */}
+                                          {section.isListSection && (
+                                            <>
+                                              {section.items.length > 0 && (
+                                                <ul className="space-y-1">
+                                                  {section.items.map((item, itemIdx) => (
+                                                    <li 
+                                                      key={itemIdx}
+                                                      className="group flex items-start gap-2 py-1 px-2 -mx-2 rounded-lg hover:bg-dark-800/50 transition-colors"
+                                                    >
+                                                      {/* Checkbox or bullet */}
+                                                      {item.isCheckbox ? (
+                                                        <button
+                                                          onClick={() => {
+                                                            // Calculate the checkbox index (count of checkboxes before this line)
+                                                            const lines = enrichment.content.split('\n');
+                                                            let checkboxIdx = 0;
+                                                            for (let i = 0; i < item.lineIndex; i++) {
+                                                              if (/^- \[[ x]\]/.test(lines[i])) {
+                                                                checkboxIdx++;
+                                                              }
+                                                            }
+                                                            toggleCheckbox(enrichment.id, enrichment.content, checkboxIdx);
+                                                          }}
+                                                          className="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
+                                                          style={{
+                                                            backgroundColor: item.isChecked ? '#d4a853' : 'transparent',
+                                                            borderColor: item.isChecked ? '#d4a853' : '#4a4a4a',
+                                                          }}
+                                                        >
+                                                          {item.isChecked && (
+                                                            <Check className="w-3 h-3 text-dark-900" />
+                                                          )}
+                                                        </button>
+                                                      ) : item.isNumbered ? (
+                                                        <span className="text-gold-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
+                                                          {itemIdx + 1}.
+                                                        </span>
+                                                      ) : (
+                                                        <span className="text-gold-500 mt-1 flex-shrink-0">•</span>
+                                                      )}
+                                                      
+                                                      {/* Item content - editable */}
+                                                      {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === item.lineIndex ? (
+                                                        <div className="flex-1 flex items-center gap-2">
+                                                          <input
+                                                            type="text"
+                                                            value={editingItemInfo.text}
+                                                            onChange={(e) => setEditingItemInfo({ ...editingItemInfo, text: e.target.value })}
+                                                            onKeyDown={(e) => {
+                                                              if (e.key === 'Enter') {
+                                                                updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text);
+                                                              } else if (e.key === 'Escape') {
+                                                                setEditingItemInfo(null);
+                                                              }
+                                                            }}
+                                                            className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
+                                                            autoFocus
+                                                          />
+                                                          <button
+                                                            onClick={() => updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text)}
+                                                            className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
+                                                          >
+                                                            <Check className="w-3 h-3" />
+                                                          </button>
+                                                          <button
+                                                            onClick={() => setEditingItemInfo(null)}
+                                                            className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
+                                                          >
+                                                            <X className="w-3 h-3" />
+                                                          </button>
+                                                        </div>
+                                                      ) : (
+                                                        <>
+                                                          <span 
+                                                            className={`flex-1 text-sm text-dark-300 cursor-pointer ${item.isChecked ? 'line-through text-dark-500' : ''}`}
+                                                            onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
+                                                          >
+                                                            {item.text}
+                                                          </span>
+                                                          
+                                                          {/* Action buttons - visible on hover */}
+                                                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                              onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
+                                                              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-gold-400 hover:bg-dark-600 transition-colors"
+                                                              title="Bearbeiten"
+                                                            >
+                                                              <Edit2 className="w-3 h-3" />
+                                                            </button>
+                                                            <button
+                                                              onClick={() => deleteListItem(enrichment.id, enrichment.content, item.lineIndex)}
+                                                              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-red-400 hover:bg-dark-600 transition-colors"
+                                                              title="Löschen"
+                                                            >
+                                                              <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                          </div>
+                                                        </>
+                                                      )}
+                                                    </li>
+                                                  ))}
+                                                </ul>
+                                              )}
+                                              
+                                              {/* Add new item - always show for list sections */}
+                                              {addingItemTo?.enrichmentId === enrichment.id && addingItemTo?.section === section.title ? (
+                                                <div className="flex items-center gap-2 pl-6 mt-2">
+                                                  <input
+                                                    type="text"
+                                                    value={newItemText}
+                                                    onChange={(e) => setNewItemText(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter') {
+                                                        addListItem(enrichment.id, enrichment.content, section.title);
+                                                      } else if (e.key === 'Escape') {
+                                                        setAddingItemTo(null);
+                                                        setNewItemText('');
+                                                      }
+                                                    }}
+                                                    placeholder="Neuen Punkt eingeben..."
                                                     className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
                                                     autoFocus
                                                   />
                                                   <button
-                                                    onClick={() => updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text)}
+                                                    onClick={() => addListItem(enrichment.id, enrichment.content, section.title)}
                                                     className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
                                                   >
                                                     <Check className="w-3 h-3" />
                                                   </button>
                                                   <button
-                                                    onClick={() => setEditingItemInfo(null)}
+                                                    onClick={() => { setAddingItemTo(null); setNewItemText(''); }}
                                                     className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
                                                   >
                                                     <X className="w-3 h-3" />
                                                   </button>
                                                 </div>
                                               ) : (
-                                                <>
-                                                  <span 
-                                                    className={`flex-1 text-sm text-dark-300 cursor-pointer ${item.isChecked ? 'line-through text-dark-500' : ''}`}
-                                                    onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
-                                                  >
-                                                    {item.text}
-                                                  </span>
-                                                  
-                                                  {/* Action buttons - visible on hover */}
-                                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                      onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
-                                                      className="p-1 rounded bg-dark-700 text-dark-400 hover:text-gold-400 hover:bg-dark-600 transition-colors"
-                                                      title="Bearbeiten"
-                                                    >
-                                                      <Edit2 className="w-3 h-3" />
-                                                    </button>
-                                                    <button
-                                                      onClick={() => deleteListItem(enrichment.id, enrichment.content, item.lineIndex)}
-                                                      className="p-1 rounded bg-dark-700 text-dark-400 hover:text-red-400 hover:bg-dark-600 transition-colors"
-                                                      title="Löschen"
-                                                    >
-                                                      <Trash2 className="w-3 h-3" />
-                                                    </button>
-                                                  </div>
-                                                </>
+                                                <button
+                                                  onClick={() => setAddingItemTo({ enrichmentId: enrichment.id, section: section.title })}
+                                                  className={`flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors ${section.items.length > 0 ? 'pl-6 mt-1' : 'mt-2'}`}
+                                                >
+                                                  <Plus className="w-3 h-3" />
+                                                  Hinzufügen
+                                                </button>
                                               )}
-                                                </li>
-                                              ))}
-                                            </ul>
-                                            )}
-                                            
-                                            {/* Add new item - always show for list sections */}
-                                            {addingItemTo?.enrichmentId === enrichment.id && addingItemTo?.section === section.title ? (
-                                              <div className="flex items-center gap-2 pl-6 mt-2">
-                                                <input
-                                                  type="text"
-                                                  value={newItemText}
-                                                  onChange={(e) => setNewItemText(e.target.value)}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                      addListItem(enrichment.id, enrichment.content, section.title);
-                                                    } else if (e.key === 'Escape') {
-                                                      setAddingItemTo(null);
-                                                      setNewItemText('');
-                                                    }
-                                                  }}
-                                                  placeholder="Neuen Punkt eingeben..."
-                                                  className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
-                                                  autoFocus
-                                                />
-                                                <button
-                                                  onClick={() => addListItem(enrichment.id, enrichment.content, section.title)}
-                                                  className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
-                                                >
-                                                  <Check className="w-3 h-3" />
-                                                </button>
-                                                <button
-                                                  onClick={() => { setAddingItemTo(null); setNewItemText(''); }}
-                                                  className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
-                                                >
-                                                  <X className="w-3 h-3" />
-                                                </button>
-                                              </div>
-                                            ) : (
-                                              <button
-                                                onClick={() => setAddingItemTo({ enrichmentId: enrichment.id, section: section.title })}
-                                                className={`flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors ${section.items.length > 0 ? 'pl-6 mt-1' : 'mt-2'}`}
-                                              >
-                                                <Plus className="w-3 h-3" />
-                                                Hinzufügen
-                                              </button>
-                                            )}
-                                          </>
-                                        )}
-                                      </div>
-                                    ))}
+                                            </>
+                                          )}
+                                        </div>
+                                      ));
+                                    })()}
                                   </div>
                                 )}
                               </div>
