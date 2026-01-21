@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -15,6 +17,8 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(fallbackDuration || 0);
   const [error, setError] = useState<string | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -117,7 +121,12 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
+    <>
     <div className="bg-dark-850 border border-dark-700 rounded-2xl p-5">
       <audio 
         ref={audioRef} 
@@ -166,14 +175,39 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
 
         {onReset && (
           <button
-            onClick={onReset}
-            className="w-10 h-10 rounded-full bg-dark-800 border border-dark-700 text-dark-400 flex items-center justify-center hover:text-white hover:border-dark-600 transition-all duration-200"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowResetModal(true);
+            }}
+            className="w-10 h-10 rounded-full bg-dark-800 border border-dark-700 text-dark-400 flex items-center justify-center hover:text-white hover:border-dark-600 transition-all duration-200 cursor-pointer relative"
             aria-label="Zurücksetzen"
+            type="button"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4 pointer-events-none" />
           </button>
         )}
       </div>
+
     </div>
+    {mounted && showResetModal && createPortal(
+      <ConfirmationModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={() => {
+          if (onReset) {
+            onReset();
+          }
+          setShowResetModal(false);
+        }}
+        title="Aufnahme zurücksetzen?"
+        message="Möchten Sie die Aufnahme wirklich zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmText="Zurücksetzen"
+        cancelText="Abbrechen"
+        variant="warning"
+      />,
+      document.body
+    )}
+    </>
   );
 }
