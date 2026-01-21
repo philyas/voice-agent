@@ -297,13 +297,22 @@ npm run electron:start
 ### Docker Befehle
 
 ```bash
-# Alle Services starten
+# Alle Services starten (ohne neuen Build)
 docker-compose up -d
+
+# Services mit neuem Build starten
+docker-compose up --build -d
+
+# Nur Images neu bauen (ohne zu starten)
+docker-compose build
+
+# Images ohne Cache neu bauen
+docker-compose build --no-cache
 
 # Logs anzeigen
 docker-compose logs -f
 
-# Einzelnen Service neustarten
+# Einzelnen Service neustarten (KEIN neuer Build!)
 docker-compose restart backend
 
 # Services stoppen
@@ -315,6 +324,8 @@ docker-compose down -v
 # Container-Shell öffnen
 docker-compose exec backend sh
 ```
+
+**Wichtig:** `docker-compose restart` macht **keinen** neuen Build! Es startet nur die Container neu. Für einen neuen Build verwende `docker-compose build` oder `docker-compose up --build`.
 
 ## 📡 API-Dokumentation
 

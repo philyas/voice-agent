@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Voice Agent - Sprachaufnahme & KI-Transkription',
+  title: 'EverlastAI - Audio Intelligence',
   description: 'Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anreicherung von Spracheingaben.',
   icons: {
     icon: '/favicon.ico',

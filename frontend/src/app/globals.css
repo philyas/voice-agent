@@ -21,11 +21,24 @@ html {
 
 body {
   color: #ffffff;
-  background: linear-gradient(180deg, #0a0a0a 0%, #171717 100%);
+  background: linear-gradient(180deg, #0a0a0a 0%, #171717 50%, #0f0f0f 100%);
   min-height: 100vh;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at top, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Selection */
@@ -88,7 +101,10 @@ body {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 168, 83, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
+              0 0 0 1px rgba(212, 168, 83, 0.15),
+              0 0 30px rgba(212, 168, 83, 0.05);
+  border-color: rgba(212, 168, 83, 0.2);
 }
 
 /* Button shine effect */

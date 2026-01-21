@@ -75,11 +75,11 @@ function createTray() {
   }
 
   tray = new Tray(trayIcon);
-  tray.setToolTip('Voice Agent - Cmd+Shift+V zum Aktivieren');
+  tray.setToolTip('EverlastAI - Audio Intelligence - Cmd+Shift+V zum Aktivieren');
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Voice Agent öffnen',
+      label: 'EverlastAI - Audio Intelligence öffnen',
       click: () => {
         mainWindow.show();
         mainWindow.focus();
@@ -218,9 +218,9 @@ ipcMain.on('recording-state-changed', (event, state) => {
   // Could update tray icon or tooltip based on recording state
   if (tray) {
     if (state.isRecording) {
-      tray.setToolTip('Voice Agent - Aufnahme läuft...');
+      tray.setToolTip('EverlastAI - Audio Intelligence - Aufnahme läuft...');
     } else {
-      tray.setToolTip('Voice Agent - Cmd+Shift+V zum Aktivieren');
+      tray.setToolTip('EverlastAI - Audio Intelligence - Cmd+Shift+V zum Aktivieren');
     }
   }
 });

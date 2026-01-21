@@ -39,7 +39,7 @@
   },
   "build": {
     "appId": "com.voiceagent.app",
-    "productName": "Voice Agent",
+    "productName": "EverlastAI - Audio Intelligence",
     "directories": {
       "output": "dist-electron"
     },

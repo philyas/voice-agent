@@ -137,9 +137,9 @@ export default function Home() {
   const isProcessing = processing.step !== 'idle' && processing.step !== 'done';
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen relative z-10">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-dark-700/50">
+      <header className="sticky top-0 z-50 glass border-b border-transparent bg-gradient-to-b from-dark-900/95 via-dark-900/90 to-dark-900/95" style={{ borderImage: 'linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.2), transparent) 1' }}>
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -148,7 +148,14 @@ export default function Home() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-white">Voice Agent</h1>
+                  <h1 className="text-2xl font-extrabold tracking-tight">
+                    <span className="bg-gradient-to-r from-gold-400 via-gold-300 via-gold-400 to-gold-500 bg-clip-text text-transparent">
+                      EverlastAI
+                    </span>
+                    <span className="bg-gradient-to-r from-white/90 via-white/70 to-white/90 bg-clip-text text-transparent font-semibold text-lg ml-2">
+                      Audio Intelligence
+                    </span>
+                  </h1>
                   {isElectron && (
                     <span className="px-2 py-0.5 text-xs bg-dark-700 text-gold-500 rounded-full flex items-center gap-1">
                       <Monitor className="w-3 h-3" />
@@ -156,14 +163,14 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-dark-400">
+                <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent">
                   Sprachaufnahme & KI-Transkription
                 </p>
               </div>
             </div>
             <Link
               href="/history"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600 transition-all duration-200"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
             >
               <History className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">Historie</span>
@@ -187,15 +194,16 @@ export default function Home() {
 
         {/* Recording Section */}
         <section className="mb-10">
-          <div className="bg-dark-850 border border-dark-700 rounded-3xl p-10 card-hover">
+          <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-3xl p-10 relative overflow-hidden transition-all duration-300 hover:border-gold-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(212,168,83,0.15),0_0_30px_rgba(212,168,83,0.05)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 hover:via-gold-500/5 transition-all duration-500 pointer-events-none rounded-3xl" />
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (
                 <div className="mb-8 text-center animate-fade-in">
-                  <span className="text-6xl font-light text-white tracking-tight font-mono">
+                  <span className="text-6xl font-light tracking-tight font-mono bg-gradient-to-br from-gold-400 via-gold-300 to-gold-500 bg-clip-text text-transparent">
                     {formatDuration(duration)}
                   </span>
-                  <p className="text-sm text-dark-400 mt-2 font-medium">
+                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-2 font-medium">
                     {isPaused ? 'Pausiert' : 'Aufnahme läuft...'}
                   </p>
                 </div>
@@ -204,10 +212,10 @@ export default function Home() {
               {/* Instruction Text */}
               {!isRecording && !audioUrl && (
                 <div className="mb-10 text-center max-w-md">
-                  <h2 className="text-2xl font-semibold text-white mb-3">
+                  <h2 className="text-2xl font-semibold mb-3 bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent">
                     Bereit für die Aufnahme
                   </h2>
-                  <p className="text-dark-400 leading-relaxed">
+                  <p className="bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent leading-relaxed">
                     Klicke auf den Button, um eine Sprachaufnahme zu starten. 
                     Deine Aufnahme wird automatisch transkribiert und kann mit KI angereichert werden.
                   </p>
@@ -216,7 +224,7 @@ export default function Home() {
                     <div className="mt-4 flex items-center justify-center gap-2 text-sm text-dark-500">
                       <Keyboard className="w-4 h-4" />
                       <span>
-                        Hotkey: <kbd className="px-2 py-1 bg-dark-800 rounded text-gold-500 font-mono text-xs">
+                        Hotkey: <kbd className="px-2 py-1 bg-gradient-to-br from-dark-800 to-dark-850 border border-gold-500/20 rounded text-gold-400 font-mono text-xs">
                           {platform === 'darwin' ? '⌘' : 'Ctrl'}+Shift+V
                         </kbd>
                       </span>
@@ -253,8 +261,9 @@ export default function Home() {
           <section className="mb-10 animate-fade-in-up">
             <button
               onClick={processRecording}
-              className="w-full py-5 px-8 bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 text-dark-950 rounded-2xl font-semibold shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-3 btn-shine"
+              className="w-full py-5 px-8 bg-gradient-to-r from-gold-500 via-gold-400 via-gold-500 to-gold-600 text-dark-950 rounded-2xl font-semibold shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-3 btn-shine relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <Sparkles className="w-5 h-5" />
               Aufnahme verarbeiten & transkribieren
             </button>
@@ -264,18 +273,19 @@ export default function Home() {
         {/* Processing Status */}
         {isProcessing && (
           <section className="mb-10 animate-fade-in">
-            <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8">
-              <div className="flex items-center gap-5">
+            <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-2xl p-8 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-gold-500/5 pointer-events-none" />
+              <div className="flex items-center gap-5 relative z-10">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full border-2 border-dark-700" />
-                  <div className="absolute inset-0 w-14 h-14 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+                  <div className="w-14 h-14 rounded-full border-2 border-dark-700/50" />
+                  <div className="absolute inset-0 w-14 h-14 rounded-full border-2 border-gold-500/30 border-t-gold-500 border-r-gold-400 animate-spin" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-lg">
+                  <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-lg">
                     {processing.step === 'uploading' && 'Aufnahme wird hochgeladen...'}
                     {processing.step === 'transcribing' && 'Wird transkribiert mit Whisper...'}
                   </p>
-                  <p className="text-sm text-dark-400 mt-1">
+                  <p className="text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1">
                     Bitte warten Sie einen Moment
                   </p>
                 </div>
@@ -300,7 +310,7 @@ export default function Home() {
           <section className="animate-fade-in">
             <button
               onClick={handleReset}
-              className="w-full py-4 px-6 bg-dark-800 border border-dark-700 text-dark-300 rounded-xl font-medium hover:text-white hover:border-dark-600 transition-all duration-200"
+              className="w-full py-4 px-6 bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 rounded-xl font-medium hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
             >
               Neue Aufnahme starten
             </button>
@@ -309,9 +319,9 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="py-8 text-center border-t border-dark-800">
-        <p className="text-sm text-dark-500">
-          Voice Agent — Powered by <span className="text-gold-500">OpenAI Whisper</span> & <span className="text-gold-500">GPT-4o-mini</span>
+      <footer className="py-8 text-center border-t border-transparent bg-gradient-to-b from-transparent via-dark-900/50 to-transparent" style={{ borderImage: 'linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.1), transparent) 1' }}>
+        <p className="text-sm bg-gradient-to-r from-dark-500 via-dark-400 to-dark-500 bg-clip-text text-transparent">
+          by <span className="bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 bg-clip-text text-transparent font-medium">EverlastAI</span>
         </p>
       </footer>
     </main>

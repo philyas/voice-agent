@@ -124,7 +124,7 @@ export default function HistoryPage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 pt-8">
         {error && (
           <div className="mb-6">
             <StatusMessage type="error" message={error} onClose={() => setError(null)} />
