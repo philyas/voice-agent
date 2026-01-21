@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check, Share2, FileDown, Copy, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -29,10 +29,37 @@ export default function HistoryPage() {
   const [addingItemTo, setAddingItemTo] = useState<{ enrichmentId: string; section: string } | null>(null);
   const [newItemText, setNewItemText] = useState('');
   const [editingItemInfo, setEditingItemInfo] = useState<{ enrichmentId: string; lineIndex: number; text: string } | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState<string | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportingGoogleDocs, setExportingGoogleDocs] = useState(false);
+  const [googleDocsModalOpen, setGoogleDocsModalOpen] = useState(false);
+  const [googleDocsContent, setGoogleDocsContent] = useState<string>('');
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadRecordings();
   }, []);
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shareMenuOpen && shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShareMenuOpen(null);
+      }
+    };
+
+    if (shareMenuOpen) {
+      // Use setTimeout to avoid immediate closing when opening
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [shareMenuOpen]);
 
   // Update localEnrichments when transcription changes
   useEffect(() => {
@@ -546,6 +573,68 @@ export default function HistoryPage() {
     }
   };
 
+  const handleExportPDF = async (recording: Recording) => {
+    setExportingPDF(true);
+    setError(null);
+    setShareMenuOpen(null);
+
+    try {
+      const blob = await api.exportPDF(recording.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${recording.original_filename || recording.filename || 'recording'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim PDF-Export');
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
+  const handleExportGoogleDocs = async (recording: Recording) => {
+    setExportingGoogleDocs(true);
+    setError(null);
+    setShareMenuOpen(null);
+
+    try {
+      const response = await api.exportGoogleDocs(recording.id);
+      if (response.data) {
+        setGoogleDocsContent(response.data.html);
+        setGoogleDocsModalOpen(true);
+        setCopiedToClipboard(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Google Docs Export');
+    } finally {
+      setExportingGoogleDocs(false);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      // Create a temporary div to extract text content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = googleDocsContent;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+      
+      await navigator.clipboard.writeText(textContent);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      setError('Fehler beim Kopieren in die Zwischenablage');
+    }
+  };
+
+  const handleShareClick = (recording: Recording, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShareMenuOpen(shareMenuOpen === recording.id ? null : recording.id);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('de-DE', {
@@ -672,16 +761,80 @@ export default function HistoryPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSendEmail(recording);
-                        }}
-                        className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200"
-                        aria-label="Per E-Mail teilen"
-                      >
-                        <Mail className="w-4 h-4" />
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={(e) => handleShareClick(recording, e)}
+                          className={`p-2.5 rounded-xl border transition-all duration-200 ${
+                            shareMenuOpen === recording.id
+                              ? 'bg-gold-500/10 border-gold-500/50 text-gold-500'
+                              : 'bg-dark-800 border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30'
+                          }`}
+                          aria-label="Teilen"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        
+                        {shareMenuOpen === recording.id && (
+                          <div 
+                            ref={shareMenuRef}
+                            className="absolute right-0 top-full mt-2 w-56 bg-dark-850 border border-dark-700 rounded-xl shadow-2xl z-[60] overflow-hidden"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleSendEmail(recording);
+                                setShareMenuOpen(null);
+                              }}
+                              className="w-full px-4 py-3 text-left text-sm text-dark-300 hover:bg-gold-500/20 hover:text-gold-300 border-l-4 border-l-transparent hover:border-l-gold-500 transition-all duration-150 flex items-center gap-3 group cursor-pointer active:bg-gold-500/30"
+                            >
+                              <Mail className="w-4 h-4 text-dark-400 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+                              <span className="flex-1 font-medium group-hover:text-white transition-colors">Per E-Mail teilen</span>
+                            </button>
+                            <div className="border-t border-dark-700"></div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleExportPDF(recording);
+                              }}
+                              disabled={exportingPDF}
+                              className="w-full px-4 py-3 text-left text-sm text-dark-300 hover:bg-gold-500/20 hover:text-gold-300 border-l-4 border-l-transparent hover:border-l-gold-500 transition-all duration-150 flex items-center gap-3 group cursor-pointer active:bg-gold-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-dark-300 disabled:hover:border-l-transparent"
+                            >
+                              {exportingPDF ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                                  <span className="flex-1 font-medium">PDF wird erstellt...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FileDown className="w-4 h-4 text-dark-400 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+                                  <span className="flex-1 font-medium group-hover:text-white transition-colors">Als PDF exportieren</span>
+                                </>
+                              )}
+                            </button>
+                            <div className="border-t border-dark-700"></div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleExportGoogleDocs(recording);
+                              }}
+                              disabled={exportingGoogleDocs}
+                              className="w-full px-4 py-3 text-left text-sm text-dark-300 hover:bg-gold-500/20 hover:text-gold-300 border-l-4 border-l-transparent hover:border-l-gold-500 transition-all duration-150 flex items-center gap-3 group cursor-pointer active:bg-gold-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-dark-300 disabled:hover:border-l-transparent"
+                            >
+                              {exportingGoogleDocs ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                                  <span className="flex-1 font-medium">Wird vorbereitet...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FileText className="w-4 h-4 text-dark-400 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+                                  <span className="flex-1 font-medium group-hover:text-white transition-colors">Zu Google Docs exportieren</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1101,6 +1254,7 @@ export default function HistoryPage() {
         </div>
       </div>
 
+
       {/* Email Modal */}
       {emailModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -1189,6 +1343,76 @@ export default function HistoryPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Google Docs Export Modal */}
+      {googleDocsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-dark-850 border border-dark-700 rounded-2xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Zu Google Docs exportieren</h2>
+              <button
+                onClick={() => {
+                  setGoogleDocsModalOpen(false);
+                  setGoogleDocsContent('');
+                  setCopiedToClipboard(false);
+                }}
+                className="p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                aria-label="Schließen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-dark-900/50 border border-dark-700 rounded-xl p-4 mb-4 text-sm text-dark-300 flex-1 overflow-y-auto">
+              <div 
+                className="prose prose-invert prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: googleDocsContent }}
+              />
+            </div>
+
+            <div className="bg-dark-900/50 border border-dark-700 rounded-xl p-4 mb-4 text-sm text-dark-300">
+              <p className="mb-2 font-medium text-dark-400">Anleitung:</p>
+              <ol className="list-decimal list-inside space-y-1 text-dark-400">
+                <li>Klicke auf "In Zwischenablage kopieren"</li>
+                <li>Öffne Google Docs in einem neuen Tab</li>
+                <li>Füge den Inhalt ein (Strg+V oder Cmd+V)</li>
+                <li>Der Inhalt wird formatiert übernommen</li>
+              </ol>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setGoogleDocsModalOpen(false);
+                  setGoogleDocsContent('');
+                  setCopiedToClipboard(false);
+                }}
+                className="flex-1 px-4 py-3 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 font-medium"
+              >
+                Schließen
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyToClipboard}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium shadow-gold hover:shadow-gold-lg transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                {copiedToClipboard ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Kopiert!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    In Zwischenablage kopieren
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

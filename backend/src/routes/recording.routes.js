@@ -8,6 +8,7 @@ const multer = require('multer');
 const path = require('path');
 const recordingController = require('../controllers/recording.controller');
 const emailController = require('../controllers/email.controller');
+const exportController = require('../controllers/export.controller');
 
 const router = express.Router();
 
@@ -106,5 +107,19 @@ router.delete('/:id', recordingController.delete.bind(recordingController));
  * @access  Public
  */
 router.post('/:id/send-email', emailController.sendRecordingEmail.bind(emailController));
+
+/**
+ * @route   GET /api/v1/recordings/:id/export/pdf
+ * @desc    Export recording as PDF
+ * @access  Public
+ */
+router.get('/:id/export/pdf', exportController.exportPDF.bind(exportController));
+
+/**
+ * @route   GET /api/v1/recordings/:id/export/google-docs
+ * @desc    Export recording to Google Docs (returns HTML)
+ * @access  Public
+ */
+router.get('/:id/export/google-docs', exportController.exportGoogleDocs.bind(exportController));
 
 module.exports = router;

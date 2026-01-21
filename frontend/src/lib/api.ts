@@ -211,6 +211,20 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  // Export
+  async exportPDF(recordingId: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/recordings/${recordingId}/export/pdf`);
+    if (!response.ok) {
+      throw new Error('PDF export failed');
+    }
+    return response.blob();
+  },
+
+  async exportGoogleDocs(recordingId: string): Promise<ApiResponse<{ html: string; instructions: string }>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/recordings/${recordingId}/export/google-docs`);
+    return handleResponse(response);
+  },
 };
 
 export type { Recording, Transcription, Enrichment, EnrichmentType, ApiResponse };
