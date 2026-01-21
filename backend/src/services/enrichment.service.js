@@ -53,8 +53,8 @@ Antworte auf Deutsch.`,
     notes: {
       system: `Du bist ein Assistent für Notizen.
 Wandle den folgenden transkribierten Text in strukturierte Notizen um.
-Verwende Aufzählungspunkte und klare Überschriften.
-Organisiere die Informationen logisch.
+Verwende Checklisten mit [ ] für jeden Punkt (z.B. "- [ ] Punkt 1").
+Verwende klare Überschriften und organisiere die Informationen logisch.
 Antworte auf Deutsch.`,
       maxTokens: 1500,
     },

@@ -163,6 +163,8 @@ export default function HistoryPage() {
       listPrefix = '- [ ] ';
     } else if (sectionLower.includes('kernpunkte') || sectionLower.includes('key points')) {
       listPrefix = '1. ';
+    } else if (sectionLower.includes('notizen') || sectionLower.includes('notes') || sectionLower.includes('anmerkungen')) {
+      listPrefix = '- [ ] ';
     } else {
       listPrefix = '- ';
     }
@@ -910,17 +912,26 @@ export default function HistoryPage() {
                                               {/* Checkbox or bullet */}
                                               {item.isCheckbox ? (
                                                 <button
-                                                  onClick={() => toggleCheckbox(enrichment.id, enrichment.content, 
-                                                    enrichment.content.split('\n').findIndex((line, idx) => idx === item.lineIndex)
-                                                  )}
-                                                  className="mt-0.5 flex-shrink-0"
+                                                  onClick={() => {
+                                                    // Calculate the checkbox index (count of checkboxes before this line)
+                                                    const lines = enrichment.content.split('\n');
+                                                    let checkboxIdx = 0;
+                                                    for (let i = 0; i < item.lineIndex; i++) {
+                                                      if (/^- \[[ x]\]/.test(lines[i])) {
+                                                        checkboxIdx++;
+                                                      }
+                                                    }
+                                                    toggleCheckbox(enrichment.id, enrichment.content, checkboxIdx);
+                                                  }}
+                                                  className="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
+                                                  style={{
+                                                    backgroundColor: item.isChecked ? '#d4a853' : 'transparent',
+                                                    borderColor: item.isChecked ? '#d4a853' : '#4a4a4a',
+                                                  }}
                                                 >
-                                                  <input
-                                                    type="checkbox"
-                                                    checked={item.isChecked}
-                                                    readOnly
-                                                    className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 cursor-pointer"
-                                                  />
+                                                  {item.isChecked && (
+                                                    <Check className="w-3 h-3 text-dark-900" />
+                                                  )}
                                                 </button>
                                               ) : item.isNumbered ? (
                                                 <span className="text-gold-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
