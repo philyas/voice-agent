@@ -141,8 +141,10 @@ voice-agent/
 │   └── src/
 │       ├── app/
 │       │   ├── layout.tsx       # Root Layout
-│       │   ├── page.tsx         # Hauptseite
-│       │   └── globals.css      # Global Styles
+│       │   ├── page.tsx         # Homepage (Aufnahme & Transkription)
+│       │   ├── globals.css      # Global Styles
+│       │   └── history/
+│       │       └── page.tsx     # Historie-Seite (Aufnahmen-Übersicht)
 │       ├── components/
 │       │   ├── RecordButton.tsx
 │       │   ├── AudioPlayer.tsx
@@ -199,6 +201,30 @@ voice-agent/
 ```
 
 ## 🚀 Quick Start
+
+### 🧪 Für Tester / Kunden
+
+**Desktop-App installieren und nutzen (Empfohlen)**
+1. Installiere die bereitgestellte Desktop-App:
+   - **macOS**: Öffne die `.dmg` Datei und ziehe die App in den Applications-Ordner
+   - **Windows**: Führe die `.exe` Datei aus und folge dem Installationsassistenten
+   - **Linux**: Mache die `.AppImage` ausführbar: `chmod +x *.AppImage` und starte sie
+2. Öffne die App
+3. Fertig! Die App verbindet sich automatisch mit dem konfigurierten Backend (Cloud oder lokal)
+
+**Keine weitere Installation nötig:**
+- ✅ Kein Docker erforderlich (wenn Cloud-Backend verwendet wird)
+- ✅ Kein Backend-Setup nötig (wenn Cloud-Backend verwendet wird)
+- ✅ Keine Konfiguration erforderlich
+- ✅ Einfach installieren und loslegen
+
+**Aus dem Quellcode bauen (für Entwickler):**
+1. Repository klonen: `git clone <repository-url>`
+2. Ins Frontend-Verzeichnis wechseln: `cd frontend`
+3. Dependencies installieren: `npm install`
+4. **Lokal**: `npm run electron:build` (verbindet mit localhost:4000)
+5. **Production**: `NEXT_PUBLIC_API_URL=https://your-backend-url.com npm run electron:build`
+6. Installiere die erstellte App aus `frontend/dist-electron/`
 
 ### Desktop-App (Empfohlen)
 
@@ -293,6 +319,47 @@ npm run electron:build
 # Electron direkt starten (Next.js muss laufen)
 npm run electron:start
 ```
+
+### 📦 Desktop-App Build für Distribution
+
+**Lokaler Build (für Entwicklung):**
+```bash
+cd frontend
+npm install
+npm run electron:build
+```
+→ Verbindet sich mit `localhost:4000` (Standard)
+
+**Production-Build mit Cloud-Backend:**
+```bash
+cd frontend
+npm install
+# Ersetze https://your-backend-url.com mit deiner tatsächlichen Cloud-Backend-URL
+NEXT_PUBLIC_API_URL=https://your-backend-url.com npm run electron:build
+```
+
+**Beispiel:**
+```bash
+NEXT_PUBLIC_API_URL=https://api.everlastai.com npm run electron:build
+```
+
+**Build-Ausgabe:**
+- **macOS**: `frontend/dist-electron/EverlastAI - Audio Intelligence-<version>.dmg`
+- **Windows**: `frontend/dist-electron/EverlastAI - Audio Intelligence Setup <version>.exe`
+- **Linux**: `frontend/dist-electron/EverlastAI - Audio Intelligence-<version>.AppImage`
+
+**Wichtig:**
+- **Lokal**: Ohne `NEXT_PUBLIC_API_URL` wird automatisch `localhost:4000` verwendet
+- **Production**: Mit `NEXT_PUBLIC_API_URL` wird die Cloud-URL zur Build-Zeit eingebaut
+- Die Desktop-App ist **vollständig standalone** - keine lokale Installation nötig
+- Der Kunde kann die App direkt installieren und nutzen
+
+**Systemanforderungen für den Build:**
+- Node.js 18+ installiert
+- npm installiert
+- Für Windows-Builds auf Mac: Wine (optional)
+- Für Mac-Builds: Nur auf macOS möglich
+- Für Linux-Builds: Funktioniert auf allen Plattformen
 
 ### Docker Befehle
 
@@ -471,17 +538,17 @@ npm run migrate:make migration_name
 
 ## 🔧 Umgebungsvariablen
 
-| Variable | Beschreibung | Default |
-|----------|--------------|---------|
-| `NODE_ENV` | Environment | development |
-| `PORT` | Backend Port | 4000 |
-| `DB_HOST` | Datenbank Host | localhost |
-| `DB_PORT` | Datenbank Port | 5432 |
-| `DB_NAME` | Datenbank Name | voice_agent |
-| `DB_USER` | Datenbank User | postgres |
-| `DB_PASSWORD` | Datenbank Passwort | postgres |
-| `OPENAI_API_KEY` | OpenAI API Key | **Required** |
-| `NEXT_PUBLIC_API_URL` | Backend URL | http://localhost:4000 |
+| Variable | Beschreibung | Default | Verwendung |
+|----------|--------------|---------|------------|
+| `NODE_ENV` | Environment | development | Backend |
+| `PORT` | Backend Port | 4000 | Backend |
+| `DB_HOST` | Datenbank Host | localhost | Backend |
+| `DB_PORT` | Datenbank Port | 5432 | Backend |
+| `DB_NAME` | Datenbank Name | voice_agent | Backend |
+| `DB_USER` | Datenbank User | postgres | Backend |
+| `DB_PASSWORD` | Datenbank Passwort | postgres | Backend |
+| `OPENAI_API_KEY` | OpenAI API Key | **Required** | Backend |
+| `NEXT_PUBLIC_API_URL` | Backend URL (für Frontend) | http://localhost:4000 | **Frontend** |
 
 ---
 
