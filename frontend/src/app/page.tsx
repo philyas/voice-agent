@@ -3,9 +3,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
+import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor, Languages } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useLiveTranscription } from '@/hooks/useLiveTranscription';
+import { useLiveTranslation } from '@/hooks/useLiveTranslation';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
@@ -44,6 +45,14 @@ export default function Home() {
     stopTranscription,
   } = useLiveTranscription();
 
+  const {
+    translatedText,
+    isTranslating,
+    error: translationError,
+    startTranslation,
+    stopTranslation,
+  } = useLiveTranslation();
+
   const { isElectron, platform, notifyRecordingState } = useElectron();
   const router = useRouter();
 
@@ -54,6 +63,8 @@ export default function Home() {
     enrichments: [],
     error: null,
   });
+
+  const [translationEnabled, setTranslationEnabled] = useState(false);
 
   // Handle hotkey-triggered recording
   const handleHotkeyStartRecording = useCallback(() => {
@@ -77,14 +88,29 @@ export default function Home() {
   }, [isRecording, notifyRecordingState]);
 
   // Start live transcription when recording starts
-  // DISABLED: Live transcription is kept in code but not used in client
-  // useEffect(() => {
-  //   if (isRecording && audioStream && !isPaused) {
-  //     startTranscription(audioStream, 'de');
-  //   } else if (!isRecording || isPaused) {
-  //     stopTranscription();
-  //   }
-  // }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription]);
+  useEffect(() => {
+    if (isRecording && audioStream && !isPaused) {
+      startTranscription(audioStream, 'de');
+    } else if (!isRecording || isPaused) {
+      stopTranscription();
+      stopTranslation();
+    }
+  }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription, stopTranslation]);
+
+  // Trigger translation when transcription completes (only if enabled)
+  useEffect(() => {
+    if (translationEnabled && liveText && liveText.trim().length > 0) {
+      // Debounce translation to avoid too many requests
+      const timeoutId = setTimeout(() => {
+        startTranslation(liveText);
+      }, 500); // Wait 500ms after last transcription update
+
+      return () => clearTimeout(timeoutId);
+    } else if (!translationEnabled) {
+      // Stop translation if disabled
+      stopTranslation();
+    }
+  }, [translationEnabled, liveText, startTranslation, stopTranslation]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -238,7 +264,16 @@ export default function Home() {
 
         {/* Recording Section */}
         <section className="mb-10">
-          <div className="group bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-3xl p-10 relative overflow-hidden transition-all duration-300 hover:border-gold-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(212,168,83,0.15),0_0_30px_rgba(212,168,83,0.05)]">
+          <div 
+            className="group bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-3xl p-10 relative overflow-hidden transition-all duration-300 hover:border-gold-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(212,168,83,0.15),0_0_30px_rgba(212,168,83,0.05)]"
+            onClick={(e) => {
+              // Prevent clicks on container from triggering any actions
+              // Only allow clicks on actual buttons
+              if (e.target === e.currentTarget) {
+                e.stopPropagation();
+              }
+            }}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:via-gold-500/3 group-hover:to-gold-500/5 transition-all duration-500 pointer-events-none" />
             <div className="flex flex-col items-center">
               {/* Duration Display */}
@@ -260,29 +295,64 @@ export default function Home() {
                     />
                   </div>
                   
-                  {/* Live Transcription Display */}
-                  {/* DISABLED: Live transcription display is kept in code but not shown in client */}
-                  {/* {liveText && (
-                    <div className="mt-6 max-w-2xl mx-auto transition-smooth animate-fade-in">
-                      <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-gold-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranscribing ? 'bg-gold-500 animate-pulse' : 'bg-dark-500'}`} />
-                          <p className="text-xs font-medium bg-gradient-to-r from-gold-400/80 to-gold-500/80 bg-clip-text text-transparent">
-                            Live-Transkription
+                  {/* Live Transcription & Translation Display */}
+                  {(liveText || isTranscribing) && (
+                    <div className="mt-6 max-w-4xl mx-auto transition-smooth animate-fade-in">
+                      {/* Translation Toggle */}
+                      <div className="flex items-center justify-center gap-3 mb-4">
+                        <button
+                          onClick={() => setTranslationEnabled(!translationEnabled)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                            translationEnabled
+                              ? 'bg-blue-500/10 border-blue-500/50 text-blue-400 hover:bg-blue-500/20'
+                              : 'bg-dark-800/50 border-dark-700/50 text-dark-400 hover:border-dark-600 hover:text-dark-300'
+                          }`}
+                          aria-label={translationEnabled ? 'Übersetzung deaktivieren' : 'Übersetzung aktivieren'}
+                        >
+                          <Languages className={`w-4 h-4 transition-all ${translationEnabled ? 'text-blue-400' : 'text-dark-500'}`} />
+                          <span className="text-sm font-medium">
+                            {translationEnabled ? 'Live-Übersetzung an' : 'Live-Übersetzung aus'}
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className={`grid gap-4 ${translationEnabled ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                        {/* Original Transcription */}
+                        <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-gold-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranscribing ? 'bg-gold-500 animate-pulse' : 'bg-dark-500'}`} />
+                            <p className="text-xs font-medium bg-gradient-to-r from-gold-400/80 to-gold-500/80 bg-clip-text text-transparent">
+                              Original
+                            </p>
+                          </div>
+                          <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300 min-h-[60px]">
+                            {liveText || (isTranscribing ? 'Höre zu...' : '')}
                           </p>
+                          {transcriptionError && (
+                            <p className="text-xs text-red-400 mt-2">{transcriptionError}</p>
+                          )}
                         </div>
-                        <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300">
-                          {liveText || (isTranscribing ? 'Höre zu...' : '')}
-                        </p>
+
+                        {/* German Translation - Only shown when enabled */}
+                        {translationEnabled && (
+                          <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-blue-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranslating ? 'bg-blue-500 animate-pulse' : 'bg-dark-500'}`} />
+                              <p className="text-xs font-medium bg-gradient-to-r from-blue-400/80 to-blue-500/80 bg-clip-text text-transparent">
+                                Deutsch
+                              </p>
+                            </div>
+                            <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300 min-h-[60px]">
+                              {translatedText || (isTranslating ? 'Übersetze...' : liveText ? 'Warte auf Übersetzung...' : '')}
+                            </p>
+                            {translationError && (
+                              <p className="text-xs text-red-400 mt-2">{translationError}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
-                  
-                  {transcriptionError && (
-                    <div className="mt-4 text-sm text-red-400 transition-smooth animate-fade-in">
-                      {transcriptionError}
-                    </div>
-                  )} */}
                 </div>
               )}
 

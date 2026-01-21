@@ -37,11 +37,18 @@ export function RecordButton({
   }
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6" onClick={(e) => e.stopPropagation()}>
       {/* Pause/Resume Button */}
       <button
-        onClick={isPaused ? onResume : onPause}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-white shadow-dark hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 hover:border-gold-500/40 transition-all duration-200 flex items-center justify-center group"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isPaused) {
+            onResume();
+          } else {
+            onPause();
+          }
+        }}
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-white shadow-dark hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 hover:border-gold-500/40 transition-all duration-200 flex items-center justify-center group relative z-10"
         aria-label={isPaused ? 'Fortsetzen' : 'Pausieren'}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/10 group-hover:via-gold-500/5 group-hover:to-gold-500/10 transition-all duration-200" />
@@ -53,8 +60,11 @@ export function RecordButton({
       {/* Recording indicator */}
       <div className="relative">
         <button
-          onClick={onStop}
-          className="relative w-24 h-24 rounded-full bg-gradient-to-br from-gold-400 via-gold-500 via-gold-400 to-gold-600 text-dark-950 shadow-gold-lg flex items-center justify-center recording-pulse overflow-hidden group"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStop();
+          }}
+          className="relative w-24 h-24 rounded-full bg-gradient-to-br from-gold-400 via-gold-500 via-gold-400 to-gold-600 text-dark-950 shadow-gold-lg flex items-center justify-center recording-pulse overflow-hidden group z-10"
           aria-label="Aufnahme stoppen"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-gold-300/30 via-transparent to-gold-600/30 animate-pulse rounded-full" />

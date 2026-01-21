@@ -7,6 +7,7 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const realtimeService = require('../services/realtime.service');
+const openaiService = require('../services/openai.service');
 const { env } = require('../config/env');
 
 const router = express.Router();
@@ -181,5 +182,72 @@ function setupWebSocketServer(server) {
 
   return wss;
 }
+
+/**
+ * POST /api/v1/realtime/translate
+ * Stream translation of text to target language
+ */
+router.post('/translate', async (req, res) => {
+  try {
+    const { text, targetLanguage = 'de' } = req.body;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Text is required',
+        },
+      });
+    }
+
+    // Set up streaming response
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const systemPrompt = `Du bist ein professioneller Übersetzer.
+Übersetze den folgenden Text ins Deutsche.
+Behalte den Ton und die Bedeutung bei.
+Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
+
+    try {
+      // Use OpenAI streaming API for translation
+      const completion = await openaiService.client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+        stream: true,
+      });
+
+      // Stream the response
+      for await (const chunk of completion) {
+        const data = JSON.stringify(chunk);
+        res.write(`data: ${data}\n\n`);
+      }
+
+      // Send done signal
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error) {
+      console.error('[Realtime] Translation error:', error);
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+      res.end();
+    }
+  } catch (error) {
+    console.error('[Realtime] Translation route error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error.message || 'Translation failed',
+      },
+    });
+  }
+});
 
 module.exports = { router, setupWebSocketServer };
