@@ -3,10 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor, Languages } from 'lucide-react';
+import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useLiveTranscription } from '@/hooks/useLiveTranscription';
-import { useLiveTranslation } from '@/hooks/useLiveTranslation';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
 import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
@@ -37,22 +35,6 @@ export default function Home() {
     error: recorderError,
   } = useAudioRecorder();
 
-  const {
-    liveText,
-    isConnected: isTranscribing,
-    error: transcriptionError,
-    startTranscription,
-    stopTranscription,
-  } = useLiveTranscription();
-
-  const {
-    translatedText,
-    isTranslating,
-    error: translationError,
-    startTranslation,
-    stopTranslation,
-  } = useLiveTranslation();
-
   const { isElectron, platform, notifyRecordingState } = useElectron();
   const router = useRouter();
 
@@ -63,8 +45,6 @@ export default function Home() {
     enrichments: [],
     error: null,
   });
-
-  const [translationEnabled, setTranslationEnabled] = useState(false);
 
   // Handle hotkey-triggered recording
   const handleHotkeyStartRecording = useCallback(() => {
@@ -86,31 +66,6 @@ export default function Home() {
   useEffect(() => {
     notifyRecordingState(isRecording);
   }, [isRecording, notifyRecordingState]);
-
-  // Start live transcription when recording starts
-  useEffect(() => {
-    if (isRecording && audioStream && !isPaused) {
-      startTranscription(audioStream, 'de');
-    } else if (!isRecording || isPaused) {
-      stopTranscription();
-      stopTranslation();
-    }
-  }, [isRecording, audioStream, isPaused, startTranscription, stopTranscription, stopTranslation]);
-
-  // Trigger translation when transcription completes (only if enabled)
-  useEffect(() => {
-    if (translationEnabled && liveText && liveText.trim().length > 0) {
-      // Debounce translation to avoid too many requests
-      const timeoutId = setTimeout(() => {
-        startTranslation(liveText);
-      }, 500); // Wait 500ms after last transcription update
-
-      return () => clearTimeout(timeoutId);
-    } else if (!translationEnabled) {
-      // Stop translation if disabled
-      stopTranslation();
-    }
-  }, [translationEnabled, liveText, startTranslation, stopTranslation]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -250,11 +205,11 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Error Messages */}
-        {(recorderError || processing.error || transcriptionError) && (
+        {(recorderError || processing.error) && (
           <div className="mb-8">
             <StatusMessage
               type="error"
-              message={recorderError || processing.error || transcriptionError || ''}
+              message={recorderError || processing.error || ''}
               onClose={() => {
                 setProcessing((prev) => ({ ...prev, error: null }));
               }}
@@ -294,65 +249,6 @@ export default function Home() {
                       isPaused={isPaused}
                     />
                   </div>
-                  
-                  {/* Live Transcription & Translation Display */}
-                  {(liveText || isTranscribing) && (
-                    <div className="mt-6 max-w-4xl mx-auto transition-smooth animate-fade-in">
-                      {/* Translation Toggle */}
-                      <div className="flex items-center justify-center gap-3 mb-4">
-                        <button
-                          onClick={() => setTranslationEnabled(!translationEnabled)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
-                            translationEnabled
-                              ? 'bg-blue-500/10 border-blue-500/50 text-blue-400 hover:bg-blue-500/20'
-                              : 'bg-dark-800/50 border-dark-700/50 text-dark-400 hover:border-dark-600 hover:text-dark-300'
-                          }`}
-                          aria-label={translationEnabled ? 'Übersetzung deaktivieren' : 'Übersetzung aktivieren'}
-                        >
-                          <Languages className={`w-4 h-4 transition-all ${translationEnabled ? 'text-blue-400' : 'text-dark-500'}`} />
-                          <span className="text-sm font-medium">
-                            {translationEnabled ? 'Live-Übersetzung an' : 'Live-Übersetzung aus'}
-                          </span>
-                        </button>
-                      </div>
-
-                      <div className={`grid gap-4 ${translationEnabled ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                        {/* Original Transcription */}
-                        <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-gold-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranscribing ? 'bg-gold-500 animate-pulse' : 'bg-dark-500'}`} />
-                            <p className="text-xs font-medium bg-gradient-to-r from-gold-400/80 to-gold-500/80 bg-clip-text text-transparent">
-                              Original
-                            </p>
-                          </div>
-                          <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300 min-h-[60px]">
-                            {liveText || (isTranscribing ? 'Höre zu...' : '')}
-                          </p>
-                          {transcriptionError && (
-                            <p className="text-xs text-red-400 mt-2">{transcriptionError}</p>
-                          )}
-                        </div>
-
-                        {/* German Translation - Only shown when enabled */}
-                        {translationEnabled && (
-                          <div className="bg-gradient-to-br from-dark-800/80 via-dark-800/60 to-dark-900/80 border border-blue-500/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300">
-                            <div className="flex items-center gap-2 mb-3">
-                              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isTranslating ? 'bg-blue-500 animate-pulse' : 'bg-dark-500'}`} />
-                              <p className="text-xs font-medium bg-gradient-to-r from-blue-400/80 to-blue-500/80 bg-clip-text text-transparent">
-                                Deutsch
-                              </p>
-                            </div>
-                            <p className="text-base leading-relaxed bg-gradient-to-r from-white/90 via-white/80 to-white/90 bg-clip-text text-transparent transition-all duration-300 min-h-[60px]">
-                              {translatedText || (isTranslating ? 'Übersetze...' : liveText ? 'Warte auf Übersetzung...' : '')}
-                            </p>
-                            {translationError && (
-                              <p className="text-xs text-red-400 mt-2">{translationError}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
