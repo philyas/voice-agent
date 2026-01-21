@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -22,6 +22,13 @@ export default function HistoryPage() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [localEnrichments, setLocalEnrichments] = useState<Transcription['enrichments']>([]);
+  const [editingEnrichmentId, setEditingEnrichmentId] = useState<string | null>(null);
+  const [editedEnrichmentContent, setEditedEnrichmentContent] = useState<string>('');
+  const [savingEnrichment, setSavingEnrichment] = useState(false);
+  // State for inline list item editing
+  const [addingItemTo, setAddingItemTo] = useState<{ enrichmentId: string; section: string } | null>(null);
+  const [newItemText, setNewItemText] = useState('');
+  const [editingItemInfo, setEditingItemInfo] = useState<{ enrichmentId: string; lineIndex: number; text: string } | null>(null);
 
   useEffect(() => {
     loadRecordings();
@@ -67,6 +74,343 @@ export default function HistoryPage() {
       );
       console.error('Failed to save checkbox state:', error);
     }
+  };
+
+  /**
+   * Start editing an enrichment
+   */
+  const handleStartEdit = (enrichmentId: string, currentContent: string) => {
+    setEditingEnrichmentId(enrichmentId);
+    setEditedEnrichmentContent(currentContent);
+  };
+
+  /**
+   * Cancel editing
+   */
+  const handleCancelEdit = () => {
+    setEditingEnrichmentId(null);
+    setEditedEnrichmentContent('');
+  };
+
+  /**
+   * Save edited enrichment
+   */
+  const handleSaveEdit = async () => {
+    if (!editingEnrichmentId || !editedEnrichmentContent.trim()) return;
+
+    setSavingEnrichment(true);
+    try {
+      const response = await api.updateEnrichment(editingEnrichmentId, editedEnrichmentContent);
+      if (response.data) {
+        setLocalEnrichments(prev => 
+          prev?.map(e => e.id === editingEnrichmentId ? { ...e, content: editedEnrichmentContent } : e)
+        );
+        setEditingEnrichmentId(null);
+        setEditedEnrichmentContent('');
+      }
+    } catch (error) {
+      console.error('Failed to save enrichment:', error);
+      setError('Fehler beim Speichern des Enrichments');
+    } finally {
+      setSavingEnrichment(false);
+    }
+  };
+
+  /**
+   * Delete a list item from enrichment content
+   */
+  const deleteListItem = async (enrichmentId: string, content: string, lineIndex: number) => {
+    const lines = content.split('\n');
+    const newLines = lines.filter((_, idx) => idx !== lineIndex);
+    const newContent = newLines.join('\n');
+
+    // Update local state immediately
+    setLocalEnrichments(prev => 
+      prev?.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Save to backend
+    try {
+      await api.updateEnrichment(enrichmentId, newContent);
+    } catch (error) {
+      // Revert on error
+      setLocalEnrichments(prev => 
+        prev?.map(e => e.id === enrichmentId ? { ...e, content } : e)
+      );
+      console.error('Failed to delete item:', error);
+    }
+  };
+
+  /**
+   * Add a new list item to a section
+   */
+  const addListItem = async (enrichmentId: string, content: string, section: string) => {
+    if (!newItemText.trim()) {
+      setAddingItemTo(null);
+      setNewItemText('');
+      return;
+    }
+
+    const lines = content.split('\n');
+    let insertIndex = -1;
+    let isInSection = false;
+    let listPrefix = '- ';
+
+    // Find the section and determine where to insert
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if we're entering the target section
+      if (line.startsWith('## ') && line.toLowerCase().includes(section.toLowerCase())) {
+        isInSection = true;
+        continue;
+      }
+      
+      // Check if we're leaving the section (next ## header)
+      if (isInSection && line.startsWith('## ')) {
+        insertIndex = i;
+        break;
+      }
+      
+      // Determine the list style from existing items
+      if (isInSection) {
+        if (line.match(/^- \[[ x]\]/)) {
+          listPrefix = '- [ ] ';
+        } else if (line.match(/^\d+\./)) {
+          // Numbered list - find the last number
+          const match = line.match(/^(\d+)\./);
+          if (match) {
+            listPrefix = `${parseInt(match[1]) + 1}. `;
+          }
+        } else if (line.startsWith('- ')) {
+          listPrefix = '- ';
+        }
+        
+        // Track the last list item position
+        if (line.match(/^(-|\d+\.)\s/)) {
+          insertIndex = i + 1;
+        }
+      }
+    }
+
+    // If no insert position found, add at the end
+    if (insertIndex === -1) {
+      insertIndex = lines.length;
+    }
+
+    // Insert the new item
+    const newItem = `${listPrefix}${newItemText.trim()}`;
+    lines.splice(insertIndex, 0, newItem);
+    const newContent = lines.join('\n');
+
+    // Update local state immediately
+    setLocalEnrichments(prev => 
+      prev?.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Reset adding state
+    setAddingItemTo(null);
+    setNewItemText('');
+
+    // Save to backend
+    try {
+      await api.updateEnrichment(enrichmentId, newContent);
+    } catch (error) {
+      // Revert on error
+      setLocalEnrichments(prev => 
+        prev?.map(e => e.id === enrichmentId ? { ...e, content } : e)
+      );
+      console.error('Failed to add item:', error);
+    }
+  };
+
+  /**
+   * Update an existing list item
+   */
+  const updateListItem = async (enrichmentId: string, content: string, lineIndex: number, newText: string) => {
+    if (!newText.trim()) {
+      setEditingItemInfo(null);
+      return;
+    }
+
+    const lines = content.split('\n');
+    const oldLine = lines[lineIndex];
+    
+    // Preserve the list prefix (-, [ ], [x], 1., etc.)
+    const prefixMatch = oldLine.match(/^(-\s*\[[ x]\]\s*|-\s*|\d+\.\s*)/);
+    const prefix = prefixMatch ? prefixMatch[1] : '- ';
+    
+    lines[lineIndex] = `${prefix}${newText.trim()}`;
+    const newContent = lines.join('\n');
+
+    // Update local state immediately
+    setLocalEnrichments(prev => 
+      prev?.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Reset editing state
+    setEditingItemInfo(null);
+
+    // Save to backend
+    try {
+      await api.updateEnrichment(enrichmentId, newContent);
+    } catch (error) {
+      // Revert on error
+      setLocalEnrichments(prev => 
+        prev?.map(e => e.id === enrichmentId ? { ...e, content } : e)
+      );
+      console.error('Failed to update item:', error);
+    }
+  };
+
+  /**
+   * Update text content (for non-list sections like summary)
+   */
+  const updateTextContent = async (enrichmentId: string, content: string, startIndex: number, endIndex: number, newText: string) => {
+    const lines = content.split('\n');
+    
+    // Replace the text block
+    const newLines = [...lines];
+    for (let i = startIndex; i <= endIndex; i++) {
+      if (i === startIndex) {
+        newLines[i] = newText;
+      } else {
+        newLines[i] = '';
+      }
+    }
+    
+    // Remove empty lines in the replaced section
+    const cleanedLines = newLines.filter((line, idx) => {
+      if (idx >= startIndex && idx <= endIndex) {
+        return idx === startIndex || line.trim() !== '';
+      }
+      return true;
+    });
+    
+    const newContent = cleanedLines.join('\n');
+
+    // Update local state immediately
+    setLocalEnrichments(prev => 
+      prev?.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+    );
+
+    // Reset editing state
+    setEditingItemInfo(null);
+
+    // Save to backend
+    try {
+      await api.updateEnrichment(enrichmentId, newContent);
+    } catch (error) {
+      // Revert on error
+      setLocalEnrichments(prev => 
+        prev?.map(e => e.id === enrichmentId ? { ...e, content } : e)
+      );
+      console.error('Failed to update text content:', error);
+    }
+  };
+
+  /**
+   * Parse enrichment content into sections for rendering
+   */
+  const parseEnrichmentSections = (content: string) => {
+    const lines = content.split('\n');
+    const sections: { 
+      title: string; 
+      items: { text: string; lineIndex: number; isCheckbox: boolean; isChecked: boolean; isNumbered: boolean }[];
+      textContent: string; // For non-list sections like summary
+      textStartIndex: number;
+      textEndIndex: number;
+      isListSection: boolean;
+    }[] = [];
+    let currentSection: typeof sections[0] | null = null;
+    let textStartIndex = -1;
+
+    lines.forEach((line, index) => {
+      if (line.startsWith('## ')) {
+        // Save previous section
+        if (currentSection) {
+          // If there was text content, save it
+          if (textStartIndex !== -1 && currentSection.textStartIndex === -1) {
+            currentSection.textStartIndex = textStartIndex;
+            currentSection.textEndIndex = index - 1;
+          }
+          sections.push(currentSection);
+        }
+        
+        // Start new section
+        currentSection = {
+          title: line.replace('## ', '').trim(),
+          items: [],
+          textContent: '',
+          textStartIndex: -1,
+          textEndIndex: -1,
+          isListSection: false
+        };
+        textStartIndex = -1;
+      } else if (currentSection) {
+        // Check if it's a list item
+        if (line.match(/^(-|\d+\.)\s/)) {
+          // If we were collecting text, save it first
+          if (textStartIndex !== -1 && currentSection.textStartIndex === -1) {
+            currentSection.textStartIndex = textStartIndex;
+            currentSection.textEndIndex = index - 1;
+            currentSection.textContent = lines.slice(textStartIndex, index).join('\n').trim();
+            textStartIndex = -1;
+          }
+          
+          // Mark as list section
+          currentSection.isListSection = true;
+          
+          const isCheckbox = /^- \[[ x]\]/.test(line);
+          const isChecked = /^- \[x\]/.test(line);
+          const isNumbered = /^\d+\./.test(line);
+          
+          // Extract text without prefix
+          let text = line;
+          if (isCheckbox) {
+            text = line.replace(/^- \[[ x]\]\s*/, '');
+          } else if (isNumbered) {
+            text = line.replace(/^\d+\.\s*/, '');
+          } else {
+            text = line.replace(/^-\s*/, '');
+          }
+
+          currentSection.items.push({
+            text,
+            lineIndex: index,
+            isCheckbox,
+            isChecked,
+            isNumbered
+          });
+        } else if (line.trim() !== '') {
+          // It's a text line (not empty, not a header, not a list)
+          if (textStartIndex === -1) {
+            textStartIndex = index;
+          }
+        } else if (line.trim() === '' && textStartIndex !== -1) {
+          // Empty line after text - save the text block
+          if (currentSection.textStartIndex === -1) {
+            currentSection.textStartIndex = textStartIndex;
+            currentSection.textEndIndex = index - 1;
+            currentSection.textContent = lines.slice(textStartIndex, index).join('\n').trim();
+            textStartIndex = -1;
+          }
+        }
+      }
+    });
+
+    // Save last section
+    if (currentSection) {
+      // Save any remaining text
+      if (textStartIndex !== -1 && currentSection.textStartIndex === -1) {
+        currentSection.textStartIndex = textStartIndex;
+        currentSection.textEndIndex = lines.length - 1;
+        currentSection.textContent = lines.slice(textStartIndex).join('\n').trim();
+      }
+      sections.push(currentSection);
+    }
+
+    return sections;
   };
 
   const handleView = useCallback(async (recording: Recording) => {
@@ -412,61 +756,259 @@ export default function HistoryPage() {
                                   <span className="text-xs font-semibold text-gold-500 uppercase tracking-wider">
                                     {enrichment.type}
                                   </span>
+                                  {editingEnrichmentId === enrichment.id ? (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={handleSaveEdit}
+                                        disabled={savingEnrichment || !editedEnrichmentContent.trim()}
+                                        className="p-1.5 rounded-lg bg-gold-500/20 border border-gold-500/30 text-gold-400 hover:bg-gold-500/30 hover:border-gold-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        aria-label="Speichern"
+                                      >
+                                        {savingEnrichment ? (
+                                          <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                          <Save className="w-4 h-4" />
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEdit}
+                                        disabled={savingEnrichment}
+                                        className="p-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        aria-label="Abbrechen"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleStartEdit(enrichment.id, enrichment.content)}
+                                      className="p-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200"
+                                      aria-label="Bearbeiten"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                  )}
                                 </div>
-                                <div 
-                                  className="enrichment-content prose prose-sm prose-invert max-w-none prose-headings:text-white prose-p:text-dark-300 prose-strong:text-white prose-em:text-dark-200 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-300 prose-ol:text-dark-300 prose-li:text-dark-300 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-400 prose-blockquote:border-dark-600"
-                                  data-enrichment-id={enrichment.id}
-                                >
-                                  <ReactMarkdown 
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                      li: ({ children, className, ...props }) => {
-                                        const isTaskItem = className?.includes('task-list-item');
+                                
+                                {editingEnrichmentId === enrichment.id ? (
+                                  <div className="space-y-3">
+                                    <textarea
+                                      value={editedEnrichmentContent}
+                                      onChange={(e) => setEditedEnrichmentContent(e.target.value)}
+                                      className="w-full bg-dark-900 border border-dark-600 rounded-lg p-3 text-dark-200 text-sm leading-relaxed resize-none focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50 font-mono"
+                                      rows={12}
+                                      placeholder="Enrichment-Content bearbeiten..."
+                                    />
+                                    <p className="text-xs text-dark-500">
+                                      Markdown wird unterstützt. Nach dem Speichern wird der Inhalt formatiert angezeigt.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    {parseEnrichmentSections(enrichment.content).map((section, sectionIdx) => (
+                                      <div key={sectionIdx} className="space-y-2">
+                                        {/* Section Header */}
+                                        <h3 className="text-sm font-semibold text-white border-b border-dark-700 pb-1">
+                                          {section.title}
+                                        </h3>
                                         
-                                        if (isTaskItem) {
-                                          return (
+                                        {/* Text Content (for sections like Zusammenfassung) */}
+                                        {section.textContent && !section.isListSection && (
+                                          <div className="group relative">
+                                            {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === section.textStartIndex ? (
+                                              <div className="space-y-2">
+                                                <textarea
+                                                  value={editingItemInfo.text}
+                                                  onChange={(e) => setEditingItemInfo({ ...editingItemInfo, text: e.target.value })}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Escape') {
+                                                      setEditingItemInfo(null);
+                                                    }
+                                                  }}
+                                                  className="w-full bg-dark-900 border border-gold-500/50 rounded px-3 py-2 text-sm text-dark-200 focus:outline-none focus:border-gold-500 resize-none"
+                                                  rows={4}
+                                                  autoFocus
+                                                />
+                                                <div className="flex items-center gap-2">
+                                                  <button
+                                                    onClick={() => updateTextContent(enrichment.id, enrichment.content, section.textStartIndex, section.textEndIndex, editingItemInfo.text)}
+                                                    className="px-3 py-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 text-sm flex items-center gap-1"
+                                                  >
+                                                    <Check className="w-3 h-3" />
+                                                    Speichern
+                                                  </button>
+                                                  <button
+                                                    onClick={() => setEditingItemInfo(null)}
+                                                    className="px-3 py-1 rounded bg-dark-700 text-dark-400 hover:text-white text-sm flex items-center gap-1"
+                                                  >
+                                                    <X className="w-3 h-3" />
+                                                    Abbrechen
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <div className="group relative">
+                                                <p 
+                                                  className="text-sm text-dark-300 leading-relaxed cursor-pointer hover:bg-dark-800/30 rounded px-2 py-1 -mx-2 transition-colors"
+                                                  onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
+                                                >
+                                                  {section.textContent}
+                                                </p>
+                                                <button
+                                                  onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: section.textStartIndex, text: section.textContent })}
+                                                  className="absolute top-1 right-1 p-1 rounded bg-dark-800/80 border border-dark-700 text-dark-400 hover:text-gold-400 hover:border-gold-500/30 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                  title="Bearbeiten"
+                                                >
+                                                  <Edit2 className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        
+                                        {/* List Items */}
+                                        {section.isListSection && (
+                                          <>
+                                            {section.items.length > 0 && (
+                                              <ul className="space-y-1">
+                                                {section.items.map((item, itemIdx) => (
                                             <li 
-                                              className={`${className || ''} cursor-pointer hover:bg-dark-800/50 rounded px-1 -mx-1 transition-colors`}
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                const container = (e.currentTarget as HTMLElement).closest('.enrichment-content');
-                                                if (container) {
-                                                  const enrichmentId = container.getAttribute('data-enrichment-id');
-                                                  const allTaskItems = container.querySelectorAll('.task-list-item');
-                                                  const idx = Array.from(allTaskItems).indexOf(e.currentTarget as HTMLElement);
-                                                  if (idx !== -1 && enrichmentId) {
-                                                    toggleCheckbox(enrichmentId, enrichment.content, idx);
-                                                  }
-                                                }
-                                              }}
-                                              {...props}
+                                              key={itemIdx}
+                                              className="group flex items-start gap-2 py-1 px-2 -mx-2 rounded-lg hover:bg-dark-800/50 transition-colors"
                                             >
-                                              {children}
-                                            </li>
-                                          );
-                                        }
-                                        
-                                        return <li className={className} {...props}>{children}</li>;
-                                      },
-                                      input: ({ type, checked, disabled, ...props }) => {
-                                        if (type === 'checkbox') {
-                                          return (
-                                            <input
-                                              type="checkbox"
-                                              checked={checked}
-                                              readOnly
-                                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
-                                              {...props}
-                                            />
-                                          );
-                                        }
-                                        return <input type={type} checked={checked} disabled={disabled} {...props} />;
-                                      },
-                                    }}
-                                  >
-                                    {enrichment.content}
-                                  </ReactMarkdown>
-                                </div>
+                                              {/* Checkbox or bullet */}
+                                              {item.isCheckbox ? (
+                                                <button
+                                                  onClick={() => toggleCheckbox(enrichment.id, enrichment.content, 
+                                                    enrichment.content.split('\n').findIndex((line, idx) => idx === item.lineIndex)
+                                                  )}
+                                                  className="mt-0.5 flex-shrink-0"
+                                                >
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={item.isChecked}
+                                                    readOnly
+                                                    className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 cursor-pointer"
+                                                  />
+                                                </button>
+                                              ) : item.isNumbered ? (
+                                                <span className="text-gold-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
+                                                  {itemIdx + 1}.
+                                                </span>
+                                              ) : (
+                                                <span className="text-gold-500 mt-1 flex-shrink-0">•</span>
+                                              )}
+                                              
+                                              {/* Item content - editable */}
+                                              {editingItemInfo?.enrichmentId === enrichment.id && editingItemInfo?.lineIndex === item.lineIndex ? (
+                                                <div className="flex-1 flex items-center gap-2">
+                                                  <input
+                                                    type="text"
+                                                    value={editingItemInfo.text}
+                                                    onChange={(e) => setEditingItemInfo({ ...editingItemInfo, text: e.target.value })}
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter') {
+                                                        updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text);
+                                                      } else if (e.key === 'Escape') {
+                                                        setEditingItemInfo(null);
+                                                      }
+                                                    }}
+                                                    className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
+                                                    autoFocus
+                                                  />
+                                                  <button
+                                                    onClick={() => updateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text)}
+                                                    className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
+                                                  >
+                                                    <Check className="w-3 h-3" />
+                                                  </button>
+                                                  <button
+                                                    onClick={() => setEditingItemInfo(null)}
+                                                    className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
+                                                  >
+                                                    <X className="w-3 h-3" />
+                                                  </button>
+                                                </div>
+                                              ) : (
+                                                <>
+                                                  <span 
+                                                    className={`flex-1 text-sm text-dark-300 cursor-pointer ${item.isChecked ? 'line-through text-dark-500' : ''}`}
+                                                    onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
+                                                  >
+                                                    {item.text}
+                                                  </span>
+                                                  
+                                                  {/* Action buttons - visible on hover */}
+                                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                      onClick={() => setEditingItemInfo({ enrichmentId: enrichment.id, lineIndex: item.lineIndex, text: item.text })}
+                                                      className="p-1 rounded bg-dark-700 text-dark-400 hover:text-gold-400 hover:bg-dark-600 transition-colors"
+                                                      title="Bearbeiten"
+                                                    >
+                                                      <Edit2 className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                      onClick={() => deleteListItem(enrichment.id, enrichment.content, item.lineIndex)}
+                                                      className="p-1 rounded bg-dark-700 text-dark-400 hover:text-red-400 hover:bg-dark-600 transition-colors"
+                                                      title="Löschen"
+                                                    >
+                                                      <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                  </div>
+                                                </>
+                                              )}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                            )}
+                                            
+                                            {/* Add new item - only for list sections */}
+                                            {addingItemTo?.enrichmentId === enrichment.id && addingItemTo?.section === section.title ? (
+                                              <div className="flex items-center gap-2 pl-6 mt-2">
+                                                <input
+                                                  type="text"
+                                                  value={newItemText}
+                                                  onChange={(e) => setNewItemText(e.target.value)}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                      addListItem(enrichment.id, enrichment.content, section.title);
+                                                    } else if (e.key === 'Escape') {
+                                                      setAddingItemTo(null);
+                                                      setNewItemText('');
+                                                    }
+                                                  }}
+                                                  placeholder="Neuen Punkt eingeben..."
+                                                  className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
+                                                  autoFocus
+                                                />
+                                                <button
+                                                  onClick={() => addListItem(enrichment.id, enrichment.content, section.title)}
+                                                  className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
+                                                >
+                                                  <Check className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                  onClick={() => { setAddingItemTo(null); setNewItemText(''); }}
+                                                  className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            ) : (
+                                              <button
+                                                onClick={() => setAddingItemTo({ enrichmentId: enrichment.id, section: section.title })}
+                                                className="flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors pl-6 mt-1"
+                                              >
+                                                <Plus className="w-3 h-3" />
+                                                Hinzufügen
+                                              </button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
