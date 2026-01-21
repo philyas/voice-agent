@@ -155,14 +155,26 @@ export default function HistoryPage() {
     let insertIndex = -1;
     let isInSection = false;
     let listPrefix = '- ';
+    let lastNumber = 0;
+
+    // Determine default prefix based on section title
+    const sectionLower = section.toLowerCase();
+    if (sectionLower.includes('aufgaben') || sectionLower.includes('todos') || sectionLower.includes('to-dos')) {
+      listPrefix = '- [ ] ';
+    } else if (sectionLower.includes('kernpunkte') || sectionLower.includes('key points')) {
+      listPrefix = '1. ';
+    } else {
+      listPrefix = '- ';
+    }
 
     // Find the section and determine where to insert
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
       // Check if we're entering the target section
-      if (line.startsWith('## ') && line.toLowerCase().includes(section.toLowerCase())) {
+      if (line.startsWith('## ') && line.toLowerCase().includes(sectionLower)) {
         isInSection = true;
+        insertIndex = i + 1; // Default: insert right after section header
         continue;
       }
       
@@ -180,7 +192,8 @@ export default function HistoryPage() {
           // Numbered list - find the last number
           const match = line.match(/^(\d+)\./);
           if (match) {
-            listPrefix = `${parseInt(match[1]) + 1}. `;
+            lastNumber = parseInt(match[1]);
+            listPrefix = `${lastNumber + 1}. `;
           }
         } else if (line.startsWith('- ')) {
           listPrefix = '- ';
@@ -334,6 +347,14 @@ export default function HistoryPage() {
             currentSection.textStartIndex = textStartIndex;
             currentSection.textEndIndex = index - 1;
           }
+          
+          // Mark as list section if title suggests it's a list section (even if empty)
+          const listSectionKeywords = ['aufgaben', 'todos', 'to-dos', 'kernpunkte', 'notizen', 'anmerkungen', 'action items', 'key points', 'notes'];
+          const titleLower = currentSection.title.toLowerCase();
+          if (listSectionKeywords.some(keyword => titleLower.includes(keyword))) {
+            currentSection.isListSection = true;
+          }
+          
           sections.push(currentSection);
         }
         
@@ -400,14 +421,24 @@ export default function HistoryPage() {
     });
 
     // Save last section
-    if (currentSection) {
+    if (currentSection !== null) {
+      type SectionType = typeof sections[0];
+      const lastSection = currentSection as SectionType;
       // Save any remaining text
-      if (textStartIndex !== -1 && currentSection.textStartIndex === -1) {
-        currentSection.textStartIndex = textStartIndex;
-        currentSection.textEndIndex = lines.length - 1;
-        currentSection.textContent = lines.slice(textStartIndex).join('\n').trim();
+      if (textStartIndex !== -1 && lastSection.textStartIndex === -1) {
+        lastSection.textStartIndex = textStartIndex;
+        lastSection.textEndIndex = lines.length - 1;
+        lastSection.textContent = lines.slice(textStartIndex).join('\n').trim();
       }
-      sections.push(currentSection);
+      
+      // Mark as list section if title suggests it's a list section (even if empty)
+      const listSectionKeywords = ['aufgaben', 'todos', 'to-dos', 'kernpunkte', 'notizen', 'anmerkungen', 'action items', 'key points', 'notes'];
+      const titleLower = lastSection.title.toLowerCase();
+      if (listSectionKeywords.some(keyword => titleLower.includes(keyword))) {
+        lastSection.isListSection = true;
+      }
+      
+      sections.push(lastSection);
     }
 
     return sections;
@@ -962,7 +993,7 @@ export default function HistoryPage() {
                                             </ul>
                                             )}
                                             
-                                            {/* Add new item - only for list sections */}
+                                            {/* Add new item - always show for list sections */}
                                             {addingItemTo?.enrichmentId === enrichment.id && addingItemTo?.section === section.title ? (
                                               <div className="flex items-center gap-2 pl-6 mt-2">
                                                 <input
@@ -997,7 +1028,7 @@ export default function HistoryPage() {
                                             ) : (
                                               <button
                                                 onClick={() => setAddingItemTo({ enrichmentId: enrichment.id, section: section.title })}
-                                                className="flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors pl-6 mt-1"
+                                                className={`flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors ${section.items.length > 0 ? 'pl-6 mt-1' : 'mt-2'}`}
                                               >
                                                 <Plus className="w-3 h-3" />
                                                 Hinzufügen

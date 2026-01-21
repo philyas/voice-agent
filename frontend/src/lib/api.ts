@@ -178,6 +178,21 @@ export const api = {
     return handleResponse(response);
   },
 
+  async createManualEnrichment(
+    transcriptionId: string,
+    type: 'action_items' | 'notes' | 'key_points',
+    content: string = ''
+  ): Promise<ApiResponse<Enrichment>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/transcriptions/${transcriptionId}/enrichments/manual`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type, content }),
+    });
+    return handleResponse(response);
+  },
+
   async deleteEnrichment(id: string): Promise<ApiResponse<void>> {
     const response = await fetch(`${API_BASE_URL}/api/v1/enrichments/${id}`, {
       method: 'DELETE',

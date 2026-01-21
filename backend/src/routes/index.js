@@ -35,7 +35,8 @@ router.get('/', (req, res) => {
         'GET /transcriptions/:id': 'Get transcription by ID',
         'PATCH /transcriptions/:id': 'Update transcription text',
         'DELETE /transcriptions/:id': 'Delete transcription',
-        'POST /transcriptions/:id/enrich': 'Enrich transcription',
+        'POST /transcriptions/:id/enrich': 'Enrich transcription with AI',
+        'POST /transcriptions/:id/enrichments/manual': 'Create manual enrichment',
         'GET /transcriptions/:id/enrichments': 'Get enrichments',
       },
       enrichments: {

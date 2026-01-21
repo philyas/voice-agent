@@ -185,6 +185,24 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
   }
 
   /**
+   * Create a manual enrichment (without AI)
+   * @param {string} transcriptionId - Transcription UUID
+   * @param {string} type - Enrichment type
+   * @param {string} content - Initial content
+   * @returns {Promise<Object>}
+   */
+  async createManualEnrichment(transcriptionId, type, content = '') {
+    return enrichmentModel.createEnrichment({
+      transcriptionId,
+      type,
+      content,
+      promptUsed: null,
+      modelUsed: 'manual',
+      tokensUsed: 0,
+    });
+  }
+
+  /**
    * Get all enrichments for a transcription
    * @param {string} transcriptionId - Transcription UUID
    * @returns {Promise<Array>}

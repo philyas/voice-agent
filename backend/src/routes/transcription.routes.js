@@ -51,6 +51,13 @@ router.delete('/:id', transcriptionController.delete.bind(transcriptionControlle
 router.post('/:id/enrich', transcriptionController.enrich.bind(transcriptionController));
 
 /**
+ * @route   POST /api/v1/transcriptions/:id/enrichments/manual
+ * @desc    Create a manual enrichment (without AI)
+ * @access  Public
+ */
+router.post('/:id/enrichments/manual', transcriptionController.createManualEnrichment.bind(transcriptionController));
+
+/**
  * @route   GET /api/v1/transcriptions/:id/enrichments
  * @desc    Get all enrichments for a transcription
  * @access  Public

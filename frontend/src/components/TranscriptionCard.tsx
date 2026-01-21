@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Globe, Languages } from 'lucide-react';
+import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Globe, Languages, Plus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { EnrichmentType } from '@/lib/api';
@@ -47,13 +47,16 @@ const LANGUAGES = [
   { code: 'ro', name: 'Rumänisch', flag: '🇷🇴' },
 ];
 
-const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean; isTranslation?: boolean }[] = [
+// Types that support manual item addition
+const LIST_ENRICHMENT_TYPES = ['action_items', 'notes', 'key_points'] as const;
+
+const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean; isTranslation?: boolean; isListType?: boolean }[] = [
   { type: 'complete', label: 'Komplett-Analyse', icon: <FilePenLine className="w-4 h-4" />, isPrimary: true },
   { type: 'summary', label: 'Zusammenfassung', icon: <FileTextIcon className="w-4 h-4" /> },
   { type: 'formatted', label: 'Formatiert', icon: <Wand2 className="w-4 h-4" /> },
-  { type: 'notes', label: 'Notizen', icon: <List className="w-4 h-4" /> },
-  { type: 'action_items', label: 'Aufgaben', icon: <CheckSquare className="w-4 h-4" /> },
-  { type: 'key_points', label: 'Kernpunkte', icon: <Target className="w-4 h-4" /> },
+  { type: 'notes', label: 'Notizen', icon: <List className="w-4 h-4" />, isListType: true },
+  { type: 'action_items', label: 'Aufgaben', icon: <CheckSquare className="w-4 h-4" />, isListType: true },
+  { type: 'key_points', label: 'Kernpunkte', icon: <Target className="w-4 h-4" />, isListType: true },
   { type: 'translation', label: 'Übersetzung', icon: <Languages className="w-4 h-4" />, isTranslation: true },
 ];
 
@@ -77,6 +80,8 @@ export function TranscriptionCard({
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
   const [localEnrichments, setLocalEnrichments] = useState<EnrichmentData[]>(enrichments);
+  const [newItemText, setNewItemText] = useState('');
+  const [isAddingItem, setIsAddingItem] = useState(false);
 
   // Update currentText when text prop changes
   useEffect(() => {
@@ -128,11 +133,77 @@ export function TranscriptionCard({
     }
   };
 
+  /**
+   * Add a new item to a list-type enrichment (action_items, notes, key_points)
+   * Creates a new manual enrichment if none exists
+   */
+  const addItemToEnrichment = async (enrichmentId: string | undefined, content: string, enrichmentType: string, newItem: string) => {
+    if (!newItem.trim()) return;
+
+    // Format the new item based on enrichment type
+    let formattedItem: string;
+    if (enrichmentType === 'action_items') {
+      formattedItem = `- [ ] ${newItem.trim()}`;
+    } else {
+      formattedItem = `- ${newItem.trim()}`;
+    }
+
+    // Append to existing content
+    const newContent = content.trim() ? `${content.trim()}\n${formattedItem}` : formattedItem;
+
+    // If no enrichment exists, create a manual one
+    if (!enrichmentId && transcriptionId) {
+      try {
+        const response = await api.createManualEnrichment(
+          transcriptionId,
+          enrichmentType as 'action_items' | 'notes' | 'key_points',
+          newContent
+        );
+        if (response.data) {
+          const data = response.data;
+          // Add new enrichment to local state
+          setLocalEnrichments(prev => [...prev, {
+            id: data.id,
+            type: data.type,
+            content: data.content,
+          }]);
+        }
+      } catch (error) {
+        console.error('Failed to create manual enrichment:', error);
+      }
+    } else if (enrichmentId) {
+      // Update local state immediately
+      setLocalEnrichments(prev =>
+        prev.map(e => e.id === enrichmentId ? { ...e, content: newContent } : e)
+      );
+
+      // Save to backend
+      if (onEnrichmentUpdate) {
+        try {
+          await onEnrichmentUpdate(enrichmentId, newContent);
+        } catch (error) {
+          // Revert on error
+          setLocalEnrichments(prev =>
+            prev.map(e => e.id === enrichmentId ? { ...e, content } : e)
+          );
+          console.error('Failed to add item:', error);
+        }
+      }
+    }
+
+    setNewItemText('');
+    setIsAddingItem(false);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showTranslationDropdown && !(event.target as Element).closest('.relative')) {
-        setShowTranslationDropdown(false);
+      if (showTranslationDropdown) {
+        const target = event.target as Element;
+        const dropdownContainer = target.closest('.relative.z-50');
+        if (!dropdownContainer) {
+          setShowTranslationDropdown(false);
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -143,6 +214,8 @@ export function TranscriptionCard({
     if (!onEnrich || loadingType) return;
     
     setLoadingType(type);
+    setIsAddingItem(false);
+    setNewItemText('');
     try {
       await onEnrich(type, targetLanguage);
       setActiveEnrichment(type);
@@ -206,9 +279,9 @@ export function TranscriptionCard({
   const activeEnrichmentId = activeEnrichmentData?.id;
 
   return (
-    <div className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden animate-fade-in-up">
+    <div className="bg-dark-850 border border-dark-700 rounded-2xl animate-fade-in-up">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between overflow-hidden rounded-t-2xl">
         <button
           onClick={() => setIsTranscriptionExpanded(!isTranscriptionExpanded)}
           className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
@@ -236,7 +309,7 @@ export function TranscriptionCard({
 
       {/* Content */}
       {isTranscriptionExpanded && (
-        <div className="p-6">
+        <div className="p-6 overflow-hidden">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative">
@@ -309,9 +382,9 @@ export function TranscriptionCard({
               )}
 
               {/* Enriched Content */}
-              {activeContent && (
+              {(activeContent || (activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]))) && (
                 <div className="enrichment-content prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
-                  <ReactMarkdown 
+                  {activeContent && <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
                       // Custom list item to handle checkbox clicks
@@ -361,14 +434,84 @@ export function TranscriptionCard({
                     }}
                   >
                     {activeContent}
-                  </ReactMarkdown>
+                  </ReactMarkdown>}
+
+                  {/* Empty state message for list-type enrichments */}
+                  {!activeContent && activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (
+                    <p className="text-dark-400 text-sm italic mb-4">
+                      {activeEnrichment === 'action_items' ? 'Keine Aufgaben vorhanden. Füge manuell welche hinzu.' :
+                       activeEnrichment === 'notes' ? 'Keine Notizen vorhanden. Füge manuell welche hinzu.' :
+                       activeEnrichment === 'key_points' ? 'Keine Kernpunkte vorhanden. Füge manuell welche hinzu.' : 
+                       'Keine Einträge vorhanden.'}
+                    </p>
+                  )}
+
+                  {/* Add item button for list-type enrichments */}
+                  {LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (activeEnrichmentId || transcriptionId) && (
+                    <div className={activeContent ? "mt-4 pt-4 border-t border-dark-700" : ""}>
+                      {isAddingItem ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newItemText}
+                            onChange={(e) => setNewItemText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newItemText.trim() && activeEnrichment) {
+                                addItemToEnrichment(activeEnrichmentId, activeContent || '', activeEnrichment, newItemText);
+                              } else if (e.key === 'Escape') {
+                                setIsAddingItem(false);
+                                setNewItemText('');
+                              }
+                            }}
+                            placeholder={
+                              activeEnrichment === 'action_items' ? 'Neue Aufgabe...' :
+                              activeEnrichment === 'notes' ? 'Neue Notiz...' :
+                              activeEnrichment === 'key_points' ? 'Neuer Kernpunkt...' : 'Neuer Eintrag...'
+                            }
+                            className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-dark-200 placeholder-dark-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => activeEnrichment && addItemToEnrichment(activeEnrichmentId, activeContent || '', activeEnrichment, newItemText)}
+                            disabled={!newItemText.trim()}
+                            className="px-3 py-2 rounded-lg bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-gold transition-all"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsAddingItem(false);
+                              setNewItemText('');
+                            }}
+                            className="px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsAddingItem(true)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200 text-sm"
+                        >
+                          <Plus className="w-4 h-4" />
+                          {activeEnrichment === 'action_items' ? 'Aufgabe hinzufügen' :
+                           activeEnrichment === 'notes' ? 'Notiz hinzufügen' :
+                           activeEnrichment === 'key_points' ? 'Kernpunkt hinzufügen' : 'Hinzufügen'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Back to original button */}
               {activeEnrichment && (
                 <button
-                  onClick={() => setActiveEnrichment(null)}
+                  onClick={() => {
+                    setActiveEnrichment(null);
+                    setIsAddingItem(false);
+                    setNewItemText('');
+                  }}
                   className="mt-4 flex items-center gap-1 text-sm text-gold-500 hover:text-gold-400 transition-colors"
                 >
                   <ChevronRight className="w-4 h-4 rotate-180" />
@@ -382,12 +525,12 @@ export function TranscriptionCard({
 
       {/* Enrichment Options */}
       {!isLoading && text && onEnrich && (
-        <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700">
+        <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700 overflow-visible">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-gold-500" />
             <span className="text-sm font-semibold text-white">KI-Verarbeitung</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 relative">
             {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary, isTranslation }) => {
               if (isTranslation) {
                 // Translation dropdown
@@ -395,7 +538,7 @@ export function TranscriptionCard({
                 const isLoadingTranslation = loadingType === 'translation';
 
                 return (
-                  <div key={type} className="relative">
+                  <div key={type} className="relative z-50">
                     <button
                       onClick={() => setShowTranslationDropdown(!showTranslationDropdown)}
                       disabled={isLoadingTranslation}
@@ -419,7 +562,7 @@ export function TranscriptionCard({
                       )}
                     </button>
                     {showTranslationDropdown && !isLoadingTranslation && (
-                      <div className="absolute top-full left-0 mt-2 bg-dark-850 border border-dark-700 rounded-xl shadow-lg z-50 min-w-[200px] max-h-64 overflow-y-auto">
+                      <div className="absolute top-full left-0 mt-2 bg-dark-850 border border-dark-700 rounded-xl shadow-2xl z-[100] min-w-[200px] max-h-64 overflow-y-auto">
                         {LANGUAGES.map((lang) => {
                           const hasLangEnrichment = translationEnrichments.some((e) => e.type === 'translation');
                           return (
@@ -443,11 +586,21 @@ export function TranscriptionCard({
               const hasEnrichment = localEnrichments.some((e) => e.type === type);
               const isActive = activeEnrichment === type;
               const isLoadingThis = loadingType === type;
+              const isListType = LIST_ENRICHMENT_TYPES.includes(type as typeof LIST_ENRICHMENT_TYPES[number]);
 
               return (
                 <button
                   key={type}
-                  onClick={() => hasEnrichment ? setActiveEnrichment(type) : handleEnrich(type)}
+                  onClick={() => {
+                    setIsAddingItem(false);
+                    setNewItemText('');
+                    // For list types without enrichment, just show the add UI (don't trigger AI)
+                    if (isListType && !hasEnrichment) {
+                      setActiveEnrichment(type);
+                    } else {
+                      hasEnrichment ? setActiveEnrichment(type) : handleEnrich(type);
+                    }
+                  }}
                   disabled={isLoadingThis}
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2

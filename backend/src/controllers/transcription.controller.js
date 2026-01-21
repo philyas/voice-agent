@@ -163,6 +163,40 @@ class TranscriptionController {
   }
 
   /**
+   * Create a manual enrichment (without AI)
+   * POST /api/v1/transcriptions/:id/enrichments/manual
+   */
+  async createManualEnrichment(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { type, content = '' } = req.body;
+
+      // Validate type
+      const validTypes = ['action_items', 'notes', 'key_points'];
+      if (!type || !validTypes.includes(type)) {
+        throw new ApiError(400, `Invalid type. Must be one of: ${validTypes.join(', ')}`);
+      }
+
+      // Check if transcription exists
+      const transcription = await transcriptionService.getTranscriptionById(id);
+      if (!transcription) {
+        throw new ApiError(404, 'Transcription not found');
+      }
+
+      // Create enrichment without AI
+      const enrichment = await enrichmentService.createManualEnrichment(id, type, content);
+
+      res.status(201).json({
+        success: true,
+        data: enrichment,
+        message: 'Manual enrichment created successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Get transcription statistics
    * GET /api/v1/transcriptions/stats
    */
