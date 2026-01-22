@@ -57,6 +57,7 @@ class OpenAIService {
    * @param {string} systemPrompt - System prompt
    * @param {string} userMessage - User message
    * @param {Object} options - Completion options
+   * @param {Array} options.history - Chat history [{role: 'user'|'assistant', content: string}]
    * @returns {Promise<Object>} - Completion result
    */
   async generateCompletion(systemPrompt, userMessage, options = {}) {
@@ -64,15 +65,32 @@ class OpenAIService {
       model = 'gpt-4o-mini',
       temperature = 0.7,
       maxTokens = 2000,
+      history = [],
     } = options;
 
     try {
+      // Build messages array with system prompt, history, and current user message
+      const messages = [
+        { role: 'system', content: systemPrompt },
+      ];
+
+      // Add chat history (last 10 exchanges to avoid token limits)
+      const recentHistory = history.slice(-20); // Last 20 messages (10 exchanges)
+      recentHistory.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({
+            role: msg.role,
+            content: msg.content,
+          });
+        }
+      });
+
+      // Add current user message
+      messages.push({ role: 'user', content: userMessage });
+
       const completion = await this.client.chat.completions.create({
         model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
+        messages,
         temperature,
         max_tokens: maxTokens,
       });

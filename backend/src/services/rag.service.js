@@ -17,6 +17,7 @@ class RAGService {
    * Answer a question using RAG
    * @param {string} question - User's question
    * @param {Object} options - RAG options
+   * @param {Array} options.history - Chat history [{role: 'user'|'assistant', content: string}]
    * @returns {Promise<Object>} - Answer with sources
    */
   async answerQuestion(question, options = {}) {
@@ -25,6 +26,7 @@ class RAGService {
       minSimilarity = DEFAULT_MIN_SIMILARITY,
       sourceTypes = ['transcription', 'enrichment'],
       language = 'de',
+      history = [],
     } = options;
 
     // 1. Retrieve relevant context via semantic search
@@ -47,7 +49,7 @@ class RAGService {
     // 2. Build context from retrieved documents
     const context = this.buildContext(relevantDocs);
 
-    // 3. Generate answer using GPT
+    // 3. Generate answer using GPT with chat history
     const systemPrompt = this.buildSystemPrompt(language);
     const userPrompt = this.buildUserPrompt(question, context, language);
 
@@ -58,6 +60,7 @@ class RAGService {
         model: 'gpt-4o-mini',
         temperature: 0.3, // Lower temperature for more factual responses
         maxTokens: 1500,
+        history, // Pass chat history for conversation context
       }
     );
 
@@ -230,23 +233,12 @@ Please answer the question based on the context above.`;
    * @returns {Promise<Object>}
    */
   async chat(question, history = [], options = {}) {
-    // For follow-up questions, we might want to use previous context
-    // But for now, we treat each question independently with RAG
-
-    // If the question seems like a follow-up, include history context
-    const isFollowUp = this.isFollowUpQuestion(question);
-    
-    if (isFollowUp && history.length > 0) {
-      // Expand the question with context from history
-      const lastExchange = history.slice(-2);
-      const expandedQuestion = `Kontext der vorherigen Frage: ${lastExchange.map(m => m.content).join(' - ')}
-      
-Aktuelle Frage: ${question}`;
-      
-      return this.answerQuestion(expandedQuestion, options);
-    }
-
-    return this.answerQuestion(question, options);
+    // Use chat history as conversation context
+    // The history will be passed to GPT so it can reference previous messages
+    return this.answerQuestion(question, {
+      ...options,
+      history, // Pass full chat history for conversation context
+    });
   }
 
   /**
