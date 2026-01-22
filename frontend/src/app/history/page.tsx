@@ -38,9 +38,22 @@ function HistoryPageContent() {
   const [googleTokens, setGoogleTokens] = useState<any>(null);
   const [creatingGoogleDoc, setCreatingGoogleDoc] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
+  const recordingRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clipboardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadRecordings();
+    
+    // Cleanup function to clear any pending timeouts
+    return () => {
+      if (emailTimeoutRef.current) {
+        clearTimeout(emailTimeoutRef.current);
+      }
+      if (clipboardTimeoutRef.current) {
+        clearTimeout(clipboardTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Close share menu when clicking outside
@@ -51,14 +64,19 @@ function HistoryPageContent() {
       }
     };
 
+    let timeoutId: NodeJS.Timeout | null = null;
+
     if (shareMenuOpen) {
       // Use setTimeout to avoid immediate closing when opening
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         document.addEventListener('mousedown', handleClickOutside);
       }, 0);
     }
 
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [shareMenuOpen]);
@@ -482,13 +500,29 @@ function HistoryPageContent() {
     await loadTranscription(recording.id);
   }, []);
 
-  // Auto-select recording from query parameter
+  // Auto-select recording from query parameter and scroll to it
   useEffect(() => {
     const recordingId = searchParams.get('recording');
     if (recordingId && recordings.length > 0) {
       const recording = recordings.find((r) => r.id === recordingId);
       if (recording && recording.id !== selectedRecording?.id) {
         handleView(recording);
+        
+        // Scroll to the recording element after a short delay to ensure it's rendered
+        const timeoutId = setTimeout(() => {
+          const element = recordingRefs.current.get(recordingId);
+          if (element) {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }, 100);
+
+        // Cleanup: cancel timeout if component unmounts or dependencies change
+        return () => {
+          clearTimeout(timeoutId);
+        };
       }
     }
   }, [searchParams, recordings, selectedRecording, handleView]);
@@ -530,6 +564,8 @@ function HistoryPageContent() {
     try {
       await api.deleteRecording(id);
       setRecordings(recordings.filter((r) => r.id !== id));
+      // Clean up ref
+      recordingRefs.current.delete(id);
       if (selectedRecording?.id === id) {
         setSelectedRecording(null);
         setTranscription(null);
@@ -563,10 +599,17 @@ function HistoryPageContent() {
     try {
       await api.sendRecordingEmail(selectedRecording.id, emailToSend.trim());
       setEmailSuccess('E-Mail wurde erfolgreich versendet!');
-      setTimeout(() => {
+      
+      // Clear previous timeout if exists
+      if (emailTimeoutRef.current) {
+        clearTimeout(emailTimeoutRef.current);
+      }
+      
+      emailTimeoutRef.current = setTimeout(() => {
         setEmailModalOpen(false);
         setEmailToSend('');
         setEmailSuccess(null);
+        emailTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Versenden der E-Mail');
@@ -672,7 +715,16 @@ function HistoryPageContent() {
       
       await navigator.clipboard.writeText(textContent);
       setCopiedToClipboard(true);
-      setTimeout(() => setCopiedToClipboard(false), 2000);
+      
+      // Clear previous timeout if exists
+      if (clipboardTimeoutRef.current) {
+        clearTimeout(clipboardTimeoutRef.current);
+      }
+      
+      clipboardTimeoutRef.current = setTimeout(() => {
+        setCopiedToClipboard(false);
+        clipboardTimeoutRef.current = null;
+      }, 2000);
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
       setError('Fehler beim Kopieren in die Zwischenablage');
@@ -777,6 +829,13 @@ function HistoryPageContent() {
               recordings.map((recording) => (
                 <div
                   key={recording.id}
+                  ref={(el) => {
+                    if (el) {
+                      recordingRefs.current.set(recording.id, el);
+                    } else {
+                      recordingRefs.current.delete(recording.id);
+                    }
+                  }}
                   className={`bg-dark-850 border rounded-2xl p-5 transition-all duration-200 cursor-pointer ${
                     selectedRecording?.id === recording.id
                       ? 'border-gold-500/50 shadow-gold'
