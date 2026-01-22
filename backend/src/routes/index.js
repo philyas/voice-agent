@@ -8,6 +8,7 @@ const recordingRoutes = require('./recording.routes');
 const transcriptionRoutes = require('./transcription.routes');
 const enrichmentRoutes = require('./enrichment.routes');
 const googleDocsRoutes = require('./google-docs.routes');
+const ragRoutes = require('./rag.routes');
 const { router: realtimeRoutes } = require('./realtime.routes');
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.get('/', (req, res) => {
       recordings: '/api/v1/recordings',
       transcriptions: '/api/v1/transcriptions',
       enrichments: '/api/v1/enrichments',
+      rag: '/api/v1/rag',
     },
     documentation: {
       recordings: {
@@ -48,6 +50,13 @@ router.get('/', (req, res) => {
         'PATCH /enrichments/:id': 'Update enrichment content',
         'DELETE /enrichments/:id': 'Delete enrichment',
       },
+      rag: {
+        'POST /rag/chat': 'Chat with your recordings using RAG',
+        'POST /rag/search': 'Semantic search over recordings',
+        'GET /rag/similar/:transcriptionId': 'Find similar recordings',
+        'POST /rag/embed-all': 'Embed all existing data',
+        'GET /rag/stats': 'Get embedding statistics',
+      },
     },
   });
 });
@@ -57,6 +66,7 @@ router.use('/recordings', recordingRoutes);
 router.use('/transcriptions', transcriptionRoutes);
 router.use('/enrichments', enrichmentRoutes);
 router.use('/google-docs', googleDocsRoutes);
+router.use('/rag', ragRoutes);
 router.use('/realtime', realtimeRoutes);
 
 module.exports = router;

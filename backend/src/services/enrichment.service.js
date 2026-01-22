@@ -6,6 +6,7 @@
 const enrichmentModel = require('../models/enrichment.model');
 const transcriptionModel = require('../models/transcription.model');
 const openaiService = require('./openai.service');
+const embeddingService = require('./embedding.service');
 
 class EnrichmentService {
   /**
@@ -178,10 +179,30 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
       tokensUsed: result.usage.totalTokens,
     });
 
+    // Generate embedding for RAG (async, don't wait)
+    this.createEmbeddingAsync(enrichment.id, result.content);
+
     return {
       enrichment,
       usage: result.usage,
     };
+  }
+
+  /**
+   * Create embedding asynchronously (fire and forget)
+   * @param {string} enrichmentId - Enrichment UUID
+   * @param {string} content - Enrichment content
+   */
+  async createEmbeddingAsync(enrichmentId, content) {
+    try {
+      if (embeddingService.isConfigured()) {
+        await embeddingService.embedEnrichment(enrichmentId, content);
+        console.log(`Embedding created for enrichment ${enrichmentId}`);
+      }
+    } catch (error) {
+      console.error(`Failed to create embedding for enrichment ${enrichmentId}:`, error.message);
+      // Don't throw - embedding is optional
+    }
   }
 
   /**
@@ -192,7 +213,7 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
    * @returns {Promise<Object>}
    */
   async createManualEnrichment(transcriptionId, type, content = '') {
-    return enrichmentModel.createEnrichment({
+    const enrichment = await enrichmentModel.createEnrichment({
       transcriptionId,
       type,
       content,
@@ -200,6 +221,13 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
       modelUsed: 'manual',
       tokensUsed: 0,
     });
+
+    // Generate embedding if content is provided
+    if (content && content.trim().length > 0) {
+      this.createEmbeddingAsync(enrichment.id, content);
+    }
+
+    return enrichment;
   }
 
   /**
@@ -236,7 +264,14 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
    * @returns {Promise<Object|null>}
    */
   async updateEnrichment(id, data) {
-    return enrichmentModel.update(id, { content: data.content });
+    const result = await enrichmentModel.update(id, { content: data.content });
+    
+    // Re-embed the updated enrichment
+    if (result && data.content && data.content.trim().length > 0) {
+      this.createEmbeddingAsync(id, data.content);
+    }
+    
+    return result;
   }
 
   /**

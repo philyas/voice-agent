@@ -242,6 +242,156 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  // RAG (Retrieval-Augmented Generation)
+  async ragChat(
+    question: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    options: { topK?: number; minSimilarity?: number; language?: string } = {}
+  ): Promise<ApiResponse<RAGChatResponse>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/rag/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question, history, options }),
+    });
+    return handleResponse(response);
+  },
+
+  async ragSearch(
+    query: string,
+    limit = 10,
+    minSimilarity = 0.6
+  ): Promise<ApiResponse<RAGSearchResponse>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/rag/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, limit, minSimilarity }),
+    });
+    return handleResponse(response);
+  },
+
+  async ragFindSimilar(
+    transcriptionId: string,
+    limit = 5
+  ): Promise<ApiResponse<RAGSimilarResponse>> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/rag/similar/${transcriptionId}?limit=${limit}`
+    );
+    return handleResponse(response);
+  },
+
+  async ragEmbedAll(): Promise<ApiResponse<RAGEmbedAllResponse>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/rag/embed-all`, {
+      method: 'POST',
+    });
+    return handleResponse(response);
+  },
+
+  async ragGetStats(): Promise<ApiResponse<RAGStatsResponse>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/rag/stats`);
+    return handleResponse(response);
+  },
 };
 
-export type { Recording, Transcription, Enrichment, EnrichmentType, ApiResponse };
+// RAG Types
+interface RAGSource {
+  recordingId: string;
+  transcriptionId: string;
+  filename: string;
+  date: string;
+  chunks: Array<{
+    content: string;
+    similarity: number;
+    type: string;
+  }>;
+  maxSimilarity: number;
+}
+
+interface RAGChatResponse {
+  answer: string;
+  sources: RAGSource[];
+  hasContext: boolean;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  relevantChunks?: number;
+}
+
+interface RAGSearchResult {
+  content: string;
+  similarity: number;
+  sourceType: string;
+  sourceId: string;
+  transcriptionId: string;
+  recordingId: string;
+  recordingFilename: string;
+  recordingDate: string;
+}
+
+interface RAGSearchResponse {
+  query: string;
+  results: RAGSearchResult[];
+  count: number;
+}
+
+interface RAGSimilarResponse {
+  transcriptionId: string;
+  similar: Array<{
+    content: string;
+    similarity: number;
+    transcriptionId: string;
+    recordingId: string;
+    recordingFilename: string;
+    recordingDate: string;
+  }>;
+  count: number;
+}
+
+interface RAGEmbedAllResponse {
+  transcriptions: {
+    embedded: number;
+    skipped: number;
+    errors: number;
+    total: number;
+  };
+  enrichments: {
+    embedded: number;
+    skipped: number;
+    errors: number;
+    total: number;
+  };
+}
+
+interface RAGStatsResponse {
+  total: number;
+  byType: {
+    transcription?: {
+      embeddings: number;
+      uniqueSources: number;
+    };
+    enrichment?: {
+      embeddings: number;
+      uniqueSources: number;
+    };
+  };
+}
+
+export type { 
+  Recording, 
+  Transcription, 
+  Enrichment, 
+  EnrichmentType, 
+  ApiResponse,
+  RAGChatResponse,
+  RAGSearchResponse,
+  RAGSimilarResponse,
+  RAGSource,
+  RAGSearchResult,
+  RAGStatsResponse,
+};

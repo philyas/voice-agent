@@ -1,7 +1,7 @@
 # Database Dockerfile
-# PostgreSQL with initialization scripts
+# PostgreSQL with pgvector extension for RAG embeddings
 
-FROM postgres:15-alpine
+FROM pgvector/pgvector:pg15
 
 # Copy initialization scripts
 COPY init/ /docker-entrypoint-initdb.d/

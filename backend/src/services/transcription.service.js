@@ -6,6 +6,7 @@
 const transcriptionModel = require('../models/transcription.model');
 const recordingModel = require('../models/recording.model');
 const openaiService = require('./openai.service');
+const embeddingService = require('./embedding.service');
 
 class TranscriptionService {
   /**
@@ -60,10 +61,30 @@ class TranscriptionService {
       });
     }
 
+    // Generate embedding for RAG (async, don't wait)
+    this.createEmbeddingAsync(transcription.id, result.text);
+
     return {
       transcription,
       isNew: true,
     };
+  }
+
+  /**
+   * Create embedding asynchronously (fire and forget)
+   * @param {string} transcriptionId - Transcription UUID
+   * @param {string} text - Transcription text
+   */
+  async createEmbeddingAsync(transcriptionId, text) {
+    try {
+      if (embeddingService.isConfigured()) {
+        await embeddingService.embedTranscription(transcriptionId, text);
+        console.log(`Embedding created for transcription ${transcriptionId}`);
+      }
+    } catch (error) {
+      console.error(`Failed to create embedding for transcription ${transcriptionId}:`, error.message);
+      // Don't throw - embedding is optional
+    }
   }
 
   /**
@@ -100,7 +121,14 @@ class TranscriptionService {
    * @returns {Promise<Object|null>}
    */
   async updateTranscriptionText(id, text) {
-    return transcriptionModel.updateText(id, text);
+    const result = await transcriptionModel.updateText(id, text);
+    
+    // Re-embed the updated transcription
+    if (result) {
+      this.createEmbeddingAsync(id, text);
+    }
+    
+    return result;
   }
 
   /**

@@ -4,6 +4,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Enable pgvector extension for RAG embeddings
+CREATE EXTENSION IF NOT EXISTS "vector";
+
 -- Create application user (optional, for production)
 -- CREATE USER voice_agent_app WITH PASSWORD 'secure_password';
 -- GRANT ALL PRIVILEGES ON DATABASE voice_agent TO voice_agent_app;
@@ -11,5 +14,5 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Log initialization
 DO $$
 BEGIN
-  RAISE NOTICE 'Voice Agent database initialized successfully at %', NOW();
+  RAISE NOTICE 'Voice Agent database initialized with pgvector at %', NOW();
 END $$;

@@ -7,10 +7,14 @@ const openaiService = require('./openai.service');
 const recordingService = require('./recording.service');
 const transcriptionService = require('./transcription.service');
 const enrichmentService = require('./enrichment.service');
+const embeddingService = require('./embedding.service');
+const ragService = require('./rag.service');
 
 module.exports = {
   openaiService,
   recordingService,
   transcriptionService,
   enrichmentService,
+  embeddingService,
+  ragService,
 };

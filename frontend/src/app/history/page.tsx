@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
-import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check, Share2, FileDown, Copy, CheckCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check, Share2, FileDown, Copy, CheckCircle, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -722,19 +722,28 @@ function HistoryPageContent() {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-dark-700/50">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-white">Aufnahmen-Historie</h1>
-              <p className="text-sm text-dark-400">
-                {recordings.length} {recordings.length === 1 ? 'Aufnahme' : 'Aufnahmen'} gespeichert
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-white">Aufnahmen-Historie</h1>
+                <p className="text-sm text-dark-400">
+                  {recordings.length} {recordings.length === 1 ? 'Aufnahme' : 'Aufnahmen'} gespeichert
+                </p>
+              </div>
             </div>
+            <Link
+              href="/chat"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">RAG Chat</span>
+            </Link>
           </div>
         </div>
       </header>
