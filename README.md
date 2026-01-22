@@ -121,15 +121,15 @@ Voice Agent ist eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-
 ```
 voice-agent/
 ├── frontend/          # Next.js + Electron
-│   ├── electron/      # Main Process (main.js, preload.js)
+│   ├── electron/      # Main Process
 │   └── src/
-│       ├── app/       # Pages (page.tsx, history/, chat/)
+│       ├── app/       # Pages
 │       ├── components/# UI Components (Feature-basiert organisiert)
-│       │   ├── shared/    # Wiederverwendbare Komponenten (AudioPlayer, StatusMessage)
-│       │   ├── recording/ # Aufnahme-Feature (RecordButton, TranscriptionCard, Waveform)
-│       │   ├── history/   # History-Feature (RecordingListItem, RecordingDetail, EnrichmentSection)
-│       │   ├── chat/      # Chat-Feature (RAGChat)
-│       │   └── modals/    # Alle Modals (ConfirmationModal, EmailModal, GoogleDocsModal)
+│       │   ├── shared/    # Wiederverwendbare Komponenten
+│       │   ├── recording/ # Aufnahme-Feature
+│       │   ├── history/   # History-Feature
+│       │   ├── chat/      # Chat-Feature
+│       │   └── modals/    # Alle Modals
 │       ├── hooks/     # Custom Hooks
 │       └── lib/       # API Client, Types, Utils
 ├── backend/           # Express.js Backend
@@ -140,8 +140,8 @@ voice-agent/
 │       ├── services/  # Business Logic
 │       ├── models/    # Database Access
 │       ├── middleware/# Error & Validation
-│       ├── utils/     # Shared Utilities (Response, Pagination, Logger)
-│       └── config/    # Configuration (Database, Environment)
+│       ├── utils/     # Shared Utilities
+│       └── config/    # Configuration
 └── database/          # PostgreSQL Init
 ```
 
