@@ -11,10 +11,12 @@ import {
   RecordingListItem,
   RecordingDetail,
   RecordingDetailEmpty,
+} from '@/components/history';
+import {
   EmailModal,
   GoogleDocsLoadingModal,
   GoogleDocsContentModal,
-} from '@/components/history';
+} from '@/components/modals';
 
 // Hooks
 import { useRecordings, useEnrichmentEditor, useShareMenu } from '@/hooks';

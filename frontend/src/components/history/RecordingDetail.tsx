@@ -1,7 +1,7 @@
 'use client';
 
 import { FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { AudioPlayer } from '@/components';
+import { AudioPlayer } from '@/components/shared';
 import { api } from '@/lib/api';
 import { formatDate, formatDuration, formatFileSize } from '@/lib/utils';
 import type { Recording, Transcription, Enrichment, ParsedEnrichmentSection } from '@/lib/types';

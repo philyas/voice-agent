@@ -1,10 +1,13 @@
-export { RecordButton } from './RecordButton';
-export { AudioPlayer } from './AudioPlayer';
-export { TranscriptionCard } from './TranscriptionCard';
-export { StatusMessage } from './StatusMessage';
-export { Waveform } from './Waveform';
-export { ConfirmationModal } from './ConfirmationModal';
-export { RAGChat } from './RAGChat';
+/**
+ * Components Index
+ * Main export file for all components
+ */
 
-// History components
+// Shared components (used across multiple features)
+export * from './shared';
+
+// Feature-specific components
+export * from './recording';
+export * from './chat';
+export * from './modals';
 export * from './history';

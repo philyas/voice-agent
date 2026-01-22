@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import { ConfirmationModal } from './ConfirmationModal';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 interface AudioPlayerProps {
   audioUrl: string;
