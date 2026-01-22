@@ -51,11 +51,32 @@ function createWindow() {
   });
 
   // Load the Next.js app
-  const startUrl = isDev 
-    ? 'http://localhost:3000' 
-    : `file://${path.join(__dirname, '../out/index.html')}`;
+  let startUrl;
+  if (isDev) {
+    startUrl = 'http://localhost:3000';
+  } else {
+    // In production, use app.getAppPath() to get the correct path
+    const appPath = app.getAppPath();
+    const indexPath = path.join(appPath, 'out', 'index.html');
+    startUrl = `file://${indexPath}`;
+  }
   
+  console.log('Loading URL:', startUrl);
   mainWindow.loadURL(startUrl);
+
+  // Error handling
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('Failed to load:', validatedURL, errorCode, errorDescription);
+    if (!isDev) {
+      // In production, show error in console and try to open DevTools for debugging
+      console.error('App failed to load. Check if out/ folder exists in the app bundle.');
+      mainWindow.webContents.openDevTools();
+    }
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Page loaded successfully');
+  });
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
