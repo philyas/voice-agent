@@ -3,12 +3,12 @@
  * Handles HTTP requests for sending emails
  */
 
+const BaseController = require('./base.controller');
 const emailService = require('../services/email.service');
-const recordingService = require('../services/recording.service');
-const transcriptionService = require('../services/transcription.service');
+const recordingDataService = require('../services/recording-data.service');
 const { ApiError } = require('../middleware/error.middleware');
 
-class EmailController {
+class EmailController extends BaseController {
   /**
    * Send recording via email
    * POST /api/v1/recordings/:id/send-email
@@ -18,60 +18,36 @@ class EmailController {
       const { id } = req.params;
       const { email } = req.body;
 
+      // Validate email
       if (!email || !email.includes('@')) {
-        throw new ApiError(400, 'Valid email address is required', 'INVALID_EMAIL');
+        throw new ApiError(400, 'Valid email address is required');
       }
 
       // Check if email service is configured
       if (!emailService.isConfigured()) {
-        throw new ApiError(503, 'Email service is not configured', 'EMAIL_NOT_CONFIGURED');
+        throw new ApiError(503, 'Email service is not configured');
       }
 
-      // Get recording
-      const recording = await recordingService.getRecordingById(id);
-      if (!recording) {
-        throw new ApiError(404, 'Recording not found', 'RECORDING_NOT_FOUND');
-      }
+      // Get recording with transcription and enrichments
+      const data = await recordingDataService.getRecordingOrThrow(id);
+      const { recording, transcription, enrichments } = data;
 
-      // Get transcription if available
-      let transcription = null;
-      let enrichments = [];
-      
-      try {
-        transcription = await transcriptionService.getTranscriptionByRecordingId(id);
-        if (transcription) {
-          // Get full transcription with enrichments
-          const fullTranscription = await transcriptionService.getTranscriptionById(transcription.id);
-          if (fullTranscription && fullTranscription.enrichments) {
-            enrichments = fullTranscription.enrichments;
-          }
-        }
-      } catch (err) {
-        // Transcription not found, continue without it
-        console.warn('No transcription found for recording:', id);
-      }
-
-      // Get audio file path
-      const audioPath = recording.storage_path;
-      if (!audioPath) {
-        throw new ApiError(404, 'Audio file not found', 'AUDIO_NOT_FOUND');
+      // Validate audio path
+      if (!recording.storage_path) {
+        throw new ApiError(404, 'Audio file not found');
       }
 
       // Send email
       const result = await emailService.sendRecordingEmail(
         email,
         id,
-        audioPath,
+        recording.storage_path,
         transcription?.text || null,
         enrichments,
         recording.original_filename || recording.filename
       );
 
-      res.json({
-        success: true,
-        message: 'Email sent successfully',
-        data: result,
-      });
+      return this.success(res, result, { message: 'Email sent successfully' });
     } catch (error) {
       next(error);
     }

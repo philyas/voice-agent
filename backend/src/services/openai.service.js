@@ -6,6 +6,7 @@
 const OpenAI = require('openai');
 const fs = require('fs');
 const { env } = require('../config/env');
+const logger = require('../utils/logger.util');
 
 class OpenAIService {
   constructor() {
@@ -47,7 +48,7 @@ class OpenAIService {
         words: transcription.words || [],
       };
     } catch (error) {
-      console.error('OpenAI Whisper Error:', error.message);
+      logger.error('OpenAI Whisper Error', error);
       throw new Error(`Transcription failed: ${error.message}`);
     }
   }
@@ -108,7 +109,7 @@ class OpenAIService {
         },
       };
     } catch (error) {
-      console.error('OpenAI GPT Error:', error.message);
+      logger.error('OpenAI GPT Error', error);
       throw new Error(`Completion failed: ${error.message}`);
     }
   }

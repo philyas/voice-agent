@@ -67,7 +67,9 @@ class EnrichmentModel extends BaseModel {
    * @returns {Promise<Array>}
    */
   async findAllWithTranscriptions(options = {}) {
-    const { limit = 50, offset = 0, type } = options;
+    const { parsePagination } = require('../utils/pagination.util');
+    const { type } = options;
+    const pagination = parsePagination(options);
     
     let query = this.db(this.tableName)
       .select(
@@ -76,8 +78,8 @@ class EnrichmentModel extends BaseModel {
       )
       .leftJoin('transcriptions', 'enrichments.transcription_id', 'transcriptions.id')
       .orderBy('enrichments.created_at', 'desc')
-      .limit(limit)
-      .offset(offset);
+      .limit(pagination.limit)
+      .offset(pagination.offset);
 
     if (type) {
       query = query.where('enrichments.type', type);

@@ -3,33 +3,23 @@
  * Handles HTTP requests for transcriptions
  */
 
+const BaseController = require('./base.controller');
 const transcriptionService = require('../services/transcription.service');
 const enrichmentService = require('../services/enrichment.service');
 const { ApiError } = require('../middleware/error.middleware');
 
-class TranscriptionController {
+class TranscriptionController extends BaseController {
   /**
    * Get all transcriptions
    * GET /api/v1/transcriptions
    */
   async getAll(req, res, next) {
     try {
-      const { limit = 50, offset = 0 } = req.query;
+      const pagination = this.parsePagination(req.query);
       
-      const transcriptions = await transcriptionService.getAllTranscriptions({
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10),
-      });
+      const transcriptions = await transcriptionService.getAllTranscriptions(pagination);
 
-      res.json({
-        success: true,
-        data: transcriptions,
-        meta: {
-          limit: parseInt(limit, 10),
-          offset: parseInt(offset, 10),
-          count: transcriptions.length,
-        },
-      });
+      return this.paginated(res, transcriptions, pagination);
     } catch (error) {
       next(error);
     }
@@ -44,15 +34,9 @@ class TranscriptionController {
       const { id } = req.params;
       
       const transcription = await transcriptionService.getTranscriptionById(id);
-      
-      if (!transcription) {
-        throw new ApiError(404, 'Transcription not found');
-      }
+      this.getEntityOr404(transcription, 'Transcription');
 
-      res.json({
-        success: true,
-        data: transcription,
-      });
+      return this.success(res, transcription);
     } catch (error) {
       next(error);
     }
@@ -67,21 +51,13 @@ class TranscriptionController {
       const { id } = req.params;
       const { text } = req.body;
 
-      if (!text || typeof text !== 'string') {
-        throw new ApiError(400, 'Text is required');
-      }
+      this.validateRequired(req.body, ['text']);
+      this.validateType(req.body, 'text', 'string');
 
       const transcription = await transcriptionService.updateTranscriptionText(id, text);
-      
-      if (!transcription) {
-        throw new ApiError(404, 'Transcription not found');
-      }
+      this.getEntityOr404(transcription, 'Transcription');
 
-      res.json({
-        success: true,
-        data: transcription,
-        message: 'Transcription updated successfully',
-      });
+      return this.success(res, transcription, { message: 'Transcription updated successfully' });
     } catch (error) {
       next(error);
     }
@@ -96,15 +72,9 @@ class TranscriptionController {
       const { id } = req.params;
       
       const deleted = await transcriptionService.deleteTranscription(id);
-      
-      if (!deleted) {
-        throw new ApiError(404, 'Transcription not found');
-      }
+      this.getEntityOr404(deleted, 'Transcription');
 
-      res.json({
-        success: true,
-        message: 'Transcription deleted successfully',
-      });
+      return this.success(res, null, { message: 'Transcription deleted successfully' });
     } catch (error) {
       next(error);
     }
@@ -125,12 +95,10 @@ class TranscriptionController {
         targetLanguage,
       });
 
-      res.status(201).json({
-        success: true,
-        data: result.enrichment,
+      return this.created(res, {
+        ...result.enrichment,
         usage: result.usage,
-        message: 'Enrichment created successfully',
-      });
+      }, 'Enrichment created successfully');
     } catch (error) {
       next(error);
     }
@@ -153,10 +121,7 @@ class TranscriptionController {
 
       const enrichments = await enrichmentService.getEnrichmentsByTranscriptionId(id);
 
-      res.json({
-        success: true,
-        data: enrichments,
-      });
+      return this.success(res, enrichments);
     } catch (error) {
       next(error);
     }
@@ -186,11 +151,7 @@ class TranscriptionController {
       // Create enrichment without AI
       const enrichment = await enrichmentService.createManualEnrichment(id, type, content);
 
-      res.status(201).json({
-        success: true,
-        data: enrichment,
-        message: 'Manual enrichment created successfully',
-      });
+      return this.created(res, enrichment, 'Manual enrichment created successfully');
     } catch (error) {
       next(error);
     }
@@ -204,11 +165,8 @@ class TranscriptionController {
     try {
       const count = await transcriptionService.getCount();
 
-      res.json({
-        success: true,
-        data: {
-          totalTranscriptions: count,
-        },
+      return this.success(res, {
+        totalTranscriptions: count,
       });
     } catch (error) {
       next(error);

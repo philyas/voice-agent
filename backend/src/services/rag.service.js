@@ -7,6 +7,7 @@ const embeddingService = require('./embedding.service');
 const openaiService = require('./openai.service');
 const transcriptionModel = require('../models/transcription.model');
 const enrichmentModel = require('../models/enrichment.model');
+const logger = require('../utils/logger.util');
 
 // RAG configuration
 const DEFAULT_TOP_K = 5;
@@ -282,7 +283,7 @@ Please answer the question based on the context above.`;
         await embeddingService.embedTranscription(transcription.id, transcription.text);
         embedded++;
       } catch (error) {
-        console.error(`Error embedding transcription ${transcription.id}:`, error.message);
+        logger.error(`Error embedding transcription ${transcription.id}`, error);
         errors++;
       }
     }
@@ -313,7 +314,7 @@ Please answer the question based on the context above.`;
         await embeddingService.embedEnrichment(enrichment.id, enrichment.content);
         embedded++;
       } catch (error) {
-        console.error(`Error embedding enrichment ${enrichment.id}:`, error.message);
+        logger.error(`Error embedding enrichment ${enrichment.id}`, error);
         errors++;
       }
     }
@@ -326,13 +327,13 @@ Please answer the question based on the context above.`;
    * @returns {Promise<Object>}
    */
   async embedAll() {
-    console.log('Starting full embedding process...');
+    logger.info('Starting full embedding process...');
     
     const transcriptionStats = await this.embedAllTranscriptions();
-    console.log('Transcription embedding complete:', transcriptionStats);
+    logger.info('Transcription embedding complete', transcriptionStats);
     
     const enrichmentStats = await this.embedAllEnrichments();
-    console.log('Enrichment embedding complete:', enrichmentStats);
+    logger.info('Enrichment embedding complete', enrichmentStats);
 
     return {
       transcriptions: transcriptionStats,

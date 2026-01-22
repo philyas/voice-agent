@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Globe, Languages, Plus } from 'lucide-react';
+import { FileText, Sparkles, Loader2, Copy, Check, ChevronRight, ChevronDown, ChevronUp, Edit2, Save, X, FilePenLine, FileText as FileTextIcon, Wand2, List, CheckSquare, Target, Languages, Plus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { EnrichmentType } from '@/lib/api';
+import type { EnrichmentType, EnrichmentData } from '@/lib/types';
 import { api } from '@/lib/api';
-
-interface EnrichmentData {
-  id?: string;
-  type: string;
-  content: string;
-}
+import { LANGUAGES, LIST_ENRICHMENT_TYPES } from '@/lib/constants';
 
 interface TranscriptionCardProps {
   text: string;
@@ -24,33 +19,6 @@ interface TranscriptionCardProps {
   enrichments?: EnrichmentData[];
   allowManualItems?: boolean; // Whether to allow manual addition of items for list-type enrichments
 }
-
-// Language options with flag Unicode regional indicators
-const LANGUAGES = [
-  { code: 'en', name: 'Englisch', flag: '🇬🇧' },
-  { code: 'es', name: 'Spanisch', flag: '🇪🇸' },
-  { code: 'fr', name: 'Französisch', flag: '🇫🇷' },
-  { code: 'it', name: 'Italienisch', flag: '🇮🇹' },
-  { code: 'pt', name: 'Portugiesisch', flag: '🇵🇹' },
-  { code: 'nl', name: 'Niederländisch', flag: '🇳🇱' },
-  { code: 'pl', name: 'Polnisch', flag: '🇵🇱' },
-  { code: 'ru', name: 'Russisch', flag: '🇷🇺' },
-  { code: 'ja', name: 'Japanisch', flag: '🇯🇵' },
-  { code: 'zh', name: 'Chinesisch', flag: '🇨🇳' },
-  { code: 'ko', name: 'Koreanisch', flag: '🇰🇷' },
-  { code: 'ar', name: 'Arabisch', flag: '🇸🇦' },
-  { code: 'tr', name: 'Türkisch', flag: '🇹🇷' },
-  { code: 'sv', name: 'Schwedisch', flag: '🇸🇪' },
-  { code: 'da', name: 'Dänisch', flag: '🇩🇰' },
-  { code: 'no', name: 'Norwegisch', flag: '🇳🇴' },
-  { code: 'fi', name: 'Finnisch', flag: '🇫🇮' },
-  { code: 'cs', name: 'Tschechisch', flag: '🇨🇿' },
-  { code: 'hu', name: 'Ungarisch', flag: '🇭🇺' },
-  { code: 'ro', name: 'Rumänisch', flag: '🇷🇴' },
-];
-
-// Types that support manual item addition
-const LIST_ENRICHMENT_TYPES = ['action_items', 'notes', 'key_points'] as const;
 
 const ENRICHMENT_OPTIONS: { type: EnrichmentType; label: string; icon: React.ReactNode; isPrimary?: boolean; isTranslation?: boolean; isListType?: boolean }[] = [
   { type: 'complete', label: 'Komplett-Analyse', icon: <FilePenLine className="w-4 h-4" />, isPrimary: true },

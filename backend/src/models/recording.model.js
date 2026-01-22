@@ -53,7 +53,8 @@ class RecordingModel extends BaseModel {
    * @returns {Promise<Array>}
    */
   async findAllWithTranscriptions(options = {}) {
-    const { limit = 50, offset = 0 } = options;
+    const { parsePagination } = require('../utils/pagination.util');
+    const pagination = parsePagination(options);
     
     return this.db(this.tableName)
       .select(
@@ -63,8 +64,8 @@ class RecordingModel extends BaseModel {
       )
       .leftJoin('transcriptions', 'recordings.id', 'transcriptions.recording_id')
       .orderBy('recordings.created_at', 'desc')
-      .limit(limit)
-      .offset(offset);
+      .limit(pagination.limit)
+      .offset(pagination.offset);
   }
 
   /**

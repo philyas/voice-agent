@@ -4,16 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { api, type RAGSource } from '@/lib/api';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: RAGSource[];
-  timestamp: Date;
-  isLoading?: boolean;
-}
+import { api } from '@/lib/api';
+import { formatDate } from '@/lib/utils';
+import type { RAGSource, ChatMessage } from '@/lib/types';
 
 interface RAGChatProps {
   onSourceClick?: (recordingId: string) => void;
@@ -21,7 +14,7 @@ interface RAGChatProps {
 }
 
 export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
@@ -36,14 +29,14 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: input.trim(),
       timestamp: new Date(),
     };
 
-    const loadingMessage: Message = {
+    const loadingMessage: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content: '',
@@ -72,7 +65,7 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
       });
 
       if (response.data) {
-        const assistantMessage: Message = {
+        const assistantMessage: ChatMessage = {
           id: (Date.now() + 2).toString(),
           role: 'assistant',
           content: response.data.answer,
@@ -83,7 +76,7 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
         setMessages(prev => prev.filter(m => !m.isLoading).concat(assistantMessage));
       }
     } catch (error) {
-      const errorMessage: Message = {
+      const errorMessage: ChatMessage = {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
         content: 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.',
@@ -115,13 +108,8 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
+  // Use centralized utility - format without time for compact display
+  const formatDateCompact = (dateString: string) => formatDate(dateString, false);
 
   const clearChat = () => {
     setMessages([]);
@@ -253,7 +241,7 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
                               </div>
                               <div className="flex items-center gap-2 text-dark-500">
                                 <Calendar className="w-3 h-3" />
-                                <span>{source.date ? formatDate(source.date) : 'Unbekannt'}</span>
+                                <span>{source.date ? formatDateCompact(source.date) : 'Unbekannt'}</span>
                               </div>
                             </div>
                           ))}

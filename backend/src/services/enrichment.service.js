@@ -7,6 +7,7 @@ const enrichmentModel = require('../models/enrichment.model');
 const transcriptionModel = require('../models/transcription.model');
 const openaiService = require('./openai.service');
 const embeddingService = require('./embedding.service');
+const logger = require('../utils/logger.util');
 
 class EnrichmentService {
   /**
@@ -197,10 +198,10 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
     try {
       if (embeddingService.isConfigured()) {
         await embeddingService.embedEnrichment(enrichmentId, content);
-        console.log(`Embedding created for enrichment ${enrichmentId}`);
+        logger.debug(`Embedding created for enrichment ${enrichmentId}`);
       }
     } catch (error) {
-      console.error(`Failed to create embedding for enrichment ${enrichmentId}:`, error.message);
+      logger.error(`Failed to create embedding for enrichment ${enrichmentId}`, error);
       // Don't throw - embedding is optional
     }
   }

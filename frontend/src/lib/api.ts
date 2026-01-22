@@ -3,64 +3,22 @@
  * Handles all communication with the backend API
  */
 
+import type {
+  ApiResponse,
+  Recording,
+  Transcription,
+  Enrichment,
+  EnrichmentType,
+  RAGSource,
+  RAGChatResponse,
+  RAGSearchResponse,
+  RAGSearchResult,
+  RAGSimilarResponse,
+  RAGEmbedAllResponse,
+  RAGStatsResponse,
+} from './types';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  message?: string;
-  meta?: {
-    limit?: number;
-    offset?: number;
-    count?: number;
-  };
-}
-
-interface Recording {
-  id: string;
-  filename: string;
-  original_filename: string;
-  mime_type: string;
-  file_size: number;
-  duration_ms: number | null;
-  storage_path: string;
-  created_at: string;
-  updated_at: string;
-  transcription_id?: string;
-  transcription_text?: string;
-}
-
-interface Transcription {
-  id: string;
-  recording_id: string;
-  text: string;
-  language: string;
-  duration_seconds: number | null;
-  provider: string;
-  model_used: string;
-  created_at: string;
-  updated_at: string;
-  enrichments?: Enrichment[];
-}
-
-interface Enrichment {
-  id: string;
-  transcription_id: string;
-  type: string;
-  content: string;
-  prompt_used: string | null;
-  model_used: string;
-  tokens_used: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-type EnrichmentType = 'complete' | 'summary' | 'formatted' | 'notes' | 'action_items' | 'key_points' | 'translation' | 'custom';
 
 async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const data = await response.json();
@@ -297,91 +255,7 @@ export const api = {
   },
 };
 
-// RAG Types
-interface RAGSource {
-  recordingId: string;
-  transcriptionId: string;
-  filename: string;
-  date: string;
-  chunks: Array<{
-    content: string;
-    similarity: number;
-    type: string;
-  }>;
-  maxSimilarity: number;
-}
-
-interface RAGChatResponse {
-  answer: string;
-  sources: RAGSource[];
-  hasContext: boolean;
-  usage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
-  relevantChunks?: number;
-}
-
-interface RAGSearchResult {
-  content: string;
-  similarity: number;
-  sourceType: string;
-  sourceId: string;
-  transcriptionId: string;
-  recordingId: string;
-  recordingFilename: string;
-  recordingDate: string;
-}
-
-interface RAGSearchResponse {
-  query: string;
-  results: RAGSearchResult[];
-  count: number;
-}
-
-interface RAGSimilarResponse {
-  transcriptionId: string;
-  similar: Array<{
-    content: string;
-    similarity: number;
-    transcriptionId: string;
-    recordingId: string;
-    recordingFilename: string;
-    recordingDate: string;
-  }>;
-  count: number;
-}
-
-interface RAGEmbedAllResponse {
-  transcriptions: {
-    embedded: number;
-    skipped: number;
-    errors: number;
-    total: number;
-  };
-  enrichments: {
-    embedded: number;
-    skipped: number;
-    errors: number;
-    total: number;
-  };
-}
-
-interface RAGStatsResponse {
-  total: number;
-  byType: {
-    transcription?: {
-      embeddings: number;
-      uniqueSources: number;
-    };
-    enrichment?: {
-      embeddings: number;
-      uniqueSources: number;
-    };
-  };
-}
-
+// Re-export types from centralized types file for backwards compatibility
 export type { 
   Recording, 
   Transcription, 
@@ -394,4 +268,4 @@ export type {
   RAGSource,
   RAGSearchResult,
   RAGStatsResponse,
-};
+} from './types';

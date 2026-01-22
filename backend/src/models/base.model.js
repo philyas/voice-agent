@@ -5,6 +5,7 @@
  */
 
 const db = require('../config/database');
+const { parsePagination } = require('../utils/pagination.util');
 
 class BaseModel {
   constructor(tableName) {
@@ -15,15 +16,22 @@ class BaseModel {
   /**
    * Get all records
    * @param {Object} options - Query options
+   * @param {string} options.orderBy - Column to order by (default: 'created_at')
+   * @param {string} options.order - Order direction (default: 'desc')
+   * @param {number} options.limit - Limit (will be parsed from query if needed)
+   * @param {number} options.offset - Offset (will be parsed from query if needed)
    * @returns {Promise<Array>}
    */
   async findAll(options = {}) {
-    const { orderBy = 'created_at', order = 'desc', limit, offset } = options;
+    const { orderBy = 'created_at', order = 'desc' } = options;
+    
+    // Parse pagination if limit/offset are provided as strings (from query params)
+    const pagination = parsePagination(options);
     
     let query = this.db(this.tableName).orderBy(orderBy, order);
     
-    if (limit) query = query.limit(limit);
-    if (offset) query = query.offset(offset);
+    if (pagination.limit) query = query.limit(pagination.limit);
+    if (pagination.offset) query = query.offset(pagination.offset);
     
     return query;
   }

@@ -2,7 +2,7 @@
 
 Eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anreicherung von Spracheingaben.
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
 - [Überblick](#überblick)
 - [Tech Stack](#tech-stack)
@@ -15,40 +15,40 @@ Eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anre
 - [API-Dokumentation](#api-dokumentation)
 - [Datenbank & Migrationen](#datenbank--migrationen)
 
-## 🎯 Überblick
+## Überblick
 
-Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribiert und durch KI-gestützte Verarbeitung anreichert. Das Ergebnis ist direkt nutzbar - z.B. als strukturierte Notiz, formatierter Text, oder kontextbezogen aufbereiteter Output.
+Voice Agent ist eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anreicherung von Spracheingaben. Die Anwendung ermöglicht die direkte Nutzung der Ergebnisse als strukturierte Notizen, formatierte Texte oder kontextbezogen aufbereitete Ausgaben.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 **Frontend:** Next.js 14, Electron, TypeScript, Tailwind CSS  
 **Backend:** Node.js 18+, Express.js, Knex.js, PostgreSQL 15  
 **KI-Services:** OpenAI Whisper (Transkription), GPT-4o-mini (Enrichment)  
 **DevOps:** Docker, Docker Compose
 
-## ✨ Features
+## Features
 
-- 🖥️ **Desktop-App** - Native Anwendung für Windows, macOS und Linux
-- ⌨️ **Globale Hotkeys** - `Cmd/Ctrl+Shift+V` zum Aktivieren von überall
-- 🎤 **Sprachaufnahme** - Browser-basierte Audioaufnahme
-- 📝 **Transkription** - Automatische Umwandlung via OpenAI Whisper
-- 🤖 **KI-Anreicherung** - Verschiedene Enrichment-Typen mit GPT-4o-mini:
+- **Desktop-App:** Native Anwendung für Windows, macOS und Linux
+- **Globale Hotkeys:** `Cmd/Ctrl+Shift+V` zum Aktivieren von überall
+- **Sprachaufnahme:** Browser-basierte Audioaufnahme
+- **Transkription:** Automatische Umwandlung via OpenAI Whisper
+- **KI-Anreicherung:** Verschiedene Enrichment-Typen mit GPT-4o-mini:
   - Zusammenfassung
   - Formatierung
   - Notizen
   - Aufgaben-Extraktion
   - Kernpunkte
   - Übersetzung
-- 🔔 **System-Tray** - App läuft im Hintergrund
-- 🗄️ **Persistenz** - PostgreSQL Datenbank für alle Daten
+- **System-Tray:** App läuft im Hintergrund
+- **Persistenz:** PostgreSQL Datenbank für alle Daten
 
-## ⌨️ Hotkeys
+## Hotkeys
 
 - `Cmd/Ctrl+Shift+V` - App aktivieren & Aufnahme starten
 - `Escape` - Aufnahme stoppen (wenn fokussiert)
 - `Cmd/Ctrl+Shift+H` - App anzeigen/verstecken
 
-## 🏗 Architektur
+## Architektur
 
 ### Voice-Pipeline
 
@@ -95,7 +95,7 @@ Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribie
                          └──────────────────┘
 ```
 
-## 🎨 Design-Entscheidungen
+## Design-Entscheidungen
 
 **Frontend:** Next.js für App Router, Static Export (Electron-kompatibel), Code-Splitting. Electron für Cross-Platform Desktop-App mit globalen Hotkeys und System-Tray. TypeScript für Type Safety und bessere Wartbarkeit. Tailwind CSS für schnelle UI-Entwicklung.
 
@@ -109,7 +109,7 @@ Voice Agent ist eine Desktop-Anwendung, die Spracheingaben aufnimmt, transkribie
 
 **Weitere:** Statischer Next.js-Export für Electron, UUIDs für Sicherheit und Offline-First, separate Services für asynchrone Transkription/Enrichment.
 
-## 📁 Projektstruktur
+## Projektstruktur
 
 ```
 voice-agent/
@@ -131,18 +131,19 @@ voice-agent/
 └── database/          # PostgreSQL Init
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Für Endnutzer (Desktop-App)
 
-Installiere die bereitgestellte Desktop-App (`.dmg`/`.exe`/`.AppImage`) - keine weitere Konfiguration nötig, verbindet sich automatisch mit dem Backend.
+Installieren Sie die bereitgestellte Desktop-App (`.dmg`/`.exe`/`.AppImage`). Keine weitere Konfiguration erforderlich, die App verbindet sich automatisch mit dem konfigurierten Backend.
 
 ### Für Entwickler
 
 **Option 1: Desktop-App (Empfohlen)**
 ```bash
 git clone <repository-url> && cd voice-agent
-cp .env.example .env  # OpenAI API Key eintragen
+cp .env.example .env
+# OpenAI API Key in .env eintragen
 docker-compose up -d db backend
 docker-compose exec backend npm run migrate
 cd frontend && npm install && npm run electron:dev
@@ -151,30 +152,31 @@ cd frontend && npm install && npm run electron:dev
 **Option 2: Docker (Web-Version)**
 ```bash
 git clone <repository-url> && cd voice-agent
-cp .env.example .env  # OpenAI API Key eintragen
+cp .env.example .env
+# OpenAI API Key in .env eintragen
 docker-compose up -d
 docker-compose exec backend npm run migrate
-# Öffne http://localhost:3000
+# Öffnen Sie http://localhost:3000 im Browser
 ```
 
 **Option 3: Lokal (ohne Docker)**
 ```bash
-# Terminal 1: PostgreSQL
+# Terminal 1: PostgreSQL-Datenbank erstellen
 createdb voice_agent
 
-# Terminal 2: Backend
+# Terminal 2: Backend starten
 cd backend && npm install && cp ../.env.example .env
 npm run migrate && npm run dev
 
-# Terminal 3: Frontend
+# Terminal 3: Frontend starten
 cd frontend && npm install && npm run dev
 ```
 
-## 📦 Installation & Build
+## Installation & Build
 
 **Voraussetzungen:** Node.js >= 18, Docker & Docker Compose (optional), OpenAI API Key
 
-**Services:** Frontend (3000), Backend (4000), PostgreSQL (5432)
+**Services:** Frontend (Port 3000), Backend (Port 4000), PostgreSQL (Port 5432)
 
 **Desktop-App Build:**
 ```bash
@@ -182,18 +184,18 @@ cd frontend && npm install
 # Lokal: npm run electron:build (verbindet mit localhost:4000)
 # Production: NEXT_PUBLIC_API_URL=https://api.example.com npm run electron:build
 ```
-→ Output: `.dmg` (macOS), `.exe` (Windows), `.AppImage` (Linux) in `frontend/dist-electron/`
+Output: `.dmg` (macOS), `.exe` (Windows), `.AppImage` (Linux) in `frontend/dist-electron/`
 
 **Docker Befehle:**
 ```bash
-docker-compose up -d              # Starten
-docker-compose up --build -d       # Mit neuem Build
-docker-compose restart backend     # Service neustarten (kein Build!)
+docker-compose up -d              # Services starten
+docker-compose up --build -d       # Services mit neuem Build starten
+docker-compose restart backend     # Service neustarten (ohne neuen Build)
 docker-compose logs -f             # Logs anzeigen
-docker-compose down [-v]           # Stoppen [mit Volume-Löschung]
+docker-compose down [-v]           # Services stoppen (optional: mit Volume-Löschung)
 ```
 
-## 📡 API-Dokumentation
+## API-Dokumentation
 
 **Base URL:** `http://localhost:4000/api/v1`
 
@@ -210,20 +212,20 @@ docker-compose down [-v]           # Stoppen [mit Volume-Löschung]
 { "success": false, "error": { "code": "...", "message": "...", "details": [...] } }
 ```
 
-## 🗄️ Datenbank & Migrationen
+## Datenbank & Migrationen
 
 **Schema:** `recordings` (1:1) → `transcriptions` (1:N) → `enrichments`
 
 **Knex Befehle:**
 ```bash
 npm run migrate              # Migrationen ausführen
-npm run migrate:rollback     # Zurückrollen
-npm run migrate:reset       # Alle zurücksetzen
-npm run migrate:status      # Status anzeigen
-npm run migrate:make <name>  # Neue Migration
+npm run migrate:rollback     # Letzte Migration zurückrollen
+npm run migrate:reset       # Alle Migrationen zurücksetzen
+npm run migrate:status      # Migrationsstatus anzeigen
+npm run migrate:make <name>  # Neue Migration erstellen
 ```
 
-## 🔧 Umgebungsvariablen
+## Umgebungsvariablen
 
 **Backend:** `NODE_ENV` (development), `PORT` (4000), `DB_HOST` (localhost), `DB_PORT` (5432), `DB_NAME` (voice_agent), `DB_USER` (postgres), `DB_PASSWORD` (postgres), `OPENAI_API_KEY` (**Required**)
 
@@ -231,15 +233,14 @@ npm run migrate:make <name>  # Neue Migration
 
 ---
 
-## 📝 Lizenz
+## Lizenz
 
 MIT License
 
-## 🤝 Beitragen
+## Beitragen
 
 1. Fork erstellen
-2. Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit (`git commit -m 'Add AmazingFeature'`)
-4. Push (`git push origin feature/AmazingFeature`)
+2. Feature Branch erstellen (`git checkout -b feature/AmazingFeature`)
+3. Änderungen committen (`git commit -m 'Add AmazingFeature'`)
+4. Branch pushen (`git push origin feature/AmazingFeature`)
 5. Pull Request öffnen
-# voice-agent

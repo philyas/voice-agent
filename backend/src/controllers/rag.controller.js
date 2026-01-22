@@ -3,10 +3,23 @@
  * Handles RAG-related HTTP requests
  */
 
+const BaseController = require('./base.controller');
 const ragService = require('../services/rag.service');
 const embeddingService = require('../services/embedding.service');
+const embeddingModel = require('../models/embedding.model');
+const { ApiError } = require('../middleware/error.middleware');
 
-class RAGController {
+class RAGController extends BaseController {
+  /**
+   * Validate that OpenAI/embedding service is configured
+   * @throws {ApiError} - If service not configured
+   */
+  validateServiceConfigured() {
+    if (!embeddingService.isConfigured()) {
+      throw new ApiError(503, 'OpenAI API is not configured');
+    }
+  }
+
   /**
    * POST /api/v1/rag/chat
    * Answer a question using RAG
@@ -15,36 +28,16 @@ class RAGController {
     try {
       const { question, history = [], options = {} } = req.body;
 
-      if (!question || question.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Question is required',
-          },
-        });
-      }
+      this.validateRequired(req.body, ['question']);
+      this.validateServiceConfigured();
 
-      if (!embeddingService.isConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: {
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'OpenAI API is not configured',
-          },
-        });
-      }
-
-      const result = await ragService.chat(question, history, {
+      const result = await ragService.chat(question.trim(), history, {
         topK: options.topK || 5,
         minSimilarity: options.minSimilarity || 0.0,
         language: options.language || 'de',
       });
 
-      res.json({
-        success: true,
-        data: result,
-      });
+      return this.success(res, result);
     } catch (error) {
       next(error);
     }
@@ -58,47 +51,18 @@ class RAGController {
     try {
       const { query, limit = 10, minSimilarity = 0.6 } = req.body;
 
-      if (!query || query.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Query is required',
-          },
-        });
-      }
+      this.validateRequired(req.body, ['query']);
+      this.validateServiceConfigured();
 
-      if (!embeddingService.isConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: {
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'OpenAI API is not configured',
-          },
-        });
-      }
-
-      const results = await embeddingService.search(query, {
+      const results = await embeddingService.search(query.trim(), {
         limit,
         minSimilarity,
       });
 
-      res.json({
-        success: true,
-        data: {
-          query,
-          results: results.map(r => ({
-            content: r.content,
-            similarity: r.similarity,
-            sourceType: r.source_type,
-            sourceId: r.source_id,
-            transcriptionId: r.transcription_id,
-            recordingId: r.recording_id,
-            recordingFilename: r.recording_filename,
-            recordingDate: r.recording_created_at,
-          })),
-          count: results.length,
-        },
+      return this.success(res, {
+        query,
+        results: this.formatSearchResults(results),
+        count: results.length,
       });
     } catch (error) {
       next(error);
@@ -114,35 +78,17 @@ class RAGController {
       const { transcriptionId } = req.params;
       const { limit = 5 } = req.query;
 
-      if (!embeddingService.isConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: {
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'OpenAI API is not configured',
-          },
-        });
-      }
+      this.validateServiceConfigured();
 
       const results = await ragService.findSimilarRecordings(
         transcriptionId,
         parseInt(limit, 10)
       );
 
-      res.json({
-        success: true,
-        data: {
-          transcriptionId,
-          similar: results.map(r => ({
-            content: r.content.substring(0, 300) + (r.content.length > 300 ? '...' : ''),
-            similarity: r.similarity,
-            transcriptionId: r.transcription_id,
-            recordingId: r.recording_id,
-            recordingFilename: r.recording_filename,
-            recordingDate: r.recording_created_at,
-          })),
-          count: results.length,
-        },
+      return this.success(res, {
+        transcriptionId,
+        similar: this.formatSimilarResults(results),
+        count: results.length,
       });
     } catch (error) {
       next(error);
@@ -155,23 +101,11 @@ class RAGController {
    */
   async embedAll(req, res, next) {
     try {
-      if (!embeddingService.isConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: {
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'OpenAI API is not configured',
-          },
-        });
-      }
+      this.validateServiceConfigured();
 
       const stats = await ragService.embedAll();
 
-      res.json({
-        success: true,
-        data: stats,
-        message: 'Embedding process completed',
-      });
+      return this.success(res, stats, { message: 'Embedding process completed' });
     } catch (error) {
       next(error);
     }
@@ -184,11 +118,7 @@ class RAGController {
   async getStats(req, res, next) {
     try {
       const stats = await embeddingService.getStats();
-
-      res.json({
-        success: true,
-        data: stats,
-      });
+      return this.success(res, stats);
     } catch (error) {
       next(error);
     }
@@ -203,29 +133,53 @@ class RAGController {
       const { sourceType, sourceId } = req.params;
 
       if (!['transcription', 'enrichment'].includes(sourceType)) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid source type. Must be "transcription" or "enrichment"',
-          },
-        });
+        throw new ApiError(400, 'Invalid source type. Must be "transcription" or "enrichment"');
       }
 
-      const embeddingModel = require('../models/embedding.model');
       const deleted = await embeddingModel.deleteBySource(sourceType, sourceId);
 
-      res.json({
-        success: true,
-        data: {
-          sourceType,
-          sourceId,
-          deletedCount: deleted,
-        },
+      return this.success(res, {
+        sourceType,
+        sourceId,
+        deletedCount: deleted,
       });
     } catch (error) {
       next(error);
     }
+  }
+
+  /**
+   * Format search results for response
+   * @param {Array} results - Raw search results
+   * @returns {Array} - Formatted results
+   */
+  formatSearchResults(results) {
+    return results.map(r => ({
+      content: r.content,
+      similarity: r.similarity,
+      sourceType: r.source_type,
+      sourceId: r.source_id,
+      transcriptionId: r.transcription_id,
+      recordingId: r.recording_id,
+      recordingFilename: r.recording_filename,
+      recordingDate: r.recording_created_at,
+    }));
+  }
+
+  /**
+   * Format similar results for response
+   * @param {Array} results - Raw similar results
+   * @returns {Array} - Formatted results
+   */
+  formatSimilarResults(results) {
+    return results.map(r => ({
+      content: r.content.substring(0, 300) + (r.content.length > 300 ? '...' : ''),
+      similarity: r.similarity,
+      transcriptionId: r.transcription_id,
+      recordingId: r.recording_id,
+      recordingFilename: r.recording_filename,
+      recordingDate: r.recording_created_at,
+    }));
   }
 }
 

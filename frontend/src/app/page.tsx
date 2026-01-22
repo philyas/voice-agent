@@ -3,11 +3,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor, X, MessageSquare } from 'lucide-react';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
+import { Mic, History, Sparkles, Keyboard, Monitor, X, MessageSquare } from 'lucide-react';
+import { useAudioRecorder, useElectron, useHotkeyListener } from '@/hooks';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
-import { api, type EnrichmentType, type Transcription, type Enrichment } from '@/lib/api';
+import { api } from '@/lib/api';
+import type { EnrichmentType, Transcription, Enrichment } from '@/lib/types';
+import { formatDurationSeconds } from '@/lib/utils';
 
 type ProcessingStep = 'idle' | 'uploading' | 'transcribing' | 'done';
 
@@ -67,11 +68,8 @@ export default function Home() {
     notifyRecordingState(isRecording);
   }, [isRecording, notifyRecordingState]);
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Use the centralized utility function
+  const formatDuration = formatDurationSeconds;
 
   const processRecording = useCallback(async () => {
     if (!audioBlob) return;

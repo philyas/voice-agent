@@ -7,6 +7,7 @@ const transcriptionModel = require('../models/transcription.model');
 const recordingModel = require('../models/recording.model');
 const openaiService = require('./openai.service');
 const embeddingService = require('./embedding.service');
+const logger = require('../utils/logger.util');
 
 class TranscriptionService {
   /**
@@ -79,10 +80,10 @@ class TranscriptionService {
     try {
       if (embeddingService.isConfigured()) {
         await embeddingService.embedTranscription(transcriptionId, text);
-        console.log(`Embedding created for transcription ${transcriptionId}`);
+        logger.debug(`Embedding created for transcription ${transcriptionId}`);
       }
     } catch (error) {
-      console.error(`Failed to create embedding for transcription ${transcriptionId}:`, error.message);
+      logger.error(`Failed to create embedding for transcription ${transcriptionId}`, error);
       // Don't throw - embedding is optional
     }
   }

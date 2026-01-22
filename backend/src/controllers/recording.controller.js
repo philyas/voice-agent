@@ -3,33 +3,23 @@
  * Handles HTTP requests for audio recordings
  */
 
+const BaseController = require('./base.controller');
 const recordingService = require('../services/recording.service');
 const transcriptionService = require('../services/transcription.service');
 const { ApiError } = require('../middleware/error.middleware');
 
-class RecordingController {
+class RecordingController extends BaseController {
   /**
    * Get all recordings
    * GET /api/v1/recordings
    */
   async getAll(req, res, next) {
     try {
-      const { limit = 50, offset = 0 } = req.query;
+      const pagination = this.parsePagination(req.query);
       
-      const recordings = await recordingService.getAllRecordings({
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10),
-      });
+      const recordings = await recordingService.getAllRecordings(pagination);
 
-      res.json({
-        success: true,
-        data: recordings,
-        meta: {
-          limit: parseInt(limit, 10),
-          offset: parseInt(offset, 10),
-          count: recordings.length,
-        },
-      });
+      return this.paginated(res, recordings, pagination);
     } catch (error) {
       next(error);
     }
@@ -44,15 +34,9 @@ class RecordingController {
       const { id } = req.params;
       
       const recording = await recordingService.getRecordingById(id);
-      
-      if (!recording) {
-        throw new ApiError(404, 'Recording not found');
-      }
+      this.getEntityOr404(recording, 'Recording');
 
-      res.json({
-        success: true,
-        data: recording,
-      });
+      return this.success(res, recording);
     } catch (error) {
       next(error);
     }
@@ -70,11 +54,7 @@ class RecordingController {
 
       const recording = await recordingService.createRecording(req.file);
 
-      res.status(201).json({
-        success: true,
-        data: recording,
-        message: 'Recording uploaded successfully',
-      });
+      return this.created(res, recording, 'Recording uploaded successfully');
     } catch (error) {
       next(error);
     }
@@ -89,15 +69,9 @@ class RecordingController {
       const { id } = req.params;
       
       const deleted = await recordingService.deleteRecording(id);
-      
-      if (!deleted) {
-        throw new ApiError(404, 'Recording not found');
-      }
+      this.getEntityOr404(deleted, 'Recording');
 
-      res.json({
-        success: true,
-        message: 'Recording deleted successfully',
-      });
+      return this.success(res, null, { message: 'Recording deleted successfully' });
     } catch (error) {
       next(error);
     }
@@ -135,11 +109,8 @@ class RecordingController {
     try {
       const count = await recordingService.getCount();
 
-      res.json({
-        success: true,
-        data: {
-          totalRecordings: count,
-        },
+      return this.success(res, {
+        totalRecordings: count,
       });
     } catch (error) {
       next(error);

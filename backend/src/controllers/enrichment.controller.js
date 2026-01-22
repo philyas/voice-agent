@@ -3,33 +3,26 @@
  * Handles HTTP requests for AI enrichments
  */
 
+const BaseController = require('./base.controller');
 const enrichmentService = require('../services/enrichment.service');
 const { ApiError } = require('../middleware/error.middleware');
 
-class EnrichmentController {
+class EnrichmentController extends BaseController {
   /**
    * Get all enrichments
    * GET /api/v1/enrichments
    */
   async getAll(req, res, next) {
     try {
-      const { limit = 50, offset = 0, type } = req.query;
+      const { type } = req.query;
+      const pagination = this.parsePagination(req.query);
       
       const enrichments = await enrichmentService.getAllEnrichments({
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10),
+        ...pagination,
         type,
       });
 
-      res.json({
-        success: true,
-        data: enrichments,
-        meta: {
-          limit: parseInt(limit, 10),
-          offset: parseInt(offset, 10),
-          count: enrichments.length,
-        },
-      });
+      return this.paginated(res, enrichments, pagination);
     } catch (error) {
       next(error);
     }
@@ -44,15 +37,9 @@ class EnrichmentController {
       const { id } = req.params;
       
       const enrichment = await enrichmentService.getEnrichmentById(id);
-      
-      if (!enrichment) {
-        throw new ApiError(404, 'Enrichment not found');
-      }
+      this.getEntityOr404(enrichment, 'Enrichment');
 
-      res.json({
-        success: true,
-        data: enrichment,
-      });
+      return this.success(res, enrichment);
     } catch (error) {
       next(error);
     }
@@ -67,21 +54,12 @@ class EnrichmentController {
       const { id } = req.params;
       const { content } = req.body;
       
-      if (content === undefined) {
-        throw new ApiError(400, 'Content is required');
-      }
+      this.validateRequired(req.body, ['content']);
 
       const enrichment = await enrichmentService.updateEnrichment(id, { content });
-      
-      if (!enrichment) {
-        throw new ApiError(404, 'Enrichment not found');
-      }
+      this.getEntityOr404(enrichment, 'Enrichment');
 
-      res.json({
-        success: true,
-        data: enrichment,
-        message: 'Enrichment updated successfully',
-      });
+      return this.success(res, enrichment, { message: 'Enrichment updated successfully' });
     } catch (error) {
       next(error);
     }
@@ -96,15 +74,9 @@ class EnrichmentController {
       const { id } = req.params;
       
       const deleted = await enrichmentService.deleteEnrichment(id);
-      
-      if (!deleted) {
-        throw new ApiError(404, 'Enrichment not found');
-      }
+      this.getEntityOr404(deleted, 'Enrichment');
 
-      res.json({
-        success: true,
-        message: 'Enrichment deleted successfully',
-      });
+      return this.success(res, null, { message: 'Enrichment deleted successfully' });
     } catch (error) {
       next(error);
     }
@@ -117,11 +89,7 @@ class EnrichmentController {
   async getTypes(req, res, next) {
     try {
       const types = enrichmentService.getAvailableTypes();
-
-      res.json({
-        success: true,
-        data: types,
-      });
+      return this.success(res, types);
     } catch (error) {
       next(error);
     }
@@ -134,11 +102,7 @@ class EnrichmentController {
   async getStats(req, res, next) {
     try {
       const stats = await enrichmentService.getStats();
-
-      res.json({
-        success: true,
-        data: stats,
-      });
+      return this.success(res, stats);
     } catch (error) {
       next(error);
     }

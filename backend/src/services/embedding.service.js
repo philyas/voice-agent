@@ -6,6 +6,7 @@
 const OpenAI = require('openai');
 const { env } = require('../config/env');
 const embeddingModel = require('../models/embedding.model');
+const logger = require('../utils/logger.util');
 
 // OpenAI embedding model configuration
 const EMBEDDING_MODEL = 'text-embedding-3-small';
@@ -40,7 +41,7 @@ class EmbeddingService {
 
       return response.data[0].embedding;
     } catch (error) {
-      console.error('OpenAI Embedding Error:', error.message);
+      logger.error('OpenAI Embedding Error', error);
       throw new Error(`Embedding generation failed: ${error.message}`);
     }
   }
@@ -70,7 +71,7 @@ class EmbeddingService {
 
       return response.data.map(d => d.embedding);
     } catch (error) {
-      console.error('OpenAI Batch Embedding Error:', error.message);
+      logger.error('OpenAI Batch Embedding Error', error);
       throw new Error(`Batch embedding generation failed: ${error.message}`);
     }
   }
@@ -120,7 +121,7 @@ class EmbeddingService {
    */
   async embedAndStore(sourceType, sourceId, content) {
     if (!content || content.trim().length === 0) {
-      console.warn(`Empty content for ${sourceType}:${sourceId}, skipping embedding`);
+      logger.warn(`Empty content for ${sourceType}:${sourceId}, skipping embedding`);
       return [];
     }
 
@@ -150,7 +151,7 @@ class EmbeddingService {
       results.push(embedding);
     }
 
-    console.log(`Created ${results.length} embeddings for ${sourceType}:${sourceId}`);
+    logger.debug(`Created ${results.length} embeddings for ${sourceType}:${sourceId}`);
     return results;
   }
 

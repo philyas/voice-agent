@@ -7,6 +7,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const recordingModel = require('../models/recording.model');
+const logger = require('../utils/logger.util');
 
 class RecordingService {
   constructor() {
@@ -94,7 +95,7 @@ class RecordingService {
     try {
       await fs.unlink(recording.storage_path);
     } catch (error) {
-      console.warn(`Could not delete file: ${recording.storage_path}`, error.message);
+      logger.warn(`Could not delete file: ${recording.storage_path}`, { error: error.message });
     }
 
     // Delete from database (cascades to transcriptions and enrichments)
