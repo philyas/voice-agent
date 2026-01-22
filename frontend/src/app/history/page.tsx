@@ -742,7 +742,7 @@ function HistoryPageContent() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
             >
               <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">RAG Chat</span>
+              <span className="hidden sm:inline text-sm font-medium">AI-Assistant</span>
             </Link>
           </div>
         </div>

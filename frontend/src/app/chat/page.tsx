@@ -35,7 +35,7 @@ export default function ChatPage() {
                       EverlastAI
                     </span>
                     <span className="bg-gradient-to-r from-white/90 via-white/70 to-white/90 bg-clip-text text-transparent font-semibold text-lg ml-2">
-                      RAG Chat
+                      AI-Assistant
                     </span>
                   </h1>
                 </div>

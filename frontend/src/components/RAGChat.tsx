@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X, ChevronDown, ChevronUp, Database, RefreshCw } from 'lucide-react';
+import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api, type RAGSource } from '@/lib/api';
@@ -25,8 +25,6 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
-  const [stats, setStats] = useState<{ total: number } | null>(null);
-  const [isEmbedding, setIsEmbedding] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -34,49 +32,6 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Load stats on mount
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
-    try {
-      const response = await api.ragGetStats();
-      if (response.data) {
-        setStats({ total: response.data.total });
-      }
-    } catch (error) {
-      console.error('Failed to load RAG stats:', error);
-    }
-  };
-
-  const handleEmbedAll = async () => {
-    setIsEmbedding(true);
-    try {
-      const response = await api.ragEmbedAll();
-      if (response.data) {
-        const { transcriptions, enrichments } = response.data;
-        const totalEmbedded = transcriptions.embedded + enrichments.embedded;
-        
-        // Add system message
-        const systemMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: `Embedding-Prozess abgeschlossen:\n\n**Transkriptionen:** ${transcriptions.embedded} neu eingebettet, ${transcriptions.skipped} übersprungen\n**Enrichments:** ${enrichments.embedded} neu eingebettet, ${enrichments.skipped} übersprungen\n\nInsgesamt ${totalEmbedded} neue Embeddings erstellt.`,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, systemMessage]);
-        
-        // Reload stats
-        await loadStats();
-      }
-    } catch (error) {
-      console.error('Failed to embed all:', error);
-    } finally {
-      setIsEmbedding(false);
-    }
-  };
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isLoading) return;
@@ -182,26 +137,13 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             <Sparkles className="w-5 h-5 text-gold-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">RAG Chat</h2>
+            <h2 className="text-lg font-semibold text-white">AI-Assistant</h2>
             <p className="text-xs text-dark-400">
-              {stats ? `${stats.total} Embeddings verfügbar` : 'Lade...'}
+              Intelligente Fragen zu deinen Aufnahmen
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleEmbedAll}
-            disabled={isEmbedding}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-dark-800 border border-dark-700/50 rounded-lg text-dark-300 hover:text-gold-400 hover:border-gold-500/30 transition-all disabled:opacity-50"
-            title="Alle Daten einbetten"
-          >
-            {isEmbedding ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Database className="w-3.5 h-3.5" />
-            )}
-            Embed All
-          </button>
           {messages.length > 0 && (
             <button
               onClick={clearChat}
