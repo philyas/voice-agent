@@ -600,7 +600,7 @@ function HistoryPageContent() {
   const handleExportGoogleDocs = async (recording: Recording) => {
     setExportingGoogleDocs(true);
     setError(null);
-    setShareMenuOpen(null);
+    // Menü offen lassen, damit Ladesequenz (Spinner) sichtbar bleibt
 
     try {
       // Check if we already have tokens (in production, store in secure storage)
@@ -617,7 +617,8 @@ function HistoryPageContent() {
 
       if (tokens && tokens.access_token) {
         // We have tokens, create document directly
-        await createGoogleDocWithTokens(recording, tokens);
+        const success = await createGoogleDocWithTokens(recording, tokens);
+        if (success) setShareMenuOpen(null);
       } else {
         // No tokens, start OAuth flow
         const authResponse = await api.getGoogleDocsAuthUrl();
@@ -636,7 +637,7 @@ function HistoryPageContent() {
     }
   };
 
-  const createGoogleDocWithTokens = async (recording: Recording, tokens: any) => {
+  const createGoogleDocWithTokens = async (recording: Recording, tokens: any): Promise<boolean> => {
     setCreatingGoogleDoc(true);
     setError(null);
 
@@ -646,13 +647,15 @@ function HistoryPageContent() {
         // Store tokens for future use
         localStorage.setItem('google_docs_tokens', JSON.stringify(tokens));
         setGoogleTokens(tokens);
-        
-        // Show success and open document
+        // Erfolg: Ladesequenz verschwindet (finally setzt Flags zurück), dann Menü schließen
         alert(`Dokument erfolgreich erstellt!\n\nTitel: ${response.data.title}\n\nDas Dokument wird jetzt in einem neuen Tab geöffnet.`);
         window.open(response.data.documentUrl, '_blank');
+        return true;
       }
+      return false;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des Dokuments');
+      return false;
     } finally {
       setCreatingGoogleDoc(false);
       setExportingGoogleDocs(false);
@@ -1391,6 +1394,21 @@ function HistoryPageContent() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Google Docs Lade-Modal */}
+      {(exportingGoogleDocs || creatingGoogleDoc) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mb-4" />
+              <h2 className="text-xl font-semibold text-white mb-2">
+                {creatingGoogleDoc ? 'Erstelle Dokument...' : 'Wird vorbereitet...'}
+              </h2>
+              <p className="text-dark-400 text-sm">Bitte warten Sie einen Moment.</p>
+            </div>
           </div>
         </div>
       )}
