@@ -61,7 +61,11 @@
     "mac": {
       "target": "dmg",
       "icon": "public/icon.icns",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Diese App benötigt Zugriff auf Ihr Mikrofon, um Audioaufnahmen zu erstellen.",
+        "NSCameraUsageDescription": "Diese App benötigt optional Zugriff auf Ihre Kamera."
+      }
     },
     "win": {
       "target": "nsis",

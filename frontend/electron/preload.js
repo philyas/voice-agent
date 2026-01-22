@@ -28,6 +28,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Platform info
   platform: process.platform,
+  
+  // Request microphone permission
+  requestMicrophonePermission: () => ipcRenderer.invoke('request-microphone-permission'),
+  
+  // Open system preferences
+  openSystemPreferences: () => ipcRenderer.invoke('open-system-preferences'),
 });
 
 // Log that preload script has loaded

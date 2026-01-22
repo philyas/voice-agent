@@ -49,6 +49,23 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setError(null);
       chunksRef.current = [];
 
+      // In Electron, request system permission first (especially on macOS)
+      if (window.electronAPI?.isElectron && window.electronAPI.requestMicrophonePermission) {
+        try {
+          const permissionResult = await window.electronAPI.requestMicrophonePermission();
+          console.log('Microphone permission result:', permissionResult);
+          
+          if (!permissionResult.granted) {
+            throw new Error('Mikrofon-Zugriff wurde verweigert. Bitte erlauben Sie den Zugriff in den Systemeinstellungen.');
+          }
+        } catch (permError) {
+          const message = permError instanceof Error ? permError.message : 'Fehler beim Anfordern der Mikrofon-Berechtigung';
+          setError(message);
+          console.error('Permission request error:', permError);
+          return;
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -104,8 +121,21 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setIsPaused(false);
       setDuration(0);
       startTimer();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to start recording';
+    } catch (err: any) {
+      let message = 'Fehler beim Starten der Aufnahme';
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          message = 'Mikrofon-Zugriff wurde verweigert. Bitte erlauben Sie den Zugriff in den Systemeinstellungen.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          message = 'Kein Mikrofon gefunden. Bitte verbinden Sie ein Mikrofon und versuchen Sie es erneut.';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          message = 'Mikrofon wird bereits von einer anderen Anwendung verwendet.';
+        } else {
+          message = err.message || message;
+        }
+      }
+      
       setError(message);
       console.error('Recording error:', err);
     }

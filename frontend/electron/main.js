@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage, systemPreferences } = require('electron');
 const path = require('path');
 
 let mainWindow = null;
@@ -18,11 +18,36 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // Enable media access
+      enableBlinkFeatures: 'MediaDevices',
     },
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#0a0a0b',
     show: false,
     icon: path.join(__dirname, '../public/icon.png'),
+  });
+
+  // Setup permissions for this specific window
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    console.log('Window-specific permission requested:', permission, 'from:', details.requestingUrl);
+    const allowedPermissions = ['microphone', 'camera', 'media'];
+    
+    if (allowedPermissions.includes(permission)) {
+      console.log('Granting window permission:', permission);
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+
+  mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    const allowedPermissions = ['microphone', 'camera', 'media'];
+    
+    if (allowedPermissions.includes(permission)) {
+      console.log('Window permission check allowed:', permission);
+      return true;
+    }
+    return false;
   });
 
   // Load the Next.js app
@@ -159,8 +184,61 @@ function registerGlobalShortcuts() {
   });
 }
 
+// Setup permissions for media access
+function setupPermissions() {
+  const { session } = require('electron');
+  
+  // Handle permission requests (for getUserMedia, etc.)
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    console.log('Permission requested:', permission, 'from:', details.requestingUrl);
+    const allowedPermissions = ['microphone', 'camera', 'media'];
+    
+    if (allowedPermissions.includes(permission)) {
+      console.log('Granting permission:', permission);
+      callback(true); // Grant permission
+    } else {
+      console.log('Denying permission:', permission);
+      callback(false); // Deny permission
+    }
+  });
+
+  // Handle permission checks
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    const allowedPermissions = ['microphone', 'camera', 'media'];
+    
+    if (allowedPermissions.includes(permission)) {
+      console.log('Permission check allowed:', permission, 'for:', requestingOrigin);
+      return true; // Allow permission check
+    }
+    return false;
+  });
+
+  // On macOS, request system-level media access (async, don't block)
+  if (process.platform === 'darwin') {
+    // Check current status first
+    const status = systemPreferences.getMediaAccessStatus('microphone');
+    console.log('Current microphone access status:', status);
+    
+    if (status !== 'granted') {
+      // Request microphone access
+      systemPreferences.askForMediaAccess('microphone').then((granted) => {
+        if (granted) {
+          console.log('Microphone access granted by system');
+        } else {
+          console.warn('Microphone access denied by system');
+        }
+      }).catch((err) => {
+        console.error('Error requesting microphone access:', err);
+      });
+    } else {
+      console.log('Microphone access already granted');
+    }
+  }
+}
+
 // App lifecycle
 app.whenReady().then(() => {
+  setupPermissions();
   createWindow();
   createTray();
   registerGlobalShortcuts();
@@ -197,6 +275,49 @@ ipcMain.handle('get-app-info', () => {
     platform: process.platform,
     isDev,
   };
+});
+
+// Handle microphone permission request from renderer
+ipcMain.handle('request-microphone-permission', async () => {
+  if (process.platform === 'darwin') {
+    try {
+      const status = systemPreferences.getMediaAccessStatus('microphone');
+      if (status === 'granted') {
+        return { granted: true, status: 'already-granted' };
+      }
+      
+      const granted = await systemPreferences.askForMediaAccess('microphone');
+      return { granted, status: granted ? 'granted' : 'denied' };
+    } catch (err) {
+      console.error('Error requesting microphone permission:', err);
+      return { granted: false, status: 'error', error: err.message };
+    }
+  }
+  // For non-macOS platforms, permissions are handled via session handlers
+  return { granted: true, status: 'handled-by-session' };
+});
+
+// Open system preferences for microphone access
+ipcMain.handle('open-system-preferences', async () => {
+  if (process.platform === 'darwin') {
+    try {
+      // Open System Preferences to Privacy & Security > Microphone
+      const { exec } = require('child_process');
+      exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"', (error) => {
+        if (error) {
+          console.error('Error opening system preferences:', error);
+          // Fallback: open general system preferences
+          exec('open /System/Library/PreferencePanes/Security.prefPane');
+        }
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('Error opening system preferences:', err);
+      return { success: false, error: err.message };
+    }
+  }
+  // For Windows/Linux, provide instructions
+  return { success: false, message: 'Bitte öffnen Sie die Systemeinstellungen manuell' };
 });
 
 ipcMain.handle('minimize-to-tray', () => {

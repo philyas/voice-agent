@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-export default function GoogleAuthCallbackPage() {
+function GoogleAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -37,16 +37,17 @@ export default function GoogleAuthCallbackPage() {
           try {
             const response = await api.createGoogleDoc(pendingRecordingId, tokens);
             
-            if (response.data) {
+            if (response.data && response.data.documentUrl) {
+              const documentData = response.data;
               setStatus('success');
-              setMessage(`Dokument erfolgreich erstellt: ${response.data.title}`);
+              setMessage(`Dokument erfolgreich erstellt: ${documentData.title}`);
               
               // Clean up
               sessionStorage.removeItem('pending_google_docs_recording');
               
               // Open document in new tab
               setTimeout(() => {
-                window.open(response.data.documentUrl, '_blank');
+                window.open(documentData.documentUrl, '_blank');
                 router.push('/history');
               }, 2000);
             }
@@ -109,5 +110,23 @@ export default function GoogleAuthCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GoogleAuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
+        <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">Lädt...</h2>
+            <p className="text-dark-400">Verarbeite Autorisierung...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <GoogleAuthCallbackContent />
+    </Suspense>
   );
 }

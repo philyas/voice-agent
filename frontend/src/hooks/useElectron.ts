@@ -12,6 +12,8 @@ interface ElectronAPI {
   showWindow: () => Promise<void>;
   notifyRecordingState: (state: { isRecording: boolean }) => void;
   onHotkeyTriggered: (callback: (action: string) => void) => () => void;
+  requestMicrophonePermission: () => Promise<{ granted: boolean; status: string; error?: string }>;
+  openSystemPreferences: () => Promise<{ success: boolean; error?: string; message?: string }>;
   isElectron: boolean;
   platform: string;
 }
@@ -28,6 +30,7 @@ interface UseElectronReturn {
   appInfo: { version: string; platform: string; isDev: boolean } | null;
   minimizeToTray: () => void;
   notifyRecordingState: (isRecording: boolean) => void;
+  openSystemPreferences: () => Promise<void>;
 }
 
 export function useElectron(): UseElectronReturn {
@@ -59,12 +62,23 @@ export function useElectron(): UseElectronReturn {
     }
   }, []);
 
+  const openSystemPreferences = useCallback(async () => {
+    if (window.electronAPI?.isElectron && window.electronAPI.openSystemPreferences) {
+      try {
+        await window.electronAPI.openSystemPreferences();
+      } catch (error) {
+        console.error('Error opening system preferences:', error);
+      }
+    }
+  }, []);
+
   return {
     isElectron,
     platform,
     appInfo,
     minimizeToTray,
     notifyRecordingState,
+    openSystemPreferences,
   };
 }
 

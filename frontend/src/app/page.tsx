@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor } from 'lucide-react';
+import { Mic, Upload, Loader2, History, Sparkles, Keyboard, Monitor, X } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useElectron, useHotkeyListener } from '@/hooks/useElectron';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
@@ -35,7 +35,7 @@ export default function Home() {
     error: recorderError,
   } = useAudioRecorder();
 
-  const { isElectron, platform, notifyRecordingState } = useElectron();
+  const { isElectron, platform, notifyRecordingState, openSystemPreferences } = useElectron();
   const router = useRouter();
 
   const [processing, setProcessing] = useState<ProcessingState>({
@@ -207,13 +207,37 @@ export default function Home() {
         {/* Error Messages */}
         {(recorderError || processing.error) && (
           <div className="mb-8">
-            <StatusMessage
-              type="error"
-              message={recorderError || processing.error || ''}
-              onClose={() => {
-                setProcessing((prev) => ({ ...prev, error: null }));
-              }}
-            />
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-red-400 text-sm font-medium mb-2">
+                    {recorderError || processing.error || ''}
+                  </p>
+                  {isElectron && (recorderError?.includes('Mikrofon') || processing.error?.includes('Mikrofon')) && (
+                    <button
+                      onClick={async () => {
+                        await openSystemPreferences();
+                      }}
+                      className="mt-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded-lg text-red-300 text-sm font-medium transition-all duration-200 hover:border-red-500/60"
+                    >
+                      Systemeinstellungen öffnen
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    if (recorderError) {
+                      resetRecording(); // This will clear the error
+                    }
+                    setProcessing((prev) => ({ ...prev, error: null }));
+                  }}
+                  className="text-dark-400 hover:text-white transition-colors"
+                  aria-label="Fehlermeldung schließen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

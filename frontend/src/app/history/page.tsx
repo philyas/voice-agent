@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { ArrowLeft, FileText, Calendar, Clock, Trash2, Eye, Mic, ChevronDown, ChevronUp, Mail, X, Edit2, Save, Plus, Check, Share2, FileDown, Copy, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm';
 import { api, type Recording, type Transcription } from '@/lib/api';
 import { StatusMessage, AudioPlayer } from '@/components';
 
-export default function HistoryPage() {
+function HistoryPageContent() {
   const searchParams = useSearchParams();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1465,5 +1465,24 @@ export default function HistoryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-dark-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mx-auto mb-4" />
+              <p className="text-dark-400">Lädt...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <HistoryPageContent />
+    </Suspense>
   );
 }
