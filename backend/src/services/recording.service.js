@@ -8,21 +8,19 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const recordingModel = require('../models/recording.model');
 const logger = require('../utils/logger.util');
+const { env } = require('../config');
 
 class RecordingService {
   constructor() {
-    this.uploadDir = path.join(__dirname, '../../uploads');
+    this.uploadDir = env.UPLOADS_DIR;
   }
 
   /**
-   * Ensure upload directory exists
+   * Ensure upload directory and temp subdir exist
    */
   async ensureUploadDir() {
-    try {
-      await fs.access(this.uploadDir);
-    } catch {
-      await fs.mkdir(this.uploadDir, { recursive: true });
-    }
+    const tempDir = path.join(this.uploadDir, 'temp');
+    await fs.mkdir(tempDir, { recursive: true });
   }
 
   /**

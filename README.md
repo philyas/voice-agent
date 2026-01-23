@@ -326,6 +326,7 @@ npm run migrate:make <name>  # Neue Migration erstellen
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (optional - für Google Docs)
 - `FRONTEND_URL` (http://localhost:3000 - für OAuth Redirects)
 - `CORS_ORIGINS` (optional) – kommagetrennte erlaubte Frontend-Origins für CORS. Standard: `FRONTEND_URL`. Für Produktion z.B. `http://localhost:3000,https://ptw-audio-intelligence.vercel.app`
+- `UPLOADS_DIR` (optional) – Verzeichnis für Audio-Uploads. Standard: `backend/uploads`. **Render mit persistentem Disk:** Disk unter `/var/data` mounten, dann `UPLOADS_DIR=/var/data/uploads` setzen.
 
 **Frontend:** `NEXT_PUBLIC_API_URL` (http://localhost:4000)
 

@@ -1,3 +1,4 @@
+const fs = require('fs').promises;
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -9,9 +10,18 @@ const { setupWebSocketServer } = require('./routes/realtime.routes');
 
 const PORT = env.PORT || 4000;
 
+async function ensureUploadDirs() {
+  const uploadsDir = env.UPLOADS_DIR;
+  const tempDir = path.join(uploadsDir, 'temp');
+  await fs.mkdir(tempDir, { recursive: true });
+}
+
 // Test database connection
 async function startServer() {
   try {
+    await ensureUploadDirs();
+    console.log(`📁 Uploads directory: ${env.UPLOADS_DIR}`);
+
     // Test DB connection
     await db.raw('SELECT 1');
     console.log('✅ Database connection established');

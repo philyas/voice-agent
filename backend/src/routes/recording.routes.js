@@ -6,16 +6,19 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const { env } = require('../config');
 const recordingController = require('../controllers/recording.controller');
 const emailController = require('../controllers/email.controller');
 const exportController = require('../controllers/export.controller');
 
 const router = express.Router();
 
+const uploadsTempDir = path.join(env.UPLOADS_DIR, 'temp');
+
 // Configure multer for audio file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads/temp'));
+    cb(null, uploadsTempDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;

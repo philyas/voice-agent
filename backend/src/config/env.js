@@ -3,6 +3,10 @@
  * Centralized environment variable management
  */
 
+const path = require('path');
+
+const defaultUploadsDir = path.join(__dirname, '..', '..', 'uploads');
+
 const env = {
   // Server
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -17,6 +21,9 @@ const env = {
 
   // OpenAI
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+  // Storage – base dir for uploads (persistent disk on Render: /var/data/uploads)
+  UPLOADS_DIR: process.env.UPLOADS_DIR || defaultUploadsDir,
 
   // Frontend
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
