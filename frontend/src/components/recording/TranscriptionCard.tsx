@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { EnrichmentType, EnrichmentData } from '@/lib/types';
 import { api } from '@/lib/api';
-import { LANGUAGES, LIST_ENRICHMENT_TYPES } from '@/lib/constants';
+import { LANGUAGES, LIST_ENRICHMENT_TYPES, type Language } from '@/lib/constants';
 
 interface TranscriptionCardProps {
   text: string;
@@ -49,7 +49,7 @@ export function TranscriptionCard({
   const [isSavingTranscription, setIsSavingTranscription] = useState(false);
   const [currentText, setCurrentText] = useState(text);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(LANGUAGES[0]);
   const [loadingTargetLanguage, setLoadingTargetLanguage] = useState<string | null>(null);
   const [localEnrichments, setLocalEnrichments] = useState<EnrichmentData[]>(enrichments);
   const [newItemText, setNewItemText] = useState('');
@@ -205,7 +205,7 @@ export function TranscriptionCard({
     }
   };
 
-  const handleTranslation = (language: typeof LANGUAGES[0]) => {
+  const handleTranslation = (language: Language) => {
     setSelectedLanguage(language);
     handleEnrich('translation', language.code);
   };

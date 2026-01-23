@@ -421,7 +421,7 @@ export function useEnrichmentEditor(
 
     // Save last section
     if (currentSection !== null) {
-      const lastSection = currentSection;
+      const lastSection: ParsedEnrichmentSection = currentSection;
       // Save any remaining text
       if (textStartIndex !== -1 && lastSection.textStartIndex === -1) {
         lastSection.textStartIndex = textStartIndex;
