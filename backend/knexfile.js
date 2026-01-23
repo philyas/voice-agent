@@ -32,6 +32,7 @@ module.exports = {
       database: process.env.DB_NAME || 'voice_agent',
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
+      ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
     },
     pool: {
       min: 2,
