@@ -1,5 +1,9 @@
-require('dotenv').config();
-const knex = require('knex')(require('../knexfile.js').development);
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+const environment = process.env.NODE_ENV || 'development';
+const knexConfig = require('../knexfile.js');
+const knex = require('knex')(knexConfig[environment]);
 
 async function waitForDatabase() {
   const maxAttempts = 60;

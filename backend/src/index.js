@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const http = require('http');
 const app = require('./app');
@@ -27,7 +28,8 @@ async function startServer() {
       console.log(`🔌 WebSocket server ready for live transcription`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
+    console.error('❌ Failed to start server:', error.message || error);
+    console.error('Full error:', error);
     process.exit(1);
   }
 }

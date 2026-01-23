@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 module.exports = {
   development: {
@@ -25,7 +26,13 @@ module.exports = {
 
   production: {
     client: 'postgresql',
-    connection: process.env.DATABASE_URL,
+    connection: {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_NAME || 'voice_agent',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+    },
     pool: {
       min: 2,
       max: 10,

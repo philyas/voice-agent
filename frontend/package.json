@@ -11,6 +11,10 @@
     "lint": "next lint",
     "electron:dev": "concurrently -k \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "next build && electron-builder",
+    "electron:build:mac": "next build && electron-builder --mac",
+    "electron:build:win": "next build && electron-builder --win",
+    "electron:build:linux": "next build && electron-builder --linux",
+    "electron:build:all": "next build && electron-builder --mac --win --linux",
     "electron:start": "electron ."
   },
   "dependencies": {
