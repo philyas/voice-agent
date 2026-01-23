@@ -19,6 +19,8 @@ Eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anre
 
 Voice Agent ist eine Desktop-Anwendung zur Sprachaufnahme, Transkription und KI-gestützten Anreicherung von Spracheingaben. Die Anwendung ermöglicht die direkte Nutzung der Ergebnisse als strukturierte Notizen, formatierte Texte oder kontextbezogen aufbereitete Ausgaben.
 
+**App im Web:** [https://ptw-audio-intelligence.vercel.app](https://ptw-audio-intelligence.vercel.app) – direkt im Browser nutzbar (ohne Desktop-App).
+
 ## Tech Stack
 
 **Frontend:** Next.js 14, Electron, TypeScript, Tailwind CSS  
@@ -147,6 +149,10 @@ voice-agent/
 
 ## Quick Start
 
+### Für Endnutzer (Web)
+
+**[https://ptw-audio-intelligence.vercel.app](https://ptw-audio-intelligence.vercel.app)** – App direkt im Browser öffnen, Aufnahmen erstellen, transkribieren und anreichern.
+
 ### Für Endnutzer (Desktop-App)
 
 Installieren Sie die bereitgestellte Desktop-App (`.dmg`/`.exe`/`.AppImage`). Keine weitere Konfiguration erforderlich, die App verbindet sich automatisch mit dem konfigurierten Backend.
@@ -198,7 +204,13 @@ cd frontend && npm install
 # Lokal: npm run electron:build (verbindet mit localhost:4000)
 # Production: NEXT_PUBLIC_API_URL=https://api.example.com npm run electron:build
 ```
-Output: `.dmg` (macOS), `.exe` (Windows), `.AppImage` (Linux) in `frontend/dist-electron/`
+
+**Output von `npm run electron:build`:** Je nach Plattform entsteht **genau eine** Installationsdatei im Projekt-Root unter **`dist-installers/`** (Installationsdateien für alle Systeme):
+- **macOS:** `EverlastAI - Audio Intelligence-x.x.x.dmg`
+- **Windows:** `EverlastAI - Audio Intelligence x.x.x.exe` (NSIS-Installer)
+- **Linux:** `EverlastAI - Audio Intelligence-x.x.x.AppImage`
+
+Für alle drei Plattformen: `npm run electron:build:all`. Einzelne Plattformen: `electron:build:mac` | `electron:build:win` | `electron:build:linux`.
 
 **Docker Befehle:**
 ```bash

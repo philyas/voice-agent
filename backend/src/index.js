@@ -25,6 +25,7 @@ async function startServer() {
     // Test DB connection
     await db.raw('SELECT 1');
     console.log('✅ Database connection established');
+    console.log(`🗄️  Database: ${env.DB_NAME} @ ${env.DB_HOST}:${env.DB_PORT} (user: ${env.DB_USER})`);
 
     // Create HTTP server
     const server = http.createServer(app);
