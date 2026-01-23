@@ -323,6 +323,50 @@ npm run migrate:status      # Migrationsstatus anzeigen
 npm run migrate:make <name>  # Neue Migration erstellen
 ```
 
+## Tests
+
+Das Projekt enthält Tests für die wichtigsten Komponenten:
+
+### Backend Tests
+
+**Ausführen:**
+```bash
+cd backend
+npm test
+```
+
+**Test-Coverage:**
+- Recording Service (Datei-Upload, Löschen, Duration-Update)
+- Transcription Service (Transkription, Update, Embeddings)
+- RAG Service (Semantische Suche, Kontext-Building, Q&A)
+- Recording Controller (API-Endpoints)
+
+**Test-Setup:**
+- Jest als Test-Framework
+- Mocking von Datenbank- und Service-Abhängigkeiten
+- Unit-Tests für Services und Controller
+
+### Frontend Tests
+
+**Ausführen:**
+```bash
+cd frontend
+npm test
+```
+
+**Test-Coverage:**
+- `useAudioRecorder` Hook (Aufnahme-Logik, Pause/Resume, Fehlerbehandlung)
+- `RecordButton` Component (UI-Interaktionen, States)
+
+**Test-Setup:**
+- Jest + React Testing Library
+- Mocking von Browser-APIs (MediaRecorder, getUserMedia, etc.)
+- Mocking von Electron-APIs
+
+**Test-Dateien:**
+- `src/hooks/__tests__/useAudioRecorder.test.tsx`
+- `src/components/recording/__tests__/RecordButton.test.tsx`
+
 ## Umgebungsvariablen
 
 **Backend:**
