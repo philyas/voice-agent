@@ -1,6 +1,17 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { RECORDING_SOUNDS } from '@/lib/constants';
+
+function playRecordingSound(url: string): void {
+  try {
+    const audio = new Audio(url);
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  } catch {
+    // Ignore sound errors (missing file, autoplay, etc.)
+  }
+}
 
 interface UseAudioRecorderReturn {
   isRecording: boolean;
@@ -121,6 +132,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setIsPaused(false);
       setDuration(0);
       startTimer();
+      playRecordingSound(RECORDING_SOUNDS.START);
     } catch (err: any) {
       let message = 'Fehler beim Starten der Aufnahme';
       
@@ -143,6 +155,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
+      playRecordingSound(RECORDING_SOUNDS.STOP);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setIsPaused(false);

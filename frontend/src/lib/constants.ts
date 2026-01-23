@@ -79,3 +79,11 @@ export const NOTIFICATION_DURATION = {
   ERROR: 5000,
   INFO: 3000,
 } as const;
+
+/**
+ * Recording UI sound assets (public assets)
+ */
+export const RECORDING_SOUNDS = {
+  START: '/assets/audio/start_recording_fx.mp3',
+  STOP: '/assets/audio/stop_recording_fx.mp3',
+} as const;
