@@ -325,6 +325,7 @@ npm run migrate:make <name>  # Neue Migration erstellen
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME` (optional - für E-Mail-Versand)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (optional - für Google Docs)
 - `FRONTEND_URL` (http://localhost:3000 - für OAuth Redirects)
+- `CORS_ORIGINS` (optional) – kommagetrennte erlaubte Frontend-Origins für CORS. Standard: `FRONTEND_URL`. Für Produktion z.B. `http://localhost:3000,https://ptw-audio-intelligence.vercel.app`
 
 **Frontend:** `NEXT_PUBLIC_API_URL` (http://localhost:4000)
 

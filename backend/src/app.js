@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
+const { env } = require('./config');
 const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middleware/error.middleware');
 
@@ -15,9 +16,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// CORS configuration – allow multiple origins (e.g. localhost + production frontend)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: env.CORS_ORIGINS,
   credentials: true,
 }));
 

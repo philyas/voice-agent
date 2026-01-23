@@ -21,6 +21,13 @@ const env = {
   // Frontend
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
 
+  // CORS allowed origins (comma-separated). Defaults to FRONTEND_URL.
+  // Example: http://localhost:3000,https://ptw-audio-intelligence.vercel.app
+  CORS_ORIGINS: (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+
   // Google OAuth
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,

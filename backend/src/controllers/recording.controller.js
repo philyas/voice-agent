@@ -7,6 +7,7 @@ const BaseController = require('./base.controller');
 const recordingService = require('../services/recording.service');
 const transcriptionService = require('../services/transcription.service');
 const { ApiError } = require('../middleware/error.middleware');
+const { env } = require('../config');
 
 class RecordingController extends BaseController {
   /**
@@ -150,8 +151,11 @@ class RecordingController extends BaseController {
       const fileSize = stat.size;
       const range = req.headers.range;
 
-      // Set CORS headers
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+      // Set CORS headers (reflect request origin when allowed)
+      const origin = req.headers.origin;
+      if (origin && env.CORS_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      }
       res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Range');
       res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
