@@ -5,3 +5,4 @@
 
 export { AudioPlayer } from './AudioPlayer';
 export { StatusMessage } from './StatusMessage';
+export { Navigation } from './Navigation';

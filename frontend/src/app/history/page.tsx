@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
-import { ArrowLeft, Mic, MessageSquare, X } from 'lucide-react';
+import { Mic, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 // Components
-import { StatusMessage } from '@/components';
+import { StatusMessage, Navigation } from '@/components';
 import {
   RecordingListItem,
   RecordingDetail,
@@ -225,33 +225,10 @@ function HistoryPageContent() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-dark-700/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Link
-                href="/"
-                className="p-2 sm:p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
-              >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Link>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">Aufnahmen-Historie</h1>
-                <p className="text-xs sm:text-sm text-dark-400">
-                  {recordings.length} {recordings.length === 1 ? 'Aufnahme' : 'Aufnahmen'} gespeichert
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/chat"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">AI-Assistant</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navigation 
+        title="Aufnahmen-Historie"
+        subtitle={`${recordings.length} ${recordings.length === 1 ? 'Aufnahme' : 'Aufnahmen'} gespeichert`}
+      />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
         {error && (

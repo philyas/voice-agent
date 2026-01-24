@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mic, History, Sparkles, Keyboard, Monitor, X, MessageSquare } from 'lucide-react';
+import { Sparkles, Keyboard, X } from 'lucide-react';
 import { useAudioRecorder, useElectron, useHotkeyListener } from '@/hooks';
-import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform } from '@/components';
+import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform, Navigation } from '@/components';
 import { api } from '@/lib/api';
 import type { EnrichmentType, Transcription, Enrichment } from '@/lib/types';
 import { formatDurationSeconds } from '@/lib/utils';
@@ -160,54 +159,7 @@ export default function Home() {
   return (
     <main className="min-h-screen relative z-10">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-transparent bg-gradient-to-b from-dark-900/95 via-dark-900/90 to-dark-900/95" style={{ borderImage: 'linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.2), transparent) 1' }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold">
-                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-dark-950" strokeWidth={1.5} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight">
-                    <span className="bg-gradient-to-r from-gold-400 via-gold-300 via-gold-400 to-gold-500 bg-clip-text text-transparent">
-                      EverlastAI
-                    </span>
-                    <span className="bg-gradient-to-r from-white/90 via-white/70 to-white/90 bg-clip-text text-transparent font-semibold text-sm sm:text-lg ml-1 sm:ml-2">
-                      Audio Intelligence
-                    </span>
-                  </h1>
-                  {isElectron && (
-                    <span className="px-2 py-0.5 text-xs bg-dark-700 text-gold-500 rounded-full flex items-center gap-1">
-                      <Monitor className="w-3 h-3" />
-                      Desktop
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent">
-                  Sprachaufnahme & KI-Transkription
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Link
-                href="/chat"
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm font-medium">Chat</span>
-              </Link>
-              <Link
-                href="/history"
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
-              >
-                <History className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm font-medium">Historie</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-12">
