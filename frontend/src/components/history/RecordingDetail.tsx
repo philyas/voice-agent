@@ -63,48 +63,49 @@ export function RecordingDetail({
   return (
     <div
       key={recording.id}
-      className="bg-dark-850 border border-dark-700 rounded-2xl overflow-hidden h-full flex flex-col transition-smooth animate-fade-in"
+      className="bg-dark-850 border border-dark-700 rounded-xl sm:rounded-2xl overflow-hidden h-full flex flex-col transition-smooth animate-fade-in"
     >
-      <div className="px-6 py-5 border-b border-dark-700">
+      {/* Header only shown on desktop (mobile uses modal header) */}
+      <div className="hidden lg:block px-6 py-5 border-b border-dark-700">
         <h2 className="text-lg font-semibold text-white">Aufnahme-Details</h2>
       </div>
 
-      <div className="p-6 overflow-y-auto flex-1">
+      <div className="p-4 sm:p-6 overflow-y-auto flex-1">
         {/* Recording Info */}
-        <div className="space-y-5 mb-6 transition-smooth">
+        <div className="space-y-4 sm:space-y-5 mb-4 sm:mb-6 transition-smooth">
           <div className="transition-smooth">
             <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
               Dateiname
             </label>
-            <p className="text-white mt-1 transition-all duration-300">
+            <p className="text-sm sm:text-base text-white mt-1 transition-all duration-300 break-words">
               {recording.original_filename}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
                 Erstellt am
               </label>
-              <p className="text-white mt-1">{formatDate(recording.created_at)}</p>
+              <p className="text-sm sm:text-base text-white mt-1">{formatDate(recording.created_at)}</p>
             </div>
             <div>
               <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
                 Dauer
               </label>
-              <p className="text-white mt-1">{formatDuration(recording.duration_ms)}</p>
+              <p className="text-sm sm:text-base text-white mt-1">{formatDuration(recording.duration_ms)}</p>
             </div>
           </div>
           <div>
             <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
               Dateigröße
             </label>
-            <p className="text-white mt-1">{formatFileSize(recording.file_size)}</p>
+            <p className="text-sm sm:text-base text-white mt-1">{formatFileSize(recording.file_size)}</p>
           </div>
         </div>
 
         {/* Audio Player */}
-        <div className="mb-6 transition-smooth">
-          <label className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-3 block">
+        <div className="mb-4 sm:mb-6 transition-smooth">
+          <label className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-2 sm:mb-3 block">
             Audio
           </label>
           <AudioPlayer
@@ -115,7 +116,7 @@ export function RecordingDetail({
 
         {/* Transcription */}
         {transcription ? (
-          <div className="border-t border-dark-700 pt-6 transition-smooth">
+          <div className="border-t border-dark-700 pt-4 sm:pt-6 transition-smooth">
             <button
               onClick={onToggleTranscription}
               className="w-full flex items-center justify-between mb-3 text-sm font-semibold text-white hover:text-gold-500 transition-colors"
@@ -132,8 +133,8 @@ export function RecordingDetail({
             </button>
 
             {isTranscriptionExpanded && (
-              <div className="bg-dark-900/50 rounded-xl p-4 mb-5 transition-smooth animate-fade-in">
-                <p className="text-dark-300 text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="bg-dark-900/50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5 transition-smooth animate-fade-in">
+                <p className="text-dark-300 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                   {transcription.text}
                 </p>
               </div>
@@ -142,10 +143,10 @@ export function RecordingDetail({
             {/* Enrichments */}
             {localEnrichments && localEnrichments.length > 0 && (
               <div className="transition-smooth">
-                <h4 className="text-sm font-semibold text-white mb-3 transition-all duration-300">
+                <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 sm:mb-3 transition-all duration-300">
                   Enrichments ({localEnrichments.length})
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {localEnrichments.map((enrichment, index) => (
                     <EnrichmentSection
                       key={enrichment.id}

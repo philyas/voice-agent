@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
-import { ArrowLeft, Mic, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Mic, MessageSquare, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -68,6 +68,7 @@ function LoadingSpinner() {
 function HistoryPageContent() {
   const searchParams = useSearchParams();
   const [isTranscriptionExpanded, setIsTranscriptionExpanded] = useState(false);
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
   // Custom hooks
   const {
@@ -127,9 +128,18 @@ function HistoryPageContent() {
     async (recording: typeof recordings[0]) => {
       setIsTranscriptionExpanded(false);
       await selectRecording(recording);
+      // Open mobile modal on mobile devices
+      if (window.innerWidth < 1024) {
+        setIsMobileModalOpen(true);
+      }
     },
     [selectRecording]
   );
+
+  // Close mobile modal
+  const handleCloseMobileModal = useCallback(() => {
+    setIsMobileModalOpen(false);
+  }, []);
 
   // Auto-select recording from query parameter and scroll to it
   useEffect(() => {
@@ -154,6 +164,25 @@ function HistoryPageContent() {
       }
     }
   }, [searchParams, recordings, selectedRecording, handleView, recordingRefs]);
+
+  // Close mobile modal when window is resized to desktop size or when no recording is selected
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024 && isMobileModalOpen) {
+        setIsMobileModalOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobileModalOpen]);
+
+  // Close modal when no recording is selected
+  useEffect(() => {
+    if (!selectedRecording && isMobileModalOpen) {
+      setIsMobileModalOpen(false);
+    }
+  }, [selectedRecording, isMobileModalOpen]);
 
   // Email submit handler with error handling
   const onEmailSubmit = async (e: React.FormEvent) => {
@@ -197,25 +226,25 @@ function HistoryPageContent() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-dark-700/50">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link
                 href="/"
-                className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                className="p-2 sm:p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-white">Aufnahmen-Historie</h1>
-                <p className="text-sm text-dark-400">
+                <h1 className="text-lg sm:text-xl font-bold text-white">Aufnahmen-Historie</h1>
+                <p className="text-xs sm:text-sm text-dark-400">
                   {recordings.length} {recordings.length === 1 ? 'Aufnahme' : 'Aufnahmen'} gespeichert
                 </p>
               </div>
             </div>
             <Link
               href="/chat"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
             >
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">AI-Assistant</span>
@@ -224,17 +253,17 @@ function HistoryPageContent() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 pt-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
         {error && (
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <StatusMessage type="error" message={error} onClose={() => setError(null)} />
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Recordings List */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-10rem)] flex flex-col">
-            <div className="overflow-y-auto flex-1 space-y-4 pr-2">
+            <div className="overflow-y-auto flex-1 space-y-3 sm:space-y-4 pr-2">
               {recordings.length === 0 ? (
                 <EmptyRecordingsState />
               ) : (
@@ -268,8 +297,8 @@ function HistoryPageContent() {
             </div>
           </div>
 
-          {/* Detail View */}
-          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-10rem)]">
+          {/* Detail View - Desktop only */}
+          <div className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-10rem)]">
             {selectedRecording ? (
               <RecordingDetail
                 recording={selectedRecording}
@@ -303,6 +332,57 @@ function HistoryPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Full-Page Modal */}
+      {isMobileModalOpen && selectedRecording && (
+        <div className="fixed inset-0 z-[100] lg:hidden flex flex-col bg-dark-900">
+          {/* Modal Header */}
+          <div className="sticky top-0 z-10 glass border-b border-dark-700/50 bg-gradient-to-b from-dark-900/95 via-dark-900/90 to-dark-900/95">
+            <div className="flex items-center justify-between px-4 py-3">
+              <h2 className="text-lg font-semibold text-white">Aufnahme-Details</h2>
+              <button
+                onClick={handleCloseMobileModal}
+                className="p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                aria-label="Modal schließen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-6xl mx-auto px-4 py-4">
+              <RecordingDetail
+                recording={selectedRecording}
+                transcription={transcription}
+                localEnrichments={enrichmentEditor.localEnrichments}
+                isTranscriptionExpanded={isTranscriptionExpanded}
+                editingEnrichmentId={enrichmentEditor.editingEnrichmentId}
+                editedEnrichmentContent={enrichmentEditor.editedEnrichmentContent}
+                savingEnrichment={enrichmentEditor.savingEnrichment}
+                addingItemTo={enrichmentEditor.addingItemTo}
+                newItemText={enrichmentEditor.newItemText}
+                editingItemInfo={enrichmentEditor.editingItemInfo}
+                parseEnrichmentSections={enrichmentEditor.parseEnrichmentSections}
+                onToggleTranscription={() => setIsTranscriptionExpanded(!isTranscriptionExpanded)}
+                onStartEdit={enrichmentEditor.startEdit}
+                onSaveEdit={enrichmentEditor.saveEdit}
+                onCancelEdit={enrichmentEditor.cancelEdit}
+                onEditedContentChange={enrichmentEditor.setEditedEnrichmentContent}
+                onToggleCheckbox={enrichmentEditor.toggleCheckbox}
+                onDeleteListItem={enrichmentEditor.deleteListItem}
+                onAddingItemToChange={enrichmentEditor.setAddingItemTo}
+                onNewItemTextChange={enrichmentEditor.setNewItemText}
+                onAddListItem={enrichmentEditor.addListItem}
+                onEditingItemInfoChange={enrichmentEditor.setEditingItemInfo}
+                onUpdateListItem={enrichmentEditor.updateListItem}
+                onUpdateTextContent={enrichmentEditor.updateTextContent}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <EmailModal
