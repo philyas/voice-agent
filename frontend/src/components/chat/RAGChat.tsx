@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
@@ -17,7 +17,6 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,24 +95,11 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
     }
   };
 
-  const toggleSourceExpanded = (messageId: string) => {
-    setExpandedSources(prev => {
-      const next = new Set(prev);
-      if (next.has(messageId)) {
-        next.delete(messageId);
-      } else {
-        next.add(messageId);
-      }
-      return next;
-    });
-  };
-
   // Use centralized utility - format without time for compact display
   const formatDateCompact = (dateString: string) => formatDate(dateString, false);
 
   const clearChat = () => {
     setMessages([]);
-    setExpandedSources(new Set());
   };
 
   return (
@@ -207,48 +193,36 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
                     </ReactMarkdown>
                   </div>
 
-                  {/* Sources */}
-                  {message.sources && message.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-dark-700/50">
-                      <button
-                        onClick={() => toggleSourceExpanded(message.id)}
-                        className="flex items-center gap-1.5 text-xs text-dark-400 hover:text-gold-400 transition-colors"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        {message.sources.length} Quelle{message.sources.length !== 1 ? 'n' : ''}
-                        {expandedSources.has(message.id) ? (
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-
-                      {expandedSources.has(message.id) && (
-                        <div className="mt-2 space-y-2">
-                          {message.sources.map((source, idx) => (
-                            <div
-                              key={idx}
-                              className="p-2 bg-dark-900/50 rounded-lg text-xs cursor-pointer hover:bg-dark-900 transition-colors"
-                              onClick={() => onSourceClick?.(source.recordingId)}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-medium text-dark-200 truncate max-w-[200px]">
-                                  {source.filename || 'Unbekannte Aufnahme'}
-                                </span>
-                                <span className="text-gold-500 font-mono">
-                                  {(source.maxSimilarity * 100).toFixed(0)}%
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-dark-500">
-                                <Calendar className="w-3 h-3" />
-                                <span>{source.date ? formatDateCompact(source.date) : 'Unbekannt'}</span>
-                              </div>
+                  {/* Sources - Only show the best (first) source */}
+                  {message.sources && message.sources.length > 0 && (() => {
+                    // Sources are already sorted by similarity (highest first) from backend
+                    const bestSource = message.sources[0];
+                    
+                    return (
+                      <div className="mt-3 pt-3 border-t border-dark-700/50">
+                        <div
+                          className="p-2 bg-dark-900/50 rounded-lg text-xs cursor-pointer hover:bg-dark-900 transition-colors"
+                          onClick={() => onSourceClick?.(bestSource.recordingId)}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-gold-400" />
+                              <span className="font-medium text-dark-200 truncate max-w-[200px]">
+                                {bestSource.filename || 'Unbekannte Aufnahme'}
+                              </span>
                             </div>
-                          ))}
+                            <span className="text-gold-500 font-mono">
+                              {(bestSource.maxSimilarity * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-dark-500">
+                            <Calendar className="w-3 h-3" />
+                            <span>{bestSource.date ? formatDateCompact(bestSource.date) : 'Unbekannt'}</span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </>
               )}
             </div>
