@@ -18,8 +18,10 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      // Enable media access
-      enableBlinkFeatures: 'MediaDevices',
+      // Disable webSecurity only for file:// protocol in production
+      // This allows loading local files without CORS issues
+      webSecurity: isDev, // Keep webSecurity enabled in dev, disable in production for file://
+      allowRunningInsecureContent: false,
     },
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#0a0a0b',
@@ -55,27 +57,137 @@ function createWindow() {
   if (isDev) {
     startUrl = 'http://localhost:3000';
   } else {
-    // In production, use app.getAppPath() to get the correct path
+    // In production, find the correct path to the out folder
+    // When packaged with electron-builder, files are in app.asar or Resources
+    let indexPath;
+    const fs = require('fs');
+    
+    // Try multiple possible locations
     const appPath = app.getAppPath();
-    const indexPath = path.join(appPath, 'out', 'index.html');
-    startUrl = `file://${indexPath}`;
+    const resourcesPath = process.resourcesPath || appPath;
+    
+    // In electron-builder, the structure is:
+    // - app.asar contains the main code
+    // - out/ folder should be in the same directory as app.asar
+    // Possible locations for the out folder
+    const possiblePaths = [
+      path.join(appPath, 'out', 'index.html'),                    // Standard location (unpacked)
+      path.join(resourcesPath, 'app', 'out', 'index.html'),      // Packaged app location (app.asar)
+      path.join(resourcesPath, 'out', 'index.html'),             // Alternative packaged location
+      path.join(path.dirname(appPath), 'out', 'index.html'),     // Parent of app.asar
+      path.join(__dirname, '..', 'out', 'index.html'),           // Relative to main.js
+      path.join(__dirname, 'out', 'index.html'),                 // Same directory as main.js
+    ];
+    
+    // Find the first existing path
+    for (const possiblePath of possiblePaths) {
+      try {
+        if (fs.existsSync(possiblePath)) {
+          indexPath = possiblePath;
+          console.log('Found index.html at:', indexPath);
+          break;
+        }
+      } catch (err) {
+        console.error('Error checking path:', possiblePath, err);
+      }
+    }
+    
+    if (!indexPath) {
+      console.error('Could not find index.html. Tried paths:');
+      possiblePaths.forEach(p => {
+        try {
+          const exists = fs.existsSync(p);
+          console.error(`  - ${p} (exists: ${exists})`);
+        } catch (err) {
+          console.error(`  - ${p} (error: ${err.message})`);
+        }
+      });
+      // Fallback: use appPath/out/index.html
+      indexPath = path.join(appPath, 'out', 'index.html');
+      console.error('Using fallback path:', indexPath);
+    }
+    
+    // Convert to file:// URL (must use path.normalize and replace backslashes on Windows)
+    try {
+      const resolvedPath = path.resolve(indexPath);
+      startUrl = `file://${resolvedPath.replace(/\\/g, '/')}`;
+    } catch (err) {
+      console.error('Error resolving path:', err);
+      // Last resort fallback
+      startUrl = `file://${indexPath.replace(/\\/g, '/')}`;
+    }
   }
   
   console.log('Loading URL:', startUrl);
+  console.log('isDev:', isDev);
+  console.log('app.isPackaged:', app.isPackaged);
+  console.log('app.getAppPath():', app.getAppPath());
+  console.log('__dirname:', __dirname);
+  
   mainWindow.loadURL(startUrl);
 
   // Error handling
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error('Failed to load:', validatedURL, errorCode, errorDescription);
-    if (!isDev) {
-      // In production, show error in console and try to open DevTools for debugging
-      console.error('App failed to load. Check if out/ folder exists in the app bundle.');
+    console.error('Failed to load:', validatedURL);
+    console.error('Error code:', errorCode);
+    console.error('Error description:', errorDescription);
+    
+    // Only show window and open DevTools if window is still valid
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
       mainWindow.webContents.openDevTools();
+      
+      // Display error message in the window - only after page is ready
+      mainWindow.webContents.once('did-finish-load', () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.executeJavaScript(`
+            (function() {
+              try {
+                document.body.innerHTML = '<div style="padding: 20px; font-family: system-ui; color: white; background: #1a1a1a; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                  <h1 style="color: #ff4444;">Fehler beim Laden der App</h1>
+                  <p>URL: ${validatedURL}</p>
+                  <p>Fehler: ${errorDescription} (Code: ${errorCode})</p>
+                  <p style="margin-top: 20px; font-size: 12px; opacity: 0.7;">Bitte öffnen Sie die Entwicklertools (Cmd+Option+I) für weitere Details.</p>
+                </div>';
+              } catch(e) {
+                console.error('Error setting error message:', e);
+              }
+            })();
+          `).catch(err => console.error('Error displaying error message:', err));
+        }
+      });
     }
+  });
+  
+  // Additional error handlers
+  mainWindow.webContents.on('console-message', (event, level, message) => {
+    console.log(`[Renderer ${level}]:`, message);
   });
 
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('Page loaded successfully');
+    // Inject a base tag if it doesn't exist (helps with relative paths in file:// protocol)
+    // Only do this if window is still valid and not destroyed
+    if (!isDev && mainWindow && !mainWindow.isDestroyed()) {
+      // Use setTimeout to ensure DOM is fully ready
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.executeJavaScript(`
+            (function() {
+              try {
+                if (!document.querySelector('base')) {
+                  const base = document.createElement('base');
+                  base.href = window.location.href.split('/').slice(0, -1).join('/') + '/';
+                  document.head.insertBefore(base, document.head.firstChild);
+                }
+              } catch(e) {
+                console.error('Error injecting base tag:', e);
+              }
+            })();
+          `).catch(err => console.error('Error injecting base tag:', err));
+        }
+      }, 100);
+    }
   });
 
   // Show window when ready
@@ -83,6 +195,17 @@ function createWindow() {
     mainWindow.show();
     mainWindow.focus();
   });
+  
+  // Fallback: Show window after 3 seconds even if ready-to-show doesn't fire
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      console.log('Fallback: Showing window after timeout');
+      mainWindow.show();
+      if (!isDev) {
+        mainWindow.webContents.openDevTools(); // Open DevTools for debugging
+      }
+    }
+  }, 3000);
 
   // Handle window close - minimize to tray instead
   mainWindow.on('close', (event) => {
@@ -207,71 +330,98 @@ function registerGlobalShortcuts() {
 
 // Setup permissions for media access
 function setupPermissions() {
-  const { session } = require('electron');
-  
-  // Handle permission requests (for getUserMedia, etc.)
-  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-    console.log('Permission requested:', permission, 'from:', details.requestingUrl);
-    const allowedPermissions = ['microphone', 'camera', 'media'];
+  try {
+    const { session } = require('electron');
     
-    if (allowedPermissions.includes(permission)) {
-      console.log('Granting permission:', permission);
-      callback(true); // Grant permission
-    } else {
-      console.log('Denying permission:', permission);
-      callback(false); // Deny permission
-    }
-  });
-
-  // Handle permission checks
-  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
-    const allowedPermissions = ['microphone', 'camera', 'media'];
-    
-    if (allowedPermissions.includes(permission)) {
-      console.log('Permission check allowed:', permission, 'for:', requestingOrigin);
-      return true; // Allow permission check
-    }
-    return false;
-  });
-
-  // On macOS, request system-level media access (async, don't block)
-  if (process.platform === 'darwin') {
-    // Check current status first
-    const status = systemPreferences.getMediaAccessStatus('microphone');
-    console.log('Current microphone access status:', status);
-    
-    if (status !== 'granted') {
-      // Request microphone access
-      systemPreferences.askForMediaAccess('microphone').then((granted) => {
-        if (granted) {
-          console.log('Microphone access granted by system');
+    // Handle permission requests (for getUserMedia, etc.)
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+      try {
+        console.log('Permission requested:', permission, 'from:', details.requestingUrl);
+        const allowedPermissions = ['microphone', 'camera', 'media'];
+        
+        if (allowedPermissions.includes(permission)) {
+          console.log('Granting permission:', permission);
+          callback(true); // Grant permission
         } else {
-          console.warn('Microphone access denied by system');
+          console.log('Denying permission:', permission);
+          callback(false); // Deny permission
         }
-      }).catch((err) => {
-        console.error('Error requesting microphone access:', err);
-      });
-    } else {
-      console.log('Microphone access already granted');
+      } catch (err) {
+        console.error('Error in permission request handler:', err);
+        callback(false);
+      }
+    });
+
+    // Handle permission checks
+    session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+      try {
+        const allowedPermissions = ['microphone', 'camera', 'media'];
+        
+        if (allowedPermissions.includes(permission)) {
+          console.log('Permission check allowed:', permission, 'for:', requestingOrigin);
+          return true; // Allow permission check
+        }
+        return false;
+      } catch (err) {
+        console.error('Error in permission check handler:', err);
+        return false;
+      }
+    });
+
+    // On macOS, request system-level media access (async, don't block)
+    if (process.platform === 'darwin') {
+      try {
+        // Check current status first
+        const status = systemPreferences.getMediaAccessStatus('microphone');
+        console.log('Current microphone access status:', status);
+        
+        if (status !== 'granted') {
+          // Request microphone access (async, don't block)
+          systemPreferences.askForMediaAccess('microphone').then((granted) => {
+            if (granted) {
+              console.log('Microphone access granted by system');
+            } else {
+              console.warn('Microphone access denied by system');
+            }
+          }).catch((err) => {
+            console.error('Error requesting microphone access:', err);
+          });
+        } else {
+          console.log('Microphone access already granted');
+        }
+      } catch (err) {
+        console.error('Error checking microphone access status:', err);
+      }
     }
+  } catch (err) {
+    console.error('Error setting up permissions:', err);
+    // Don't throw - continue with app initialization
   }
 }
 
 // App lifecycle
 app.whenReady().then(() => {
-  setupPermissions();
-  createWindow();
-  createTray();
-  registerGlobalShortcuts();
+  try {
+    setupPermissions();
+    createWindow();
+    createTray();
+    registerGlobalShortcuts();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    } else {
-      mainWindow.show();
-      mainWindow.focus();
-    }
-  });
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      } else if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+  } catch (error) {
+    console.error('Error during app initialization:', error);
+    app.quit();
+  }
+}).catch((error) => {
+  console.error('Error in app.whenReady():', error);
+  app.quit();
 });
 
 app.on('window-all-closed', () => {
