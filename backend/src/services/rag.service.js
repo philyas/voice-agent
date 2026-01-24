@@ -117,9 +117,9 @@ ${doc.content}
 Wichtige Regeln:
 1. Antworte NUR basierend auf den bereitgestellten Kontextinformationen.
 2. Wenn die Antwort nicht im Kontext zu finden ist, sage das ehrlich.
-3. Zitiere relevante Quellen mit [Quelle X] wenn möglich.
-4. Fasse Informationen aus mehreren Quellen zusammen, wenn relevant.
-5. Antworte präzise und hilfreich auf Deutsch.
+3. Fasse Informationen aus mehreren Quellen zusammen, wenn relevant.
+4. Antworte präzise und hilfreich auf Deutsch.
+5. Verwende KEINE Quellen-Referenzen wie [Quelle X] in deiner Antwort.
 6. Verwende Markdown-Formatierung für bessere Lesbarkeit:
    - **Fett** für wichtige Begriffe und Überschriften
    - *Kursiv* für Betonungen
@@ -135,9 +135,9 @@ Wichtige Regeln:
 Important rules:
 1. Answer ONLY based on the provided context information.
 2. If the answer cannot be found in the context, say so honestly.
-3. Cite relevant sources with [Source X] when possible.
-4. Combine information from multiple sources when relevant.
-5. Answer precisely and helpfully in English.
+3. Combine information from multiple sources when relevant.
+4. Answer precisely and helpfully in English.
+5. Do NOT use source references like [Source X] in your answer.
 6. Use Markdown formatting for better readability:
    - **Bold** for important terms and headings
    - *Italic* for emphasis
