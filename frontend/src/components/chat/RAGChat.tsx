@@ -204,15 +204,10 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
                           className="p-2 bg-dark-900/50 rounded-lg text-xs cursor-pointer hover:bg-dark-900 transition-colors"
                           onClick={() => onSourceClick?.(bestSource.recordingId)}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-gold-400" />
-                              <span className="font-medium text-dark-200 truncate max-w-[200px]">
-                                {bestSource.filename || 'Unbekannte Aufnahme'}
-                              </span>
-                            </div>
-                            <span className="text-gold-500 font-mono">
-                              {(bestSource.maxSimilarity * 100).toFixed(0)}%
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <FileText className="w-3.5 h-3.5 text-gold-400" />
+                            <span className="font-medium text-dark-200 truncate max-w-[200px]">
+                              {bestSource.filename || 'Unbekannte Aufnahme'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-dark-500">
