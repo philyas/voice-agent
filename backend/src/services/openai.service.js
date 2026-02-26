@@ -5,8 +5,14 @@
 
 const OpenAI = require('openai');
 const fs = require('fs');
+const path = require('path');
 const { env } = require('../config/env');
 const logger = require('../utils/logger.util');
+const {
+  WHISPER_MAX_BYTES,
+  splitAudioIntoChunks,
+  cleanupChunkFiles,
+} = require('../utils/audioChunks.util');
 
 class OpenAIService {
   constructor() {
@@ -16,37 +22,104 @@ class OpenAIService {
   }
 
   /**
-   * Transcribe audio file using Whisper API
+   * Transcribe a single audio file (must be under Whisper 25MB limit).
    * @param {string} filePath - Path to audio file
    * @param {Object} options - Transcription options
    * @returns {Promise<Object>} - Transcription result
    */
-  async transcribeAudio(filePath, options = {}) {
+  async transcribeSingleFile(filePath, options = {}) {
     const {
       language = 'de',
       prompt,
       responseFormat = 'verbose_json',
     } = options;
 
+    const audioFile = fs.createReadStream(filePath);
+
+    const transcription = await this.client.audio.transcriptions.create({
+      file: audioFile,
+      model: 'whisper-1',
+      language,
+      response_format: responseFormat,
+      ...(prompt && { prompt }),
+    });
+
+    return {
+      success: true,
+      text: transcription.text || '',
+      language: transcription.language || language,
+      duration: transcription.duration,
+      segments: transcription.segments || [],
+      words: transcription.words || [],
+    };
+  }
+
+  /**
+   * Transcribe audio file using Whisper API.
+   * If file exceeds 25MB, splits into chunks, transcribes in parallel, then merges text.
+   * @param {string} filePath - Path to audio file
+   * @param {Object} options - Transcription options
+   * @returns {Promise<Object>} - Transcription result
+   */
+  async transcribeAudio(filePath, options = {}) {
     try {
-      const audioFile = fs.createReadStream(filePath);
+      const stat = fs.statSync(filePath);
+      const fileSizeBytes = stat.size;
 
-      const transcription = await this.client.audio.transcriptions.create({
-        file: audioFile,
-        model: 'whisper-1',
-        language,
-        response_format: responseFormat,
-        ...(prompt && { prompt }),
-      });
+      if (fileSizeBytes <= WHISPER_MAX_BYTES) {
+        return this.transcribeSingleFile(filePath, options);
+      }
 
-      return {
-        success: true,
-        text: transcription.text,
-        language: transcription.language || language,
-        duration: transcription.duration,
-        segments: transcription.segments || [],
-        words: transcription.words || [],
-      };
+      // Large file: chunk, transcribe in parallel, merge
+      const tempBase = path.join(env.UPLOADS_DIR, 'temp');
+      const chunkDir = path.join(tempBase, `transcribe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`);
+      await fs.promises.mkdir(chunkDir, { recursive: true });
+
+      let chunks;
+      try {
+        const result = await splitAudioIntoChunks(filePath, chunkDir);
+        chunks = result.chunks;
+        const totalDuration = result.totalDuration;
+
+        if (chunks.length === 1 && chunks[0].path === filePath) {
+          return this.transcribeSingleFile(filePath, options);
+        }
+
+        // Transcribe all chunks in parallel
+        const { language = 'de', prompt } = options;
+        const transcriptions = await Promise.all(
+          chunks.map((chunk) =>
+            this.transcribeSingleFile(chunk.path, { language, prompt, responseFormat: 'json' })
+          )
+        );
+
+        // Sort by chunk index and merge text
+        const sorted = transcriptions
+          .map((t, i) => ({ ...t, index: chunks[i].index }))
+          .sort((a, b) => a.index - b.index);
+
+        const mergedText = sorted
+          .map((t) => (t.text || '').trim())
+          .filter(Boolean)
+          .join(' ');
+
+        const duration = totalDuration ?? sorted.reduce((sum, t) => sum + (t.duration || 0), 0);
+        const firstLanguage = sorted[0]?.language || language;
+
+        return {
+          success: true,
+          text: mergedText.trim(),
+          language: firstLanguage,
+          duration,
+          segments: sorted.flatMap((t) => t.segments || []),
+          words: sorted.flatMap((t) => t.words || []),
+        };
+      } finally {
+        if (chunks && chunks.length > 1) {
+          await cleanupChunkFiles(chunks, filePath);
+        }
+        await fs.promises.rm(chunkDir, { recursive: true, force: true }).catch(() => {});
+      }
     } catch (error) {
       logger.error('OpenAI Whisper Error', error);
       throw new Error(`Transcription failed: ${error.message}`);

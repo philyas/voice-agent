@@ -3,8 +3,8 @@
 
 FROM node:18-alpine
 
-# Install dependencies for node-gyp (needed for some packages)
-RUN apk add --no-cache python3 make g++
+# Install dependencies for node-gyp and audio chunking (ffmpeg for large-file transcription)
+RUN apk add --no-cache python3 make g++ ffmpeg
 
 # Set working directory
 WORKDIR /app

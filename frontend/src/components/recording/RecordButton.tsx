@@ -48,7 +48,7 @@ export function RecordButton({
             onPause();
           }
         }}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-white shadow-dark hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 hover:border-ptw-500/40 transition-all duration-200 flex items-center justify-center group relative z-10"
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-white via-dark-50 to-dark-100 border border-dark-300 text-dark-700 shadow-md hover:border-ptw-400/60 hover:shadow-ptw transition-all duration-200 flex items-center justify-center group relative z-10"
         aria-label={isPaused ? 'Fortsetzen' : 'Pausieren'}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-ptw-500/0 via-ptw-500/0 to-ptw-500/0 group-hover:from-ptw-500/10 group-hover:via-ptw-500/5 group-hover:to-ptw-500/10 transition-all duration-200 rounded-full" />

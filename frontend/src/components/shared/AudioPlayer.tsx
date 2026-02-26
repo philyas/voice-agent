@@ -127,7 +127,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
 
   return (
     <>
-    <div className="bg-dark-850 border border-dark-700 rounded-2xl p-5">
+    <div className="bg-dark-50 border border-dark-300 rounded-2xl p-5 shadow-sm">
       <audio 
         ref={audioRef} 
         src={audioUrl}
@@ -152,7 +152,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
 
         <div className="flex-1">
           {/* Progress bar container */}
-          <div className="relative h-1.5 bg-dark-700 rounded-full overflow-hidden mb-2">
+          <div className="relative h-1.5 bg-dark-200 rounded-full overflow-hidden mb-2">
             <div 
               className="absolute h-full bg-gradient-to-r from-ptw-500 to-ptw-400 rounded-full transition-all duration-100"
               style={{ width: `${progress}%` }}
@@ -167,7 +167,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
             className="w-full absolute opacity-0 cursor-pointer"
             style={{ marginTop: '-14px', height: '20px' }}
           />
-          <div className="flex justify-between text-xs text-dark-400 font-medium">
+          <div className="flex justify-between text-xs text-dark-600 font-medium">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -180,7 +180,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
               e.stopPropagation();
               setShowResetModal(true);
             }}
-            className="w-10 h-10 rounded-full bg-dark-800 border border-dark-700 text-dark-400 flex items-center justify-center hover:text-white hover:border-dark-600 transition-all duration-200 cursor-pointer relative"
+            className="w-10 h-10 rounded-full bg-white border border-dark-300 text-dark-500 flex items-center justify-center hover:text-ptw-600 hover:border-ptw-400/60 transition-all duration-200 cursor-pointer relative shadow-sm"
             aria-label="Zurücksetzen"
             type="button"
           >

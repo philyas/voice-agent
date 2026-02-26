@@ -92,8 +92,8 @@ export function Waveform({ audioStream, isRecording, isPaused, className = '' }:
           const canvasHeight = currentRect.height || 128;
 
           if (!isRecording || isPaused) {
-            // Draw empty waveform when paused
-            ctx.fillStyle = 'rgba(20, 20, 25, 1)';
+            // Draw empty waveform when paused (light background)
+            ctx.fillStyle = 'rgba(248, 248, 250, 1)';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
             animationFrameRef.current = requestAnimationFrame(draw);
             return;
@@ -103,8 +103,8 @@ export function Waveform({ audioStream, isRecording, isPaused, className = '' }:
 
           analyser.getByteFrequencyData(dataArray);
 
-          // Clear canvas
-          ctx.fillStyle = 'rgba(20, 20, 25, 1)';
+          // Clear canvas (light background)
+          ctx.fillStyle = 'rgba(248, 248, 250, 1)';
           ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
           // Only use lower frequencies for cleaner visualization (first 200 bins)
@@ -207,16 +207,16 @@ export function Waveform({ audioStream, isRecording, isPaused, className = '' }:
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="relative w-full h-16 rounded-xl overflow-hidden bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/30">
+      <div className="relative w-full h-16 rounded-xl overflow-hidden bg-gradient-to-br from-dark-100 via-dark-50 to-dark-200 border border-dark-300/80">
         <canvas
           ref={canvasRef}
           className="w-full h-full"
           style={{ display: 'block' }}
         />
         {isPaused && (
-          <div className="absolute inset-0 flex items-center justify-center bg-dark-900/50 backdrop-blur-sm">
-            <div className="px-4 py-2 rounded-lg bg-dark-800/80 border border-ptw-500/30">
-              <p className="text-sm text-ptw-400 font-medium">Pausiert</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+            <div className="px-4 py-2 rounded-lg bg-white/90 border border-ptw-400/40 shadow-sm">
+              <p className="text-sm text-ptw-600 font-medium">Pausiert</p>
             </div>
           </div>
         )}
