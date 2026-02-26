@@ -63,11 +63,11 @@ export function RecordingDetail({
   return (
     <div
       key={recording.id}
-      className="bg-dark-850 border border-dark-700 rounded-xl sm:rounded-2xl overflow-hidden h-full flex flex-col transition-smooth animate-fade-in"
+      className="bg-white border border-dark-200 rounded-xl sm:rounded-2xl overflow-hidden h-full flex flex-col transition-smooth animate-fade-in shadow-sm"
     >
       {/* Header only shown on desktop (mobile uses modal header) */}
-      <div className="hidden lg:block px-6 py-5 border-b border-dark-700">
-        <h2 className="text-lg font-semibold text-white">Aufnahme-Details</h2>
+      <div className="hidden lg:block px-6 py-5 border-b border-dark-200">
+        <h2 className="text-lg font-semibold text-dark-800">Aufnahme-Details</h2>
       </div>
 
       <div className="p-4 sm:p-6 overflow-y-auto flex-1">
@@ -77,7 +77,7 @@ export function RecordingDetail({
             <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
               Dateiname
             </label>
-            <p className="text-sm sm:text-base text-white mt-1 transition-all duration-300 break-words">
+            <p className="text-sm sm:text-base text-dark-800 mt-1 transition-all duration-300 break-words">
               {recording.original_filename}
             </p>
           </div>
@@ -86,20 +86,20 @@ export function RecordingDetail({
               <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
                 Erstellt am
               </label>
-              <p className="text-sm sm:text-base text-white mt-1">{formatDate(recording.created_at)}</p>
+              <p className="text-sm sm:text-base text-dark-800 mt-1">{formatDate(recording.created_at)}</p>
             </div>
             <div>
               <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
                 Dauer
               </label>
-              <p className="text-sm sm:text-base text-white mt-1">{formatDuration(recording.duration_ms)}</p>
+              <p className="text-sm sm:text-base text-dark-800 mt-1">{formatDuration(recording.duration_ms)}</p>
             </div>
           </div>
           <div>
             <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">
               Dateigröße
             </label>
-            <p className="text-sm sm:text-base text-white mt-1">{formatFileSize(recording.file_size)}</p>
+            <p className="text-sm sm:text-base text-dark-800 mt-1">{formatFileSize(recording.file_size)}</p>
           </div>
         </div>
 
@@ -116,13 +116,13 @@ export function RecordingDetail({
 
         {/* Transcription */}
         {transcription ? (
-          <div className="border-t border-dark-700 pt-4 sm:pt-6 transition-smooth">
+          <div className="border-t border-dark-200 pt-4 sm:pt-6 transition-smooth">
             <button
               onClick={onToggleTranscription}
-              className="w-full flex items-center justify-between mb-3 text-sm font-semibold text-white hover:text-gold-500 transition-colors"
+              className="w-full flex items-center justify-between mb-3 text-sm font-semibold text-dark-800 hover:text-ptw-500 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gold-500" />
+                <FileText className="w-4 h-4 text-ptw-500" />
                 Transkription
               </div>
               {isTranscriptionExpanded ? (
@@ -133,8 +133,8 @@ export function RecordingDetail({
             </button>
 
             {isTranscriptionExpanded && (
-              <div className="bg-dark-900/50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5 transition-smooth animate-fade-in">
-                <p className="text-dark-300 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="bg-dark-50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5 transition-smooth animate-fade-in">
+                <p className="text-dark-700 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                   {transcription.text}
                 </p>
               </div>
@@ -143,7 +143,7 @@ export function RecordingDetail({
             {/* Enrichments */}
             {localEnrichments && localEnrichments.length > 0 && (
               <div className="transition-smooth">
-                <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 sm:mb-3 transition-all duration-300">
+                <h4 className="text-xs sm:text-sm font-semibold text-dark-800 mb-2 sm:mb-3 transition-all duration-300">
                   Enrichments ({localEnrichments.length})
                 </h4>
                 <div className="space-y-2 sm:space-y-3">
@@ -178,7 +178,7 @@ export function RecordingDetail({
             )}
           </div>
         ) : (
-          <div className="border-t border-dark-700 pt-6">
+          <div className="border-t border-dark-200 pt-6">
             <p className="text-sm text-dark-500">Noch keine Transkription vorhanden</p>
           </div>
         )}
@@ -189,12 +189,16 @@ export function RecordingDetail({
 
 export function RecordingDetailEmpty() {
   return (
-    <div className="bg-dark-850 border border-dark-700 rounded-2xl p-10 text-center h-full flex flex-col items-center justify-center">
-      <div className="w-16 h-16 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center mb-5">
-        <FileText className="w-8 h-8 text-dark-500" />
+    <div className="bg-white border border-dark-200 rounded-2xl p-10 text-center h-full flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-dark-100 border border-dark-200 flex items-center justify-center">
+          <FileText className="w-7 h-7 text-dark-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-dark-800 mb-1">Keine Auswahl</h3>
+          <p className="text-sm text-dark-500">Wähle eine Aufnahme aus der Liste, um Details anzuzeigen</p>
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">Keine Auswahl</h3>
-      <p className="text-dark-400">Wähle eine Aufnahme aus der Liste, um Details anzuzeigen</p>
     </div>
   );
 }

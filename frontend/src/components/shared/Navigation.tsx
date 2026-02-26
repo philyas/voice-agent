@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Mic, History, MessageSquare, Menu, X, Monitor } from 'lucide-react';
 import { useElectron } from '@/hooks';
@@ -62,7 +63,7 @@ export function Navigation({
   return (
     <>
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-transparent bg-gradient-to-b from-dark-900/95 via-dark-900/90 to-dark-900/95" style={{ borderImage: 'linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.2), transparent) 1' }}>
+      <header className="sticky top-0 z-50 bg-white border-b border-dark-200/80 dark:bg-dark-900 dark:border-dark-700">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-4">
@@ -70,26 +71,33 @@ export function Navigation({
               {showBackButton && (
                 <Link
                   href={backHref}
-                  className="p-2 sm:p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                  className="p-2 sm:p-2.5 rounded-xl bg-dark-100 border border-dark-200 text-dark-500 hover:text-dark-800 hover:border-dark-300 transition-all duration-200 dark:bg-dark-800 dark:border-dark-700 dark:text-dark-400 dark:hover:text-white dark:hover:border-dark-600"
                 >
                   <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
               )}
 
-              {/* Logo/Icon */}
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold">
-                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-dark-950" strokeWidth={1.5} />
-              </div>
+              {/* PTW Logo */}
+              <Link href="/" className="flex items-center shrink-0">
+                <Image
+                  src="/assets/ptw-logo.png"
+                  alt="PTW TU Darmstadt"
+                  width={120}
+                  height={44}
+                  className="h-9 sm:h-11 w-auto object-contain"
+                  priority
+                />
+              </Link>
 
               {/* Title Section */}
               <div>
                 {title ? (
                   <>
-                    <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white">
+                    <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-dark-950 dark:text-white">
                       {title}
                     </h1>
                     {subtitle && (
-                      <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent">
+                      <p className="text-xs sm:text-sm text-dark-500 dark:text-dark-400">
                         {subtitle}
                       </p>
                     )}
@@ -97,22 +105,17 @@ export function Navigation({
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
-                      <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight">
-                        <span className="bg-gradient-to-r from-gold-400 via-gold-300 via-gold-400 to-gold-500 bg-clip-text text-transparent">
-                          EverlastAI
-                        </span>
-                        <span className="bg-gradient-to-r from-white/90 via-white/70 to-white/90 bg-clip-text text-transparent font-semibold text-sm sm:text-lg ml-1 sm:ml-2">
-                          Audio Intelligence
-                        </span>
-                      </h1>
+                      <span className="text-lg sm:text-xl font-semibold tracking-tight text-dark-800 dark:text-white/90">
+                        Audio Intelligence
+                      </span>
                       {isElectron && (
-                        <span className="px-2 py-0.5 text-xs bg-dark-700 text-gold-500 rounded-full flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-xs bg-ptw-500/15 text-ptw-600 dark:text-ptw-400 rounded-full flex items-center gap-1">
                           <Monitor className="w-3 h-3" />
                           Desktop
                         </span>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent">
+                    <p className="text-xs sm:text-sm text-dark-500 dark:text-dark-400">
                       Sprachaufnahme & KI-Transkription
                     </p>
                   </>
@@ -131,7 +134,7 @@ export function Navigation({
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-200"
+                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700/50 text-dark-800 dark:text-dark-200 hover:border-dark-300 dark:hover:border-dark-600 transition-all duration-200"
                     >
                       <Icon className="w-4 h-4" />
                       <span className="text-sm font-medium">{item.label}</span>
@@ -143,7 +146,7 @@ export function Navigation({
               {/* Burger Menu Button - Mobile Only */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-gold-500/30 transition-all duration-200"
+                className="lg:hidden p-2 rounded-xl bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700 text-dark-800 dark:text-dark-200 hover:border-dark-300 dark:hover:border-dark-600 transition-all duration-200"
                 aria-label="Menü öffnen"
               >
                 {isMobileMenuOpen ? (
@@ -171,24 +174,28 @@ export function Navigation({
 
         {/* Side Nav */}
         <div
-          className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-gradient-to-br from-dark-900 via-dark-850 to-dark-900 border-l border-dark-700/50 shadow-2xl transform transition-transform duration-300 ease-out ${
+          className={`absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white dark:bg-dark-900 border-l border-dark-200 dark:border-dark-700/50 shadow-2xl transform transition-transform duration-300 ease-out ${
             isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
           {/* Side Nav Header */}
-          <div className="flex items-center justify-between p-4 border-b border-dark-700/50">
+          <div className="flex items-center justify-between p-4 border-b border-dark-200 dark:border-dark-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold">
-                <Mic className="w-5 h-5 text-dark-950" strokeWidth={1.5} />
-              </div>
+              <Image
+                src="/assets/ptw-logo.png"
+                alt="PTW"
+                width={80}
+                height={32}
+                className="h-8 w-auto object-contain"
+              />
               <div>
-                <h2 className="text-lg font-extrabold text-white">EverlastAI</h2>
-                <p className="text-xs text-dark-400">Navigation</p>
+                <h2 className="text-lg font-extrabold text-dark-900 dark:text-white">PTW</h2>
+                <p className="text-xs text-dark-500 dark:text-dark-400">Navigation</p>
               </div>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+              className="p-2 rounded-xl bg-white border border-dark-200 text-dark-800 hover:border-dark-300 transition-all duration-200 dark:bg-dark-800 dark:border-dark-700 dark:text-dark-300 dark:hover:text-white dark:hover:border-dark-600"
               aria-label="Menü schließen"
             >
               <X className="w-5 h-5" />
@@ -207,14 +214,14 @@ export function Navigation({
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     active
-                      ? 'bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-gold-500/20 border border-gold-500/30 text-gold-400'
-                      : 'bg-dark-800 border border-dark-700/50 text-dark-300 hover:text-white hover:border-gold-500/30 hover:bg-dark-750'
+                      ? 'bg-white dark:bg-dark-800 border border-ptw-500/40 text-ptw-600 dark:text-ptw-400'
+                      : 'bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700/50 text-dark-800 dark:text-dark-200 hover:border-dark-300 dark:hover:border-dark-600'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
                   {active && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-gold-500" />
+                    <div className="ml-auto w-2 h-2 rounded-full bg-ptw-500" />
                   )}
                 </Link>
               );

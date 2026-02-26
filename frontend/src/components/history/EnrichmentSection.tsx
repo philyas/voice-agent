@@ -56,12 +56,12 @@ export function EnrichmentSection({
 
   return (
     <div
-      className="bg-gold-500/5 border border-gold-500/10 rounded-xl p-4 transition-smooth animate-fade-in"
+      className="bg-ptw-500/5 border border-ptw-500/15 rounded-xl p-4 transition-smooth animate-fade-in"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-gold-500 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-ptw-500 uppercase tracking-wider">
           {enrichment.type}
         </span>
         {isEditing ? (
@@ -69,11 +69,11 @@ export function EnrichmentSection({
             <button
               onClick={onSaveEdit}
               disabled={savingEnrichment || !editedContent.trim()}
-              className="p-1.5 rounded-lg bg-gold-500/20 border border-gold-500/30 text-gold-400 hover:bg-gold-500/30 hover:border-gold-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg bg-ptw-500/20 border border-ptw-500/30 text-ptw-500 hover:bg-ptw-500/30 hover:border-ptw-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Speichern"
             >
               {savingEnrichment ? (
-                <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-ptw-400 border-t-transparent rounded-full animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
@@ -81,7 +81,7 @@ export function EnrichmentSection({
             <button
               onClick={onCancelEdit}
               disabled={savingEnrichment}
-              className="p-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg bg-dark-100 border border-dark-200 text-dark-600 hover:text-dark-800 hover:border-dark-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Abbrechen"
             >
               <X className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function EnrichmentSection({
         ) : (
           <button
             onClick={() => onStartEdit(enrichment.id, enrichment.content)}
-            className="p-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200"
+            className="p-1.5 rounded-lg bg-dark-100 border border-dark-200 text-dark-600 hover:text-ptw-500 hover:border-ptw-500/30 transition-all duration-200"
             aria-label="Bearbeiten"
           >
             <Edit2 className="w-4 h-4" />
@@ -104,7 +104,7 @@ export function EnrichmentSection({
           <textarea
             value={editedContent}
             onChange={(e) => onEditedContentChange(e.target.value)}
-            className="w-full bg-dark-900 border border-dark-600 rounded-lg p-3 text-dark-200 text-sm leading-relaxed resize-none focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50 font-mono"
+            className="w-full bg-dark-50 border border-dark-200 rounded-lg p-3 text-dark-800 text-sm leading-relaxed resize-none focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50 font-mono"
             rows={12}
             placeholder="Enrichment-Content bearbeiten..."
           />
@@ -116,7 +116,7 @@ export function EnrichmentSection({
         <div className="space-y-4">
           {sections.length === 0 || (sections.length === 1 && !sections[0].title) ? (
             // Simple enrichment without sections
-            <div className="prose prose-invert prose-sm max-w-none text-dark-300 text-sm leading-relaxed">
+            <div className="prose prose-sm max-w-none text-dark-700 text-sm leading-relaxed">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{enrichment.content}</ReactMarkdown>
             </div>
           ) : (
@@ -180,7 +180,7 @@ function SectionContent({
   return (
     <div className="space-y-2">
       {/* Section Header */}
-      <h3 className="text-sm font-semibold text-white border-b border-dark-700 pb-1">
+      <h3 className="text-sm font-semibold text-dark-800 border-b border-dark-200 pb-1">
         {section.title}
       </h3>
 
@@ -248,7 +248,7 @@ function TextContentEditor({
               onEditingItemInfoChange(null);
             }
           }}
-          className="w-full bg-dark-900 border border-gold-500/50 rounded px-3 py-2 text-sm text-dark-200 focus:outline-none focus:border-gold-500 resize-none"
+          className="w-full bg-dark-50 border border-ptw-500/30 rounded px-3 py-2 text-sm text-dark-800 focus:outline-none focus:border-ptw-500 resize-none"
           rows={4}
           autoFocus
         />
@@ -263,14 +263,14 @@ function TextContentEditor({
                 editingItemInfo.text
               )
             }
-            className="px-3 py-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 text-sm flex items-center gap-1"
+            className="px-3 py-1 rounded bg-ptw-500/20 text-ptw-500 hover:bg-ptw-500/30 text-sm flex items-center gap-1"
           >
             <Check className="w-3 h-3" />
             Speichern
           </button>
           <button
             onClick={() => onEditingItemInfoChange(null)}
-            className="px-3 py-1 rounded bg-dark-700 text-dark-400 hover:text-white text-sm flex items-center gap-1"
+            className="px-3 py-1 rounded bg-dark-200 text-dark-600 hover:text-dark-800 text-sm flex items-center gap-1"
           >
             <X className="w-3 h-3" />
             Abbrechen
@@ -283,7 +283,7 @@ function TextContentEditor({
   return (
     <div className="group relative">
       <p
-        className="text-sm text-dark-300 leading-relaxed cursor-pointer hover:bg-dark-800/30 rounded px-2 py-1 -mx-2 transition-colors"
+        className="text-sm text-dark-700 leading-relaxed cursor-pointer hover:bg-dark-100 rounded px-2 py-1 -mx-2 transition-colors"
         onClick={() =>
           onEditingItemInfoChange({
             enrichmentId: enrichment.id,
@@ -302,7 +302,7 @@ function TextContentEditor({
             text: section.textContent,
           })
         }
-        className="absolute top-1 right-1 p-1 rounded bg-dark-800/80 border border-dark-700 text-dark-400 hover:text-gold-400 hover:border-gold-500/30 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-1 right-1 p-1 rounded bg-white/90 border border-dark-200 text-dark-500 hover:text-ptw-500 hover:border-ptw-500/30 opacity-0 group-hover:opacity-100 transition-opacity"
         title="Bearbeiten"
       >
         <Edit2 className="w-3 h-3" />
@@ -379,12 +379,12 @@ function ListContent({
               }
             }}
             placeholder="Neuen Punkt eingeben..."
-            className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
+            className="flex-1 bg-dark-50 border border-ptw-500/30 rounded px-2 py-1 text-sm text-dark-800 focus:outline-none focus:border-ptw-500"
             autoFocus
           />
           <button
             onClick={() => onAddListItem(enrichment.id, enrichment.content, section.title)}
-            className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
+            className="p-1 rounded bg-ptw-500/20 text-ptw-500 hover:bg-ptw-500/30"
           >
             <Check className="w-3 h-3" />
           </button>
@@ -393,7 +393,7 @@ function ListContent({
               onAddingItemToChange(null);
               onNewItemTextChange('');
             }}
-            className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
+            className="p-1 rounded bg-dark-200 text-dark-600 hover:text-dark-800"
           >
             <X className="w-3 h-3" />
           </button>
@@ -401,7 +401,7 @@ function ListContent({
       ) : (
         <button
           onClick={() => onAddingItemToChange({ enrichmentId: enrichment.id, section: section.title })}
-          className={`flex items-center gap-1 text-xs text-dark-500 hover:text-gold-400 transition-colors ${
+          className={`flex items-center gap-1 text-xs text-dark-500 hover:text-ptw-500 transition-colors ${
             section.items.length > 0 ? 'pl-6 mt-1' : 'mt-2'
           }`}
         >
@@ -451,7 +451,7 @@ function ListItem({
   };
 
   return (
-    <li className="group flex items-start gap-2 py-1 px-2 -mx-2 rounded-lg hover:bg-dark-800/50 transition-colors">
+    <li className="group flex items-start gap-2 py-1 px-2 -mx-2 rounded-lg hover:bg-dark-50 transition-colors">
       {/* Checkbox or bullet */}
       {item.isCheckbox ? (
         <button
@@ -462,14 +462,14 @@ function ListItem({
             borderColor: item.isChecked ? '#d4a853' : '#4a4a4a',
           }}
         >
-          {item.isChecked && <Check className="w-3 h-3 text-dark-900" />}
+          {item.isChecked && <Check className="w-3 h-3 text-dark-800" />}
         </button>
       ) : item.isNumbered ? (
-        <span className="text-gold-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
+        <span className="text-ptw-500 font-medium text-sm mt-0.5 flex-shrink-0 w-5">
           {itemIdx + 1}.
         </span>
       ) : (
-        <span className="text-gold-500 mt-1 flex-shrink-0">•</span>
+        <span className="text-ptw-500 mt-1 flex-shrink-0">•</span>
       )}
 
       {/* Item content */}
@@ -486,20 +486,20 @@ function ListItem({
                 onEditingItemInfoChange(null);
               }
             }}
-            className="flex-1 bg-dark-900 border border-gold-500/50 rounded px-2 py-1 text-sm text-dark-200 focus:outline-none focus:border-gold-500"
+            className="flex-1 bg-dark-50 border border-ptw-500/30 rounded px-2 py-1 text-sm text-dark-800 focus:outline-none focus:border-ptw-500"
             autoFocus
           />
           <button
             onClick={() =>
               onUpdateListItem(enrichment.id, enrichment.content, item.lineIndex, editingItemInfo.text)
             }
-            className="p-1 rounded bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
+            className="p-1 rounded bg-ptw-500/20 text-ptw-500 hover:bg-ptw-500/30"
           >
             <Check className="w-3 h-3" />
           </button>
           <button
             onClick={() => onEditingItemInfoChange(null)}
-            className="p-1 rounded bg-dark-700 text-dark-400 hover:text-white"
+            className="p-1 rounded bg-dark-200 text-dark-600 hover:text-dark-800"
           >
             <X className="w-3 h-3" />
           </button>
@@ -507,7 +507,7 @@ function ListItem({
       ) : (
         <>
           <span
-            className={`flex-1 text-sm text-dark-300 cursor-pointer ${
+            className={`flex-1 text-sm text-dark-700 cursor-pointer ${
               item.isChecked ? 'line-through text-dark-500' : ''
             }`}
             onClick={() =>
@@ -531,14 +531,14 @@ function ListItem({
                   text: item.text,
                 })
               }
-              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-gold-400 hover:bg-dark-600 transition-colors"
+              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-ptw-500 hover:bg-dark-200 transition-colors"
               title="Bearbeiten"
             >
               <Edit2 className="w-3 h-3" />
             </button>
             <button
               onClick={() => onDeleteListItem(enrichment.id, enrichment.content, item.lineIndex)}
-              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-red-400 hover:bg-dark-600 transition-colors"
+              className="p-1 rounded bg-dark-700 text-dark-400 hover:text-red-600 hover:bg-dark-200 transition-colors"
               title="Löschen"
             >
               <Trash2 className="w-3 h-3" />

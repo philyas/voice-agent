@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Keyboard, X } from 'lucide-react';
+import { Sparkles, Keyboard, X, Upload } from 'lucide-react';
 import { useAudioRecorder, useElectron, useHotkeyListener } from '@/hooks';
 import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform, Navigation } from '@/components';
 import { api } from '@/lib/api';
@@ -46,6 +46,9 @@ export default function Home() {
     error: null,
   });
 
+  /** Hochgeladene Audiodatei (Alternative zur Aufnahme) */
+  const [uploadedAudio, setUploadedAudio] = useState<{ blob: Blob; url: string; name: string } | null>(null);
+
   // Handle hotkey-triggered recording
   const handleHotkeyStartRecording = useCallback(() => {
     if (!isRecording && processing.step === 'idle') {
@@ -70,16 +73,17 @@ export default function Home() {
   // Use the centralized utility function
   const formatDuration = formatDurationSeconds;
 
+  const audioToProcess = audioBlob ?? uploadedAudio?.blob;
   const processRecording = useCallback(async () => {
-    if (!audioBlob) return;
+    if (!audioToProcess) return;
 
     setProcessing((prev) => ({ ...prev, step: 'uploading', error: null }));
 
+    const filename = uploadedAudio?.name ?? `recording-${Date.now()}.webm`;
     try {
-      // Upload recording
       const uploadResponse = await api.uploadRecording(
-        audioBlob,
-        `recording-${Date.now()}.webm`
+        audioToProcess,
+        filename
       );
 
       if (!uploadResponse.data) {
@@ -105,7 +109,7 @@ export default function Home() {
       const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';
       setProcessing((prev) => ({ ...prev, step: 'idle', error: message }));
     }
-  }, [audioBlob]);
+  }, [audioBlob, uploadedAudio?.blob, uploadedAudio?.name]);
 
   const handleEnrich = useCallback(
     async (type: EnrichmentType, targetLanguage?: string) => {
@@ -145,6 +149,8 @@ export default function Home() {
 
   const handleReset = useCallback(() => {
     resetRecording();
+    if (uploadedAudio?.url) URL.revokeObjectURL(uploadedAudio.url);
+    setUploadedAudio(null);
     setProcessing({
       step: 'idle',
       recordingId: null,
@@ -152,17 +158,51 @@ export default function Home() {
       enrichments: [],
       error: null,
     });
-  }, [resetRecording]);
+  }, [resetRecording, uploadedAudio?.url]);
 
   const isProcessing = processing.step !== 'idle' && processing.step !== 'done';
 
+  const hasAudio = (audioUrl && !isRecording) || uploadedAudio;
+  const canProcess = (audioBlob ?? uploadedAudio?.blob) && !isRecording && processing.step === 'idle';
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setProcessing((prev) => ({ ...prev, error: 'Bitte eine Audiodatei wählen (z.B. MP3, WAV, WebM).' }));
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setUploadedAudio({ blob: file, url, name: file.name });
+    setProcessing((prev) => ({ ...prev, error: null }));
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setProcessing((prev) => ({ ...prev, error: 'Bitte eine Audiodatei ablegen (z.B. MP3, WAV, WebM).' }));
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setUploadedAudio({ blob: file, url, name: file.name });
+    setProcessing((prev) => ({ ...prev, error: null }));
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
   return (
-    <main className="min-h-screen relative z-10">
+    <main className="min-h-screen relative z-10 flex flex-col">
       {/* Header */}
       <Navigation />
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-12">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-12">
         {/* Error Messages */}
         {(recorderError || processing.error) && (
           <div className="mb-4 sm:mb-8">
@@ -203,7 +243,7 @@ export default function Home() {
         {/* Recording Section */}
         <section className="mb-4 sm:mb-10">
           <div 
-            className="group bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-2xl sm:rounded-3xl p-4 sm:p-10 relative overflow-hidden transition-all duration-300 hover:border-gold-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(212,168,83,0.15),0_0_30px_rgba(212,168,83,0.05)]"
+            className="group bg-white border border-dark-200 rounded-2xl sm:rounded-3xl p-4 sm:p-10 relative overflow-hidden transition-all duration-300 shadow-sm hover:border-ptw-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12),0_0_0_1px_rgba(181,45,58,0.15),0_0_30px_rgba(181,45,58,0.06)]"
             onClick={(e) => {
               // Prevent clicks on container from triggering any actions
               // Only allow clicks on actual buttons
@@ -212,12 +252,12 @@ export default function Home() {
               }
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:via-gold-500/3 group-hover:to-gold-500/5 transition-all duration-500 pointer-events-none rounded-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-ptw-500/0 via-ptw-500/0 to-ptw-500/0 group-hover:from-ptw-500/5 group-hover:via-ptw-500/3 group-hover:to-ptw-500/5 transition-all duration-500 pointer-events-none rounded-3xl" />
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (
                 <div className="mb-4 sm:mb-8 text-center w-full transition-smooth animate-fade-in">
-                  <span className="text-4xl sm:text-6xl font-light tracking-tight font-mono bg-gradient-to-br from-gold-400 via-gold-300 to-gold-500 bg-clip-text text-transparent transition-all duration-300">
+                  <span className="text-4xl sm:text-6xl font-light tracking-tight font-mono bg-gradient-to-br from-ptw-500 via-ptw-400 to-ptw-600 bg-clip-text text-transparent transition-all duration-300">
                     {formatDuration(duration)}
                   </span>
                   <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1 sm:mt-2 font-medium transition-all duration-300">
@@ -235,53 +275,81 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Instruction Text */}
-              {!isRecording && !audioUrl && (
-                <div className="mb-4 sm:mb-10 text-center max-w-md transition-smooth animate-fade-in">
-                  <h2 className="text-lg sm:text-2xl font-semibold mb-2 sm:mb-3 bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent transition-all duration-300">
-                    Bereit für die Aufnahme
-                  </h2>
-                  <p className="text-sm sm:text-base bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent leading-relaxed transition-all duration-300">
-                    Klicke auf den Button, um eine Sprachaufnahme zu starten. 
-                    Deine Aufnahme wird automatisch transkribiert und kann mit KI angereichert werden.
-                  </p>
-                  {/* Hotkey Hint for Electron */}
+              {/* Bereit für Aufnahme: kompakter Block mit Aufnahme + Upload */}
+              {!isRecording && !audioUrl && !uploadedAudio && (
+                <div className="w-full max-w-md text-center transition-smooth animate-fade-in">
+                  <h2 className="text-base sm:text-lg font-semibold text-dark-800 mb-1">Bereit für die Aufnahme</h2>
+                  <p className="text-xs sm:text-sm text-dark-500 mb-4">Sprachaufnahme oder Audiodatei – wird transkribiert und kann angereichert werden.</p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                    <RecordButton
+                      isRecording={isRecording}
+                      isPaused={isPaused}
+                      onStart={startRecording}
+                      onStop={stopRecording}
+                      onPause={pauseRecording}
+                      onResume={resumeRecording}
+                      disabled={isProcessing}
+                    />
+                    <span className="text-xs text-dark-400 hidden sm:inline">oder</span>
+                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dark-200 bg-dark-50/50 hover:border-dark-300 hover:bg-dark-100/80 text-dark-600 hover:text-dark-800 cursor-pointer transition-colors text-sm font-medium">
+                      <Upload className="w-4 h-4" />
+                      Audio hochladen
+                      <input
+                        type="file"
+                        accept="audio/*,.mp3,.wav,.webm,.m4a,.ogg,.opus"
+                        onChange={handleFileSelect}
+                        className="sr-only"
+                        aria-label="Audiodatei auswählen"
+                      />
+                    </label>
+                  </div>
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    className="mt-3 rounded-xl border border-dashed border-dark-200 py-3 px-4 text-dark-400 hover:border-dark-300 hover:bg-dark-50/80 transition-colors text-xs"
+                  >
+                    oder Datei hierher ziehen (MP3, WAV, WebM, M4A, OGG)
+                  </div>
                   {isElectron && (
-                    <div className="mt-2 sm:mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm text-dark-500 transition-all duration-300">
-                      <Keyboard className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span>
-                        Hotkey: <kbd className="px-2 py-1 bg-gradient-to-br from-dark-800 to-dark-850 border border-gold-500/20 rounded text-gold-400 font-mono text-xs">
-                          {platform === 'darwin' ? '⌘' : 'Ctrl'}+Shift+V
-                        </kbd>
-                      </span>
-                    </div>
+                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-dark-400">
+                      <Keyboard className="w-3 h-3" />
+                      <span>Hotkey: <kbd className="px-1.5 py-0.5 bg-dark-100 border border-dark-200 rounded font-mono text-dark-600">{platform === 'darwin' ? '⌘' : 'Ctrl'}+Shift+V</kbd></span>
+                    </p>
                   )}
                 </div>
               )}
 
-              {/* Record Button */}
-              <div className="mb-4 sm:mb-8">
-                <RecordButton
-                  isRecording={isRecording}
-                  isPaused={isPaused}
-                  onStart={startRecording}
-                  onStop={stopRecording}
-                  onPause={pauseRecording}
-                  onResume={resumeRecording}
-                  disabled={isProcessing}
-                />
-              </div>
+              {/* Record Button (nur sichtbar während Aufnahme – sonst oben im Block) */}
+              {isRecording && (
+                <div className="mb-4 sm:mb-6">
+                  <RecordButton
+                    isRecording={isRecording}
+                    isPaused={isPaused}
+                    onStart={startRecording}
+                    onStop={stopRecording}
+                    onPause={pauseRecording}
+                    onResume={resumeRecording}
+                    disabled={isProcessing}
+                  />
+                </div>
+              )}
 
-              {/* Audio Player (after recording) */}
-              {audioUrl && !isRecording && (
+              {/* Audio Player (nach Aufnahme oder Upload) */}
+              {hasAudio && (
                 <div className="w-full max-w-lg transition-smooth animate-fade-in">
                   <div className="mb-3 sm:mb-4 text-center">
-                    <p className="text-xs sm:text-sm text-dark-400 mb-1">Aufnahmedauer</p>
-                    <p className="text-xl sm:text-2xl font-light font-mono text-gold-400">
-                      {formatDuration(duration)}
+                    <p className="text-xs sm:text-sm text-dark-400 mb-1">
+                      {uploadedAudio ? 'Hochgeladene Datei' : 'Aufnahmedauer'}
+                    </p>
+                    <p className="text-xl sm:text-2xl font-light font-mono text-ptw-500">
+                      {uploadedAudio ? uploadedAudio.name : formatDuration(duration)}
                     </p>
                   </div>
-                  <AudioPlayer audioUrl={audioUrl} onReset={handleReset} fallbackDuration={duration} />
+                  <AudioPlayer
+                    audioUrl={audioUrl ?? uploadedAudio!.url}
+                    onReset={handleReset}
+                    fallbackDuration={uploadedAudio ? undefined : duration}
+                  />
                 </div>
               )}
             </div>
@@ -289,15 +357,15 @@ export default function Home() {
         </section>
 
         {/* Process Button */}
-        {audioUrl && !isRecording && processing.step === 'idle' && (
+        {canProcess && (
           <section className="mb-4 sm:mb-10 transition-smooth animate-fade-in">
             <button
               onClick={processRecording}
-              className="w-full py-3 sm:py-5 px-6 sm:px-8 bg-gradient-to-r from-gold-500 via-gold-400 via-gold-500 to-gold-600 text-dark-950 rounded-xl sm:rounded-2xl font-semibold shadow-gold-lg hover:shadow-gold transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-2 sm:gap-3 btn-shine relative overflow-hidden group text-sm sm:text-base"
+              className="w-full py-3 sm:py-5 px-6 sm:px-8 bg-gradient-to-r from-ptw-500 via-ptw-400 via-ptw-500 to-ptw-600 text-white rounded-xl sm:rounded-2xl font-semibold shadow-ptw-lg hover:shadow-ptw transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-2 sm:gap-3 btn-shine relative overflow-hidden group text-sm sm:text-base"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-              Aufnahme verarbeiten & transkribieren
+              Audio verarbeiten & transkribieren
             </button>
           </section>
         )}
@@ -306,15 +374,15 @@ export default function Home() {
         {isProcessing && (
           <section className="mb-4 sm:mb-10 transition-smooth animate-fade-in">
             <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-8 relative overflow-hidden transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-gold-500/5 pointer-events-none transition-all duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-br from-ptw-500/5 via-transparent to-ptw-500/5 pointer-events-none transition-all duration-300" />
               <div className="flex items-center gap-3 sm:gap-5 relative z-10">
                 <div className="relative">
                   <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-dark-700/50 transition-all duration-300" />
-                  <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-gold-500/30 border-t-gold-500 border-r-gold-400 animate-spin transition-all duration-300" />
+                  <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-ptw-500/30 border-t-ptw-500 border-r-ptw-400 animate-spin transition-all duration-300" />
                 </div>
                 <div>
                   <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-base sm:text-lg transition-all duration-300">
-                    {processing.step === 'uploading' && 'Aufnahme wird hochgeladen...'}
+                    {processing.step === 'uploading' && 'Audio wird hochgeladen...'}
                     {processing.step === 'transcribing' && 'Wird transkribiert...'}
                   </p>
                   <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1 transition-all duration-300">
@@ -354,18 +422,18 @@ export default function Home() {
           <section className="transition-smooth animate-fade-in">
             <button
               onClick={handleReset}
-              className="w-full py-4 px-6 bg-gradient-to-br from-dark-800 via-dark-800 to-dark-850 border border-dark-700/50 text-dark-300 rounded-xl font-medium hover:text-white hover:border-gold-500/30 hover:bg-gradient-to-br hover:from-dark-750 hover:via-dark-800 hover:to-dark-850 transition-all duration-300"
+              className="w-full py-4 px-6 bg-white border border-dark-200 text-dark-600 rounded-xl font-medium hover:text-ptw-600 hover:border-ptw-500/40 hover:bg-dark-50 transition-all duration-300"
             >
-              Neue Aufnahme starten
+              Neue Aufnahme oder Upload
             </button>
           </section>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="py-4 sm:py-8 text-center border-t border-transparent bg-gradient-to-b from-transparent via-dark-900/50 to-transparent" style={{ borderImage: 'linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.1), transparent) 1' }}>
-        <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-500 via-dark-400 to-dark-500 bg-clip-text text-transparent">
-          by <span className="bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 bg-clip-text text-transparent font-medium">EverlastAI</span>
+      <footer className="py-4 sm:py-8 text-center border-t border-dark-200 bg-white dark:border-dark-700 dark:bg-dark-900">
+        <p className="text-xs sm:text-sm text-dark-500 dark:text-dark-400">
+          by <span className="text-ptw-500 font-medium">PTW TU Darmstadt</span>
         </p>
       </footer>
     </main>

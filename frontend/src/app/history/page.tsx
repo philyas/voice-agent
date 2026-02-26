@@ -25,22 +25,26 @@ import { useRecordings, useEnrichmentEditor, useShareMenu } from '@/hooks';
 import type { Enrichment } from '@/lib/types';
 
 /**
- * Empty recordings state component
+ * Empty recordings state – vertikal angeordnet, helle Farben
  */
 function EmptyRecordingsState() {
   return (
-    <div className="bg-dark-850 border border-dark-700 rounded-2xl p-10 text-center flex items-center justify-center min-h-full">
-      <div className="w-16 h-16 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center mx-auto mb-5">
-        <Mic className="w-8 h-8 text-dark-500" />
+    <div className="bg-white border border-dark-200 rounded-2xl p-8 sm:p-10 min-h-full flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-dark-100 border border-dark-200 flex items-center justify-center">
+          <Mic className="w-7 h-7 text-dark-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold text-dark-800">Noch keine Aufnahmen</h3>
+          <p className="text-sm text-dark-500">Erstelle deine erste Sprachaufnahme</p>
+        </div>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-ptw-500 to-ptw-600 text-white font-medium shadow-ptw hover:shadow-ptw-lg transition-all duration-200"
+        >
+          Aufnahme starten
+        </Link>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">Noch keine Aufnahmen</h3>
-      <p className="text-dark-400 mb-6">Erstelle deine erste Sprachaufnahme</p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium shadow-gold hover:shadow-gold-lg transition-all duration-200"
-      >
-        Aufnahme starten
-      </Link>
     </div>
   );
 }
@@ -50,13 +54,13 @@ function EmptyRecordingsState() {
  */
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-dark-50/30">
       <div className="text-center">
         <div className="relative mx-auto mb-6">
-          <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
-          <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+          <div className="w-16 h-16 rounded-full border-2 border-dark-200" />
+          <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-ptw-500 border-t-transparent animate-spin" />
         </div>
-        <p className="text-dark-400 font-medium">Lade Aufnahmen...</p>
+        <p className="text-dark-500 font-medium">Lade Aufnahmen...</p>
       </div>
     </div>
   );
@@ -223,7 +227,7 @@ function HistoryPageContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-dark-50/30">
       {/* Header */}
       <Navigation 
         title="Aufnahmen-Historie"
@@ -312,14 +316,14 @@ function HistoryPageContent() {
 
       {/* Mobile Full-Page Modal */}
       {isMobileModalOpen && selectedRecording && (
-        <div className="fixed inset-0 z-[100] lg:hidden flex flex-col bg-dark-900">
+        <div className="fixed inset-0 z-[100] lg:hidden flex flex-col bg-white">
           {/* Modal Header */}
-          <div className="sticky top-0 z-10 glass border-b border-dark-700/50 bg-gradient-to-b from-dark-900/95 via-dark-900/90 to-dark-900/95">
+          <div className="sticky top-0 z-10 border-b border-dark-200 bg-white">
             <div className="flex items-center justify-between px-4 py-3">
-              <h2 className="text-lg font-semibold text-white">Aufnahme-Details</h2>
+              <h2 className="text-lg font-semibold text-dark-800">Aufnahme-Details</h2>
               <button
                 onClick={handleCloseMobileModal}
-                className="p-2 rounded-xl bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200"
+                className="p-2 rounded-xl bg-dark-100 border border-dark-200 text-dark-600 hover:text-dark-800 hover:border-dark-300 transition-all duration-200"
                 aria-label="Modal schließen"
               >
                 <X className="w-5 h-5" />
@@ -397,14 +401,10 @@ export default function HistoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-dark-900">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mx-auto mb-4" />
-                <p className="text-dark-400">Lädt...</p>
-              </div>
-            </div>
+        <div className="min-h-screen bg-dark-50/30 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full border-4 border-dark-200 border-t-ptw-500 animate-spin mx-auto mb-4" />
+            <p className="text-dark-500">Lädt...</p>
           </div>
         </div>
       }

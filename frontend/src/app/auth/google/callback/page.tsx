@@ -80,7 +80,7 @@ function GoogleAuthCallbackContent() {
         <div className="text-center">
           {status === 'loading' && (
             <>
-              <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mx-auto mb-4" />
+              <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-ptw-500 animate-spin mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-white mb-2">Autorisierung läuft...</h2>
               <p className="text-dark-400">{message}</p>
             </>
@@ -88,8 +88,8 @@ function GoogleAuthCallbackContent() {
 
           {status === 'success' && (
             <>
-              <div className="w-16 h-16 rounded-full bg-gold-500/10 border-2 border-gold-500 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-gold-500" />
+              <div className="w-16 h-16 rounded-full bg-ptw-500/10 border-2 border-ptw-500 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-ptw-500" />
               </div>
               <h2 className="text-xl font-semibold text-white mb-2">Erfolgreich!</h2>
               <p className="text-dark-400 mb-4">{message}</p>
@@ -119,7 +119,7 @@ export default function GoogleAuthCallbackPage() {
       <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-gold-500 animate-spin mx-auto mb-4" />
+            <div className="w-16 h-16 rounded-full border-4 border-dark-700 border-t-ptw-500 animate-spin mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-white mb-2">Lädt...</h2>
             <p className="text-dark-400">Verarbeite Autorisierung...</p>
           </div>

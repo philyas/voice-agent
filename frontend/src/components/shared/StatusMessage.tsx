@@ -27,10 +27,10 @@ const config = {
   },
   info: {
     icon: Info,
-    bg: 'bg-gold-500/10',
-    border: 'border-gold-500/20',
-    text: 'text-gold-400',
-    iconColor: 'text-gold-500',
+    bg: 'bg-ptw-500/10',
+    border: 'border-ptw-500/20',
+    text: 'text-ptw-400',
+    iconColor: 'text-ptw-500',
   },
 };
 

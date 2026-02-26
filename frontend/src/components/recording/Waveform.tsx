@@ -215,8 +215,8 @@ export function Waveform({ audioStream, isRecording, isPaused, className = '' }:
         />
         {isPaused && (
           <div className="absolute inset-0 flex items-center justify-center bg-dark-900/50 backdrop-blur-sm">
-            <div className="px-4 py-2 rounded-lg bg-dark-800/80 border border-gold-500/30">
-              <p className="text-sm text-gold-400 font-medium">Pausiert</p>
+            <div className="px-4 py-2 rounded-lg bg-dark-800/80 border border-ptw-500/30">
+              <p className="text-sm text-ptw-400 font-medium">Pausiert</p>
             </div>
           </div>
         )}

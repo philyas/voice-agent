@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, FileText, Calendar, Sparkles, X } from 'lucide-react';
+import { Send, Bot, User, Loader2, FileText, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
@@ -103,44 +103,18 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700/50 bg-gradient-to-r from-dark-850 to-dark-900">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-gold-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">AI-Assistant</h2>
-            <p className="text-xs text-dark-400">
-              Intelligente Fragen zu deinen Aufnahmen
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {messages.length > 0 && (
-            <button
-              onClick={clearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-dark-800 border border-dark-700/50 rounded-lg text-dark-300 hover:text-red-400 hover:border-red-500/30 transition-all"
-            >
-              <X className="w-3.5 h-3.5" />
-              Löschen
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className={`flex flex-col h-full min-h-0 ${className}`}>
+      {/* Messages - scrollable, takes remaining space */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500/10 to-gold-600/10 flex items-center justify-center mb-4">
-              <Bot className="w-8 h-8 text-gold-400" />
+          <div className="flex flex-col items-center justify-center min-h-[200px] text-center py-8 sm:py-12">
+            <div className="w-16 h-16 rounded-2xl bg-ptw-500/10 flex items-center justify-center mb-4">
+              <Bot className="w-8 h-8 text-ptw-500" />
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-dark-800 mb-2">
               Frag mich etwas über deine Aufnahmen
             </h3>
-            <p className="text-sm text-dark-400 max-w-md mb-6">
+            <p className="text-sm text-dark-500 max-w-md mb-6">
               Ich kann Informationen aus deinen Transkriptionen und Enrichments finden
               und zusammenfassen.
             </p>
@@ -153,7 +127,7 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
                 <button
                   key={suggestion}
                   onClick={() => setInput(suggestion)}
-                  className="px-3 py-1.5 text-xs bg-dark-800 border border-dark-700/50 rounded-lg text-dark-300 hover:text-gold-400 hover:border-gold-500/30 transition-all"
+                  className="px-3 py-1.5 text-xs bg-dark-100 border border-dark-200 rounded-lg text-dark-600 hover:bg-dark-200 hover:border-dark-300 transition-all"
                 >
                   {suggestion}
                 </button>
@@ -168,26 +142,26 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {message.role === 'assistant' && (
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-gold-400" />
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-ptw-500/10 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-ptw-500" />
               </div>
             )}
 
             <div
-              className={`max-w-[80%] ${
+              className={`max-w-[85%] sm:max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-dark-950 rounded-2xl rounded-tr-md'
-                  : 'bg-dark-800 border border-dark-700/50 text-dark-100 rounded-2xl rounded-tl-md'
+                  ? 'bg-gradient-to-br from-ptw-500 to-ptw-600 text-white rounded-2xl rounded-tr-md'
+                  : 'bg-white border border-dark-200 text-dark-800 rounded-2xl rounded-tl-md shadow-sm'
               } px-4 py-3`}
             >
               {message.isLoading ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gold-400" />
-                  <span className="text-sm text-dark-400">Denke nach...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-ptw-500" />
+                  <span className="text-sm text-dark-500">Denke nach...</span>
                 </div>
               ) : (
                 <>
-                  <div className="text-sm prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-dark-100 prose-strong:text-white prose-ul:text-dark-100 prose-ol:text-dark-100 prose-li:text-dark-100 prose-a:text-gold-400 hover:prose-a:text-gold-300 prose-code:text-gold-300 prose-code:bg-dark-900 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700">
+                  <div className="text-sm prose prose-sm max-w-none prose-headings:text-dark-800 prose-p:text-dark-700 prose-strong:text-dark-800 prose-ul:text-dark-700 prose-ol:text-dark-700 prose-li:text-dark-700 prose-a:text-ptw-500 hover:prose-a:text-ptw-600 prose-code:text-dark-800 prose-code:bg-dark-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-100 prose-pre:border prose-pre:border-dark-200 prose-pre:text-dark-700">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.content}
                     </ReactMarkdown>
@@ -195,18 +169,16 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
 
                   {/* Sources - Only show the best (first) source */}
                   {message.sources && message.sources.length > 0 && (() => {
-                    // Sources are already sorted by similarity (highest first) from backend
                     const bestSource = message.sources[0];
-                    
                     return (
-                      <div className="mt-3 pt-3 border-t border-dark-700/50">
+                      <div className="mt-3 pt-3 border-t border-dark-200">
                         <div
-                          className="p-2 bg-dark-900/50 rounded-lg text-xs cursor-pointer hover:bg-dark-900 transition-colors"
+                          className="p-2 bg-dark-50 rounded-lg text-xs cursor-pointer hover:bg-dark-100 transition-colors"
                           onClick={() => onSourceClick?.(bestSource.recordingId)}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
-                            <FileText className="w-3.5 h-3.5 text-gold-400" />
-                            <span className="font-medium text-dark-200 truncate max-w-[200px]">
+                            <FileText className="w-3.5 h-3.5 text-ptw-500" />
+                            <span className="font-medium text-dark-700 truncate max-w-[200px]">
                               {bestSource.filename || 'Unbekannte Aufnahme'}
                             </span>
                           </div>
@@ -223,8 +195,8 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             </div>
 
             {message.role === 'user' && (
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-dark-700 to-dark-800 flex items-center justify-center">
-                <User className="w-4 h-4 text-dark-300" />
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-dark-200 flex items-center justify-center">
+                <User className="w-4 h-4 text-dark-600" />
               </div>
             )}
           </div>
@@ -233,8 +205,8 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-dark-700/50 bg-gradient-to-r from-dark-850 to-dark-900">
+      {/* Input - always at bottom, safe-area aware */}
+      <div className="flex-shrink-0 p-4 pt-3 border-t border-dark-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
@@ -243,13 +215,13 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             onKeyDown={handleKeyDown}
             placeholder="Stelle eine Frage über deine Aufnahmen..."
             rows={1}
-            className="flex-1 px-4 py-3 bg-dark-800 border border-dark-700/50 rounded-xl text-white text-sm placeholder-dark-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 resize-none transition-all"
+            className="flex-1 min-h-[44px] px-4 py-3 bg-dark-50 border border-dark-200 rounded-xl text-dark-800 text-sm placeholder-dark-400 focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/20 resize-none transition-all"
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading}
-            className="px-4 py-3 bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 rounded-xl font-medium hover:from-gold-400 hover:to-gold-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-3 bg-gradient-to-r from-ptw-500 to-ptw-600 text-white rounded-xl font-medium hover:from-ptw-400 hover:to-ptw-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex-shrink-0"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -258,9 +230,20 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             )}
           </button>
         </div>
-        <p className="mt-2 text-xs text-dark-500 text-center">
-          Drücke Enter zum Senden, Shift+Enter für neue Zeile
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-3 flex-wrap">
+          <p className="text-xs text-dark-500">
+            Enter zum Senden, Shift+Enter für neue Zeile
+          </p>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={clearChat}
+              className="text-xs text-dark-500 hover:text-red-600 transition-colors"
+            >
+              Chat leeren
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

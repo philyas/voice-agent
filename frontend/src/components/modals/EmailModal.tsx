@@ -44,10 +44,10 @@ export function EmailModal({
 
         {emailSuccess ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-gold-500" />
+            <div className="w-16 h-16 rounded-full bg-ptw-500/10 border border-ptw-500/30 flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-ptw-500" />
             </div>
-            <p className="text-gold-500 font-medium">{emailSuccess}</p>
+            <p className="text-ptw-500 font-medium">{emailSuccess}</p>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
@@ -62,7 +62,7 @@ export function EmailModal({
                 onChange={(e) => onEmailChange(e.target.value)}
                 placeholder="empfaenger@example.com"
                 required
-                className="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 transition-all duration-200"
+                className="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-xl text-white placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-ptw-500/50 focus:border-ptw-500/50 transition-all duration-200"
               />
             </div>
 
@@ -88,7 +88,7 @@ export function EmailModal({
               <button
                 type="submit"
                 disabled={sendingEmail || !emailToSend.trim()}
-                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium shadow-gold hover:shadow-gold-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-ptw-500 to-ptw-600 text-dark-950 font-medium shadow-ptw hover:shadow-ptw-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {sendingEmail ? (
                   <>

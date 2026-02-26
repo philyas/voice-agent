@@ -274,7 +274,7 @@ export function TranscriptionCard({
             <div className="flex flex-col items-center text-center">
               <div className="relative mb-6">
                 <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
-                <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-ptw-500 border-t-transparent animate-spin" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 KI-Verarbeitung läuft...
@@ -299,7 +299,7 @@ export function TranscriptionCard({
           className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
         >
           <div className="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-gold-500" />
+            <FileText className="w-5 h-5 text-ptw-500" />
           </div>
           <div>
             <h3 className="font-semibold text-white">Transkription</h3>
@@ -326,7 +326,7 @@ export function TranscriptionCard({
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative">
                 <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
-                <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-ptw-500 border-t-transparent animate-spin" />
               </div>
               <span className="mt-4 text-dark-300 font-medium">Transkribiere...</span>
             </div>
@@ -340,7 +340,7 @@ export function TranscriptionCard({
                       <textarea
                         value={editedTranscriptionText}
                         onChange={(e) => setEditedTranscriptionText(e.target.value)}
-                        className="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-dark-200 text-sm leading-relaxed resize-none focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50"
+                        className="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-dark-200 text-sm leading-relaxed resize-none focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
                         rows={8}
                         placeholder="Transkription bearbeiten..."
                       />
@@ -356,7 +356,7 @@ export function TranscriptionCard({
                         <button
                           onClick={handleSaveTranscription}
                           disabled={isSavingTranscription || editedTranscriptionText.trim() === currentText || (!transcriptionId && !onUpdate)}
-                          className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium shadow-gold hover:shadow-gold-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="px-4 py-2 rounded-lg bg-gradient-to-r from-ptw-500 to-ptw-600 text-white font-medium shadow-ptw hover:shadow-ptw-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                           {isSavingTranscription ? (
                             <>
@@ -374,7 +374,7 @@ export function TranscriptionCard({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
+                      <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-ptw-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-ptw-400 prose-a:hover:text-ptw-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
                         <p className="text-dark-200 whitespace-pre-wrap leading-relaxed text-[15px]">
                           {currentText}
                         </p>
@@ -382,7 +382,7 @@ export function TranscriptionCard({
                       {(transcriptionId || onUpdate) && (
                         <button
                           onClick={handleEditTranscription}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200 text-xs font-medium"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-ptw-500 hover:border-ptw-500/30 transition-all duration-200 text-xs font-medium"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           Bearbeiten
@@ -395,7 +395,7 @@ export function TranscriptionCard({
 
               {/* Enriched Content */}
               {(activeContent || (activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]))) && (
-                <div className="enrichment-content prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-gold-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-gold-400 prose-a:hover:text-gold-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
+                <div className="enrichment-content prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-ptw-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-ptw-400 prose-a:hover:text-ptw-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
                   {activeContent && <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -436,7 +436,7 @@ export function TranscriptionCard({
                               type="checkbox"
                               checked={checked}
                               readOnly
-                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
+                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-ptw-500 focus:ring-ptw-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
                               {...props}
                             />
                           );
@@ -480,13 +480,13 @@ export function TranscriptionCard({
                               activeEnrichment === 'notes' ? 'Neue Notiz...' :
                               activeEnrichment === 'key_points' ? 'Neuer Kernpunkt...' : 'Neuer Eintrag...'
                             }
-                            className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-dark-200 placeholder-dark-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50"
+                            className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-dark-200 placeholder-dark-500 focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
                             autoFocus
                           />
                           <button
                             onClick={() => activeEnrichment && addItemToEnrichment(activeEnrichmentId, activeContent || '', activeEnrichment, newItemText)}
                             disabled={!newItemText.trim()}
-                            className="px-3 py-2 rounded-lg bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-gold transition-all"
+                            className="px-3 py-2 rounded-lg bg-gradient-to-r from-ptw-500 to-ptw-600 text-white font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-ptw transition-all"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -503,7 +503,7 @@ export function TranscriptionCard({
                       ) : (
                         <button
                           onClick={() => setIsAddingItem(true)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-gold-500 hover:border-gold-500/30 transition-all duration-200 text-sm"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-ptw-500 hover:border-ptw-500/30 transition-all duration-200 text-sm"
                         >
                           <Plus className="w-4 h-4" />
                           {activeEnrichment === 'action_items' ? 'Aufgabe hinzufügen' :
@@ -524,7 +524,7 @@ export function TranscriptionCard({
                     setIsAddingItem(false);
                     setNewItemText('');
                   }}
-                  className="mt-4 flex items-center gap-1 text-sm text-gold-500 hover:text-gold-400 transition-colors"
+                  className="mt-4 flex items-center gap-1 text-sm text-ptw-500 hover:text-ptw-400 transition-colors"
                 >
                   <ChevronRight className="w-4 h-4 rotate-180" />
                   Original anzeigen
@@ -539,7 +539,7 @@ export function TranscriptionCard({
       {!isLoading && text && onEnrich && (
         <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700 overflow-visible">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-gold-500" />
+            <Sparkles className="w-4 h-4 text-ptw-500" />
             <span className="text-sm font-semibold text-white">KI-Verarbeitung</span>
           </div>
           <div className="flex flex-wrap gap-2 relative">
@@ -557,7 +557,7 @@ export function TranscriptionCard({
                       className={`
                         px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
                         ${translationEnrichments.length > 0
-                          ? 'bg-dark-800 border border-gold-500/30 text-gold-400 hover:border-gold-500/50'
+                          ? 'bg-dark-800 border border-ptw-500/30 text-ptw-400 hover:border-ptw-500/50'
                           : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
                         }
                         ${isLoadingTranslation ? 'opacity-70 cursor-wait' : ''}
@@ -612,11 +612,11 @@ export function TranscriptionCard({
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
                     ${isActive
-                      ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-dark-950 shadow-gold'
+                      ? 'bg-gradient-to-r from-ptw-500 to-ptw-600 text-dark-950 shadow-ptw'
                       : hasEnrichment
-                        ? 'bg-dark-800 border border-gold-500/30 text-gold-400 hover:border-gold-500/50'
+                        ? 'bg-dark-800 border border-ptw-500/30 text-ptw-400 hover:border-ptw-500/50'
                         : isPrimary
-                          ? 'bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/40 text-gold-400 hover:from-gold-500/30 hover:to-gold-600/30 hover:border-gold-500/60'
+                          ? 'bg-gradient-to-r from-ptw-500/20 to-ptw-600/20 border border-ptw-500/40 text-ptw-400 hover:from-ptw-500/30 hover:to-ptw-600/30 hover:border-ptw-500/60'
                           : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
                     }
                     ${isLoadingThis ? 'opacity-70 cursor-wait' : ''}

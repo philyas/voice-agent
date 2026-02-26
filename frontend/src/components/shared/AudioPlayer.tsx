@@ -144,7 +144,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
       <div className="flex items-center gap-4">
         <button
           onClick={togglePlayPause}
-          className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 text-dark-950 flex items-center justify-center hover:shadow-gold transition-all duration-200 btn-shine"
+          className="w-12 h-12 rounded-full bg-gradient-to-br from-ptw-400 to-ptw-600 text-white flex items-center justify-center hover:shadow-ptw transition-all duration-200 btn-shine"
           aria-label={isPlaying ? 'Pause' : 'Abspielen'}
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
@@ -154,7 +154,7 @@ export function AudioPlayer({ audioUrl, onReset, fallbackDuration }: AudioPlayer
           {/* Progress bar container */}
           <div className="relative h-1.5 bg-dark-700 rounded-full overflow-hidden mb-2">
             <div 
-              className="absolute h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full transition-all duration-100"
+              className="absolute h-full bg-gradient-to-r from-ptw-500 to-ptw-400 rounded-full transition-all duration-100"
               style={{ width: `${progress}%` }}
             />
           </div>

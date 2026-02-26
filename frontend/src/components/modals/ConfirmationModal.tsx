@@ -42,8 +42,8 @@ export function ConfirmationModal({
       button: 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
     },
     warning: {
-      icon: 'text-gold-500',
-      button: 'bg-gradient-to-br from-gold-400 to-gold-600 hover:from-gold-500 hover:to-gold-700',
+      icon: 'text-ptw-500',
+      button: 'bg-gradient-to-br from-ptw-400 to-ptw-600 hover:from-ptw-500 hover:to-ptw-700',
     },
     info: {
       icon: 'text-blue-500',
@@ -76,7 +76,7 @@ export function ConfirmationModal({
         <div className="flex flex-col items-center text-center">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
             variant === 'warning' 
-              ? 'bg-gold-500/10 border border-gold-500/20' 
+              ? 'bg-ptw-500/10 border border-ptw-500/20' 
               : variant === 'danger' 
               ? 'bg-red-500/10 border border-red-500/20' 
               : 'bg-blue-500/10 border border-blue-500/20'

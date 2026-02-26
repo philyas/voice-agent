@@ -10,7 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Gold / Amber tones
+        // PTW – gedämpftes Rot (kein Knallrot)
+        ptw: {
+          50: '#fdf2f3',
+          100: '#fce4e6',
+          200: '#f9cdd1',
+          300: '#f4a8af',
+          400: '#ec7a85',
+          500: '#b52d3a',
+          600: '#9a2530',
+          700: '#801f28',
+          800: '#661922',
+          900: '#4d131a',
+          950: '#2e0c10',
+        },
+        // Gold (fallback, wird durch ptw ersetzt)
         gold: {
           50: '#fffbeb',
           100: '#fef3c7',
@@ -70,8 +84,8 @@ const config: Config = {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'glow': {
-          '0%': { boxShadow: '0 0 20px rgba(212, 168, 83, 0.3)' },
-          '100%': { boxShadow: '0 0 30px rgba(212, 168, 83, 0.6)' },
+          '0%': { boxShadow: '0 0 20px rgba(181, 45, 58, 0.3)' },
+          '100%': { boxShadow: '0 0 30px rgba(181, 45, 58, 0.5)' },
         },
         'shimmer': {
           '0%': { backgroundPosition: '-200% 0' },
@@ -80,10 +94,13 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'ptw-gradient': 'linear-gradient(135deg, #b52d3a 0%, #9a2530 50%, #b52d3a 100%)',
         'gold-gradient': 'linear-gradient(135deg, #d4a853 0%, #b8942d 50%, #d4a853 100%)',
         'dark-gradient': 'linear-gradient(180deg, #171717 0%, #0a0a0a 100%)',
       },
       boxShadow: {
+        'ptw': '0 4px 20px rgba(181, 45, 58, 0.25)',
+        'ptw-lg': '0 8px 30px rgba(181, 45, 58, 0.35)',
         'gold': '0 4px 20px rgba(212, 168, 83, 0.25)',
         'gold-lg': '0 8px 30px rgba(212, 168, 83, 0.35)',
         'dark': '0 4px 20px rgba(0, 0, 0, 0.5)',
