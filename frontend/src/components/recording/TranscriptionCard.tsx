@@ -269,17 +269,17 @@ export function TranscriptionCard({
     <>
       {/* Loading Overlay Modal - Rendered via Portal to body */}
       {mounted && loadingType && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-dark-850 border border-dark-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white border border-dark-300 rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
             <div className="flex flex-col items-center text-center">
               <div className="relative mb-6">
-                <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
+                <div className="w-16 h-16 rounded-full border-2 border-dark-200" />
                 <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-ptw-500 border-t-transparent animate-spin" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-dark-900 mb-2">
                 KI-Verarbeitung läuft...
               </h3>
-              <p className="text-dark-300 text-sm mb-1">
+              <p className="text-dark-600 text-sm mb-1">
                 {loadingLabel}
               </p>
               <p className="text-dark-500 text-xs">
@@ -291,31 +291,31 @@ export function TranscriptionCard({
         document.body
       )}
 
-      <div className="bg-dark-850 border border-dark-700 rounded-2xl animate-fade-in-up">
+      <div className="bg-white border border-dark-300 rounded-2xl animate-fade-in-up shadow-sm">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between overflow-hidden rounded-t-2xl">
+      <div className="px-6 py-4 border-b border-dark-200 flex items-center justify-between overflow-hidden rounded-t-2xl">
         <button
           onClick={() => setIsTranscriptionExpanded(!isTranscriptionExpanded)}
           className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
         >
-          <div className="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-dark-100 border border-dark-300 flex items-center justify-center">
             <FileText className="w-5 h-5 text-ptw-500" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Transkription</h3>
+            <h3 className="font-semibold text-dark-900">Transkription</h3>
           </div>
           {isTranscriptionExpanded ? (
-            <ChevronUp className="w-4 h-4 text-dark-400 ml-auto" />
+            <ChevronUp className="w-4 h-4 text-dark-500 ml-auto" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-dark-400 ml-auto" />
+            <ChevronDown className="w-4 h-4 text-dark-500 ml-auto" />
           )}
         </button>
         <button
           onClick={() => handleCopy(activeContent || currentText)}
-          className="p-2.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 ml-2"
+          className="p-2.5 rounded-lg bg-dark-100 border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 transition-all duration-200 ml-2"
           aria-label="Kopieren"
         >
-          {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+          {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
         </button>
       </div>
 
@@ -325,10 +325,10 @@ export function TranscriptionCard({
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full border-2 border-dark-700" />
+                <div className="w-16 h-16 rounded-full border-2 border-dark-200" />
                 <div className="absolute inset-0 w-16 h-16 rounded-full border-2 border-ptw-500 border-t-transparent animate-spin" />
               </div>
-              <span className="mt-4 text-dark-300 font-medium">Transkribiere...</span>
+              <span className="mt-4 text-dark-600 font-medium">Transkribiere...</span>
             </div>
           ) : (
             <>
@@ -340,7 +340,7 @@ export function TranscriptionCard({
                       <textarea
                         value={editedTranscriptionText}
                         onChange={(e) => setEditedTranscriptionText(e.target.value)}
-                        className="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-dark-200 text-sm leading-relaxed resize-none focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
+                        className="w-full bg-white border border-dark-300 rounded-lg p-3 text-dark-800 text-sm leading-relaxed resize-none focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
                         rows={8}
                         placeholder="Transkription bearbeiten..."
                       />
@@ -348,7 +348,7 @@ export function TranscriptionCard({
                         <button
                           onClick={handleCancelEdit}
                           disabled={isSavingTranscription}
-                          className="px-4 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="px-4 py-2 rounded-lg bg-white border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
                         >
                           <X className="w-4 h-4" />
                           Abbrechen
@@ -360,7 +360,7 @@ export function TranscriptionCard({
                         >
                           {isSavingTranscription ? (
                             <>
-                              <div className="w-4 h-4 border-2 border-dark-950 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                               Speichern...
                             </>
                           ) : (
@@ -374,15 +374,15 @@ export function TranscriptionCard({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-ptw-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-ptw-400 prose-a:hover:text-ptw-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
-                        <p className="text-dark-200 whitespace-pre-wrap leading-relaxed text-[15px]">
+                      <div className="prose max-w-none prose-headings:text-dark-900 prose-p:text-dark-700 prose-strong:text-dark-900 prose-em:text-dark-600 prose-code:text-ptw-600 prose-code:bg-dark-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-100 prose-pre:border prose-pre:border-dark-300 prose-ul:text-dark-700 prose-ol:text-dark-700 prose-li:text-dark-700 prose-a:text-ptw-600 prose-a:hover:text-ptw-500 prose-blockquote:text-dark-600 prose-blockquote:border-dark-300">
+                        <p className="text-dark-700 whitespace-pre-wrap leading-relaxed text-[15px]">
                           {currentText}
                         </p>
                       </div>
                       {(transcriptionId || onUpdate) && (
                         <button
                           onClick={handleEditTranscription}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-ptw-500 hover:border-ptw-500/30 transition-all duration-200 text-xs font-medium"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-100 border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 transition-all duration-200 text-xs font-medium"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           Bearbeiten
@@ -395,7 +395,7 @@ export function TranscriptionCard({
 
               {/* Enriched Content */}
               {(activeContent || (activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]))) && (
-                <div className="enrichment-content prose prose-invert max-w-none prose-headings:text-white prose-p:text-dark-200 prose-strong:text-white prose-em:text-dark-300 prose-code:text-ptw-400 prose-code:bg-dark-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-900 prose-pre:border prose-pre:border-dark-700 prose-ul:text-dark-200 prose-ol:text-dark-200 prose-li:text-dark-200 prose-a:text-ptw-400 prose-a:hover:text-ptw-300 prose-blockquote:text-dark-300 prose-blockquote:border-dark-600">
+                <div className="enrichment-content prose max-w-none prose-headings:text-dark-900 prose-p:text-dark-700 prose-strong:text-dark-900 prose-em:text-dark-600 prose-code:text-ptw-600 prose-code:bg-dark-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-dark-100 prose-pre:border prose-pre:border-dark-300 prose-ul:text-dark-700 prose-ol:text-dark-700 prose-li:text-dark-700 prose-a:text-ptw-600 prose-a:hover:text-ptw-500 prose-blockquote:text-dark-600 prose-blockquote:border-dark-300">
                   {activeContent && <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -406,7 +406,7 @@ export function TranscriptionCard({
                         if (isTaskItem && activeEnrichmentId) {
                           return (
                             <li 
-                              className={`${className || ''} cursor-pointer hover:bg-dark-800/50 rounded px-1 -mx-1 transition-colors`}
+                              className={`${className || ''} cursor-pointer hover:bg-dark-100 rounded px-1 -mx-1 transition-colors`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 // Find the checkbox index
@@ -436,7 +436,7 @@ export function TranscriptionCard({
                               type="checkbox"
                               checked={checked}
                               readOnly
-                              className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-ptw-500 focus:ring-ptw-500 focus:ring-offset-dark-900 cursor-pointer pointer-events-none"
+                              className="w-4 h-4 rounded border-dark-400 bg-white text-ptw-500 focus:ring-ptw-500 focus:ring-offset-white cursor-pointer pointer-events-none"
                               {...props}
                             />
                           );
@@ -450,7 +450,7 @@ export function TranscriptionCard({
 
                   {/* Empty state message for list-type enrichments */}
                   {!activeContent && activeEnrichment && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (
-                    <p className="text-dark-400 text-sm italic mb-4">
+                    <p className="text-dark-500 text-sm italic mb-4">
                       {activeEnrichment === 'action_items' ? 'Keine Aufgaben vorhanden.' :
                        activeEnrichment === 'notes' ? 'Keine Notizen vorhanden.' :
                        activeEnrichment === 'key_points' ? 'Keine Kernpunkte vorhanden.' : 
@@ -460,7 +460,7 @@ export function TranscriptionCard({
 
                   {/* Add item button for list-type enrichments - only if allowManualItems is true */}
                   {allowManualItems && LIST_ENRICHMENT_TYPES.includes(activeEnrichment as typeof LIST_ENRICHMENT_TYPES[number]) && (activeEnrichmentId || transcriptionId) && (
-                    <div className={activeContent ? "mt-4 pt-4 border-t border-dark-700" : ""}>
+                    <div className={activeContent ? "mt-4 pt-4 border-t border-dark-200" : ""}>
                       {isAddingItem ? (
                         <div className="flex gap-2">
                           <input
@@ -480,7 +480,7 @@ export function TranscriptionCard({
                               activeEnrichment === 'notes' ? 'Neue Notiz...' :
                               activeEnrichment === 'key_points' ? 'Neuer Kernpunkt...' : 'Neuer Eintrag...'
                             }
-                            className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-dark-200 placeholder-dark-500 focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
+                            className="flex-1 bg-white border border-dark-300 rounded-lg px-3 py-2 text-sm text-dark-800 placeholder-dark-500 focus:outline-none focus:border-ptw-500/50 focus:ring-1 focus:ring-ptw-500/50"
                             autoFocus
                           />
                           <button
@@ -495,7 +495,7 @@ export function TranscriptionCard({
                               setIsAddingItem(false);
                               setNewItemText('');
                             }}
-                            className="px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-white hover:border-dark-600 transition-all"
+                            className="px-3 py-2 rounded-lg bg-white border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 transition-all shadow-sm"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -503,7 +503,7 @@ export function TranscriptionCard({
                       ) : (
                         <button
                           onClick={() => setIsAddingItem(true)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-400 hover:text-ptw-500 hover:border-ptw-500/30 transition-all duration-200 text-sm"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-100 border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 transition-all duration-200 text-sm"
                         >
                           <Plus className="w-4 h-4" />
                           {activeEnrichment === 'action_items' ? 'Aufgabe hinzufügen' :
@@ -537,10 +537,10 @@ export function TranscriptionCard({
 
       {/* Enrichment Options */}
       {!isLoading && text && onEnrich && (
-        <div className="px-6 py-5 bg-dark-900/50 border-t border-dark-700 overflow-visible">
+        <div className="px-6 py-5 bg-dark-50 border-t border-dark-200 overflow-visible rounded-b-2xl">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-ptw-500" />
-            <span className="text-sm font-semibold text-white">KI-Verarbeitung</span>
+            <span className="text-sm font-semibold text-dark-900">KI-Verarbeitung</span>
           </div>
           <div className="flex flex-wrap gap-2 relative">
             {ENRICHMENT_OPTIONS.map(({ type, label, icon, isPrimary, isTranslation }) => {
@@ -557,8 +557,8 @@ export function TranscriptionCard({
                       className={`
                         px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
                         ${translationEnrichments.length > 0
-                          ? 'bg-dark-800 border border-ptw-500/30 text-ptw-400 hover:border-ptw-500/50'
-                          : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
+                          ? 'bg-white border border-ptw-500/40 text-ptw-600 hover:border-ptw-500/60 shadow-sm'
+                          : 'bg-white border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 shadow-sm'
                         }
                         ${isLoadingTranslation ? 'opacity-70 cursor-wait' : ''}
                       `}
@@ -574,14 +574,14 @@ export function TranscriptionCard({
                       )}
                     </button>
                     {showTranslationDropdown && !isLoadingTranslation && (
-                      <div className="absolute top-full left-0 mt-2 bg-dark-850 border border-dark-700 rounded-xl shadow-2xl z-[100] min-w-[200px] max-h-64 overflow-y-auto">
+                      <div className="absolute top-full left-0 mt-2 bg-white border border-dark-300 rounded-xl shadow-xl z-[100] min-w-[200px] max-h-64 overflow-y-auto">
                         {LANGUAGES.map((lang) => {
                           const hasLangEnrichment = translationEnrichments.some((e) => e.type === 'translation');
                           return (
                             <button
                               key={lang.code}
                               onClick={() => handleTranslation(lang)}
-                              className="w-full px-4 py-2.5 text-left text-sm text-dark-300 hover:text-white hover:bg-dark-800 flex items-center gap-3 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                              className="w-full px-4 py-2.5 text-left text-sm text-dark-700 hover:text-ptw-600 hover:bg-dark-50 flex items-center gap-3 transition-colors first:rounded-t-xl last:rounded-b-xl"
                             >
                               <span className="text-lg">{lang.flag}</span>
                               <span>{lang.name}</span>
@@ -612,12 +612,12 @@ export function TranscriptionCard({
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
                     ${isActive
-                      ? 'bg-gradient-to-r from-ptw-500 to-ptw-600 text-dark-950 shadow-ptw'
+                      ? 'bg-gradient-to-r from-ptw-500 to-ptw-600 text-white shadow-ptw'
                       : hasEnrichment
-                        ? 'bg-dark-800 border border-ptw-500/30 text-ptw-400 hover:border-ptw-500/50'
+                        ? 'bg-white border border-ptw-500/40 text-ptw-600 hover:border-ptw-500/60 shadow-sm'
                         : isPrimary
-                          ? 'bg-gradient-to-r from-ptw-500/20 to-ptw-600/20 border border-ptw-500/40 text-ptw-400 hover:from-ptw-500/30 hover:to-ptw-600/30 hover:border-ptw-500/60'
-                          : 'bg-dark-800 border border-dark-700 text-dark-300 hover:text-white hover:border-dark-600'
+                          ? 'bg-gradient-to-r from-ptw-500/15 to-ptw-600/15 border border-ptw-500/50 text-ptw-600 hover:from-ptw-500/25 hover:to-ptw-600/25 hover:border-ptw-500/70 shadow-sm'
+                          : 'bg-white border border-dark-300 text-dark-600 hover:text-ptw-600 hover:border-ptw-400/60 shadow-sm'
                     }
                     ${isLoadingThis ? 'opacity-70 cursor-wait' : ''}
                   `}

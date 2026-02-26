@@ -372,19 +372,19 @@ export default function Home() {
         {/* Processing Status */}
         {isProcessing && (
           <section className="mb-4 sm:mb-10 transition-smooth animate-fade-in">
-            <div className="bg-gradient-to-br from-dark-850 via-dark-850 to-dark-900 border border-dark-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-8 relative overflow-hidden transition-all duration-300">
+            <div className="bg-gradient-to-br from-white via-dark-50 to-dark-100 border border-dark-300 rounded-xl sm:rounded-2xl p-4 sm:p-8 relative overflow-hidden transition-all duration-300 shadow-sm">
               <div className="absolute inset-0 bg-gradient-to-br from-ptw-500/5 via-transparent to-ptw-500/5 pointer-events-none transition-all duration-300" />
               <div className="flex items-center gap-3 sm:gap-5 relative z-10">
                 <div className="relative">
-                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-dark-700/50 transition-all duration-300" />
-                  <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-ptw-500/30 border-t-ptw-500 border-r-ptw-400 animate-spin transition-all duration-300" />
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-dark-200 transition-all duration-300" />
+                  <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-ptw-500/40 border-t-ptw-500 border-r-ptw-400 animate-spin transition-all duration-300" />
                 </div>
                 <div>
-                  <p className="font-semibold bg-gradient-to-r from-white via-white/90 to-white bg-clip-text text-transparent text-base sm:text-lg transition-all duration-300">
+                  <p className="font-semibold text-dark-900 text-base sm:text-lg transition-all duration-300">
                     {processing.step === 'uploading' && 'Audio wird hochgeladen...'}
                     {processing.step === 'transcribing' && 'Wird transkribiert...'}
                   </p>
-                  <p className="text-xs sm:text-sm bg-gradient-to-r from-dark-400 via-dark-300 to-dark-400 bg-clip-text text-transparent mt-1 transition-all duration-300">
+                  <p className="text-xs sm:text-sm text-dark-600 mt-1 transition-all duration-300">
                     Bitte warten Sie einen Moment
                   </p>
                 </div>
