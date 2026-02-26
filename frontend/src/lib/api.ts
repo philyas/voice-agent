@@ -66,6 +66,17 @@ export const api = {
     return handleResponse(response);
   },
 
+  async updateRecordingTitle(id: string, title: string): Promise<ApiResponse<Recording>> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/recordings/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: title.trim() }),
+    });
+    return handleResponse(response);
+  },
+
   getRecordingAudioUrl(id: string): string {
     return `${API_BASE_URL}/api/v1/recordings/${id}/audio`;
   },

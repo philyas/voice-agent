@@ -10,6 +10,26 @@ const recordingModel = require('../models/recording.model');
 const logger = require('../utils/logger.util');
 const { env } = require('../config');
 
+/**
+ * Generate a friendly default title for a new recording (German locale)
+ */
+function getDefaultRecordingTitle() {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `Aufnahme ${day}.${month}.${year}, ${hours}:${minutes}`;
+}
+
+/**
+ * Check if the filename is our generic default (e.g. recording-1234567890.webm)
+ */
+function isGenericRecordingFilename(name) {
+  return /^recording-\d+\.\w+$/i.test(name || '');
+}
+
 class RecordingService {
   constructor() {
     this.uploadDir = env.UPLOADS_DIR;
@@ -37,9 +57,14 @@ class RecordingService {
     // Move file from temp to uploads
     await fs.rename(file.path, storagePath);
 
+    const originalFilename =
+      isGenericRecordingFilename(file.originalname)
+        ? getDefaultRecordingTitle()
+        : file.originalname;
+
     const recording = await recordingModel.createRecording({
       filename,
-      originalFilename: file.originalname,
+      originalFilename,
       mimeType: file.mimetype,
       fileSize: file.size,
       storagePath,
@@ -108,6 +133,18 @@ class RecordingService {
    */
   async updateDuration(id, durationMs) {
     return recordingModel.update(id, { duration_ms: durationMs });
+  }
+
+  /**
+   * Update recording title (display name)
+   * @param {string} id - Recording UUID
+   * @param {string} title - New title (original_filename)
+   * @returns {Promise<Object|null>}
+   */
+  async updateTitle(id, title) {
+    const trimmed = typeof title === 'string' ? title.trim() : '';
+    if (!trimmed) return recordingModel.findById(id);
+    return recordingModel.update(id, { original_filename: trimmed });
   }
 
   /**

@@ -62,6 +62,25 @@ class RecordingController extends BaseController {
   }
 
   /**
+   * Update recording title
+   * PATCH /api/v1/recordings/:id
+   */
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { title } = req.body;
+
+      const recording = await recordingService.getRecordingById(id);
+      this.getEntityOr404(recording, 'Recording');
+
+      const updated = await recordingService.updateTitle(id, title);
+      return this.success(res, updated, { message: 'Recording title updated' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Delete recording
    * DELETE /api/v1/recordings/:id
    */

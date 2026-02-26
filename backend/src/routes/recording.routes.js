@@ -98,6 +98,13 @@ router.post('/:id/transcribe', recordingController.transcribe.bind(recordingCont
 router.get('/:id', recordingController.getById.bind(recordingController));
 
 /**
+ * @route   PATCH /api/v1/recordings/:id
+ * @desc    Update recording title (body: { title: string })
+ * @access  Public
+ */
+router.patch('/:id', recordingController.update.bind(recordingController));
+
+/**
  * @route   DELETE /api/v1/recordings/:id
  * @desc    Delete a recording
  * @access  Public

@@ -18,6 +18,7 @@ interface UseRecordingsReturn {
   loadTranscription: (recordingId: string) => Promise<void>;
   selectRecording: (recording: Recording) => Promise<void>;
   deleteRecording: (id: string) => Promise<void>;
+  updateRecordingTitle: (id: string, title: string) => Promise<void>;
   setError: (error: string | null) => void;
   clearSelection: () => void;
 }
@@ -97,6 +98,30 @@ export function useRecordings(): UseRecordingsReturn {
   }, [selectedRecording]);
 
   /**
+   * Update recording title and keep local state in sync
+   */
+  const updateRecordingTitle = useCallback(async (id: string, title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+
+    try {
+      const response = await api.updateRecordingTitle(id, trimmed);
+      if (response.data) {
+        setRecordings(prev =>
+          prev.map((r) => (r.id === id ? { ...r, original_filename: response.data!.original_filename } : r))
+        );
+        if (selectedRecording?.id === id) {
+          setSelectedRecording((prev) =>
+            prev ? { ...prev, original_filename: response.data!.original_filename } : null
+          );
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Titel konnte nicht gespeichert werden');
+    }
+  }, [selectedRecording?.id]);
+
+  /**
    * Clear current selection
    */
   const clearSelection = useCallback(() => {
@@ -120,6 +145,7 @@ export function useRecordings(): UseRecordingsReturn {
     loadTranscription,
     selectRecording,
     deleteRecording,
+    updateRecordingTitle,
     setError,
     clearSelection,
   };

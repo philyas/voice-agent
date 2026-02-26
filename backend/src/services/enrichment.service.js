@@ -7,7 +7,26 @@ const enrichmentModel = require('../models/enrichment.model');
 const transcriptionModel = require('../models/transcription.model');
 const openaiService = require('./openai.service');
 const embeddingService = require('./embedding.service');
+const recordingService = require('./recording.service');
 const logger = require('../utils/logger.util');
+
+/** Default title pattern: "Aufnahme DD.MM.YYYY, HH:MM" */
+const DEFAULT_RECORDING_TITLE_REGEX = /^Aufnahme \d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/;
+
+/**
+ * Extract a short title from enrichment content.
+ * Skips markdown headers (e.g. ## Zusammenfassung) and uses the first real content line.
+ */
+function extractTitleFromContent(content, maxLen = 80) {
+  if (!content || typeof content !== 'string') return null;
+  const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const contentLine = lines.find((l) => !/^#+\s*/.test(l));
+  const line = contentLine || lines[0];
+  if (!line) return null;
+  const stripped = line.replace(/^#+\s*/, '').trim();
+  if (stripped.length === 0) return null;
+  return stripped.length > maxLen ? `${stripped.slice(0, maxLen - 3)}...` : stripped;
+}
 
 class EnrichmentService {
   /**
@@ -182,6 +201,25 @@ Antworte nur mit der Übersetzung, ohne zusätzliche Erklärungen.`;
 
     // Generate embedding for RAG (async, don't wait)
     this.createEmbeddingAsync(enrichment.id, result.content);
+
+    // When "Komplett-Analyse" is created, set recording title from first line if it's still the default
+    if (type === 'complete' && transcription.recording_id && result.content) {
+      try {
+        const recording = await recordingService.getRecordingById(transcription.recording_id);
+        if (
+          recording &&
+          recording.original_filename &&
+          DEFAULT_RECORDING_TITLE_REGEX.test(recording.original_filename.trim())
+        ) {
+          const newTitle = extractTitleFromContent(result.content);
+          if (newTitle) {
+            await recordingService.updateTitle(recording.id, newTitle);
+          }
+        }
+      } catch (err) {
+        logger.warn('Could not update recording title from complete enrichment', { error: err.message });
+      }
+    }
 
     return {
       enrichment,

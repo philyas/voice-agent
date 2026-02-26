@@ -86,6 +86,7 @@ function HistoryPageContent() {
     recordingRefs,
     selectRecording,
     deleteRecording,
+    updateRecordingTitle,
     setError,
     loadTranscription,
   } = useRecordings();
@@ -290,6 +291,7 @@ function HistoryPageContent() {
               <RecordingDetail
                 recording={selectedRecording}
                 transcription={transcription}
+                onTitleChange={updateRecordingTitle}
                 localEnrichments={enrichmentEditor.localEnrichments}
                 isTranscriptionExpanded={isTranscriptionExpanded}
                 editingEnrichmentId={enrichmentEditor.editingEnrichmentId}
@@ -343,6 +345,7 @@ function HistoryPageContent() {
               <RecordingDetail
                 recording={selectedRecording}
                 transcription={transcription}
+                onTitleChange={updateRecordingTitle}
                 localEnrichments={enrichmentEditor.localEnrichments}
                 isTranscriptionExpanded={isTranscriptionExpanded}
                 editingEnrichmentId={enrichmentEditor.editingEnrichmentId}
