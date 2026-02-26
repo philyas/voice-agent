@@ -243,7 +243,7 @@ export default function Home() {
         {/* Recording Section */}
         <section className="mb-4 sm:mb-10">
           <div 
-            className="group bg-white border border-dark-200 rounded-2xl sm:rounded-3xl p-4 sm:p-10 relative overflow-hidden transition-all duration-300 shadow-sm hover:border-ptw-500/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12),0_0_0_1px_rgba(181,45,58,0.15),0_0_30px_rgba(181,45,58,0.06)]"
+            className="bg-white border border-dark-200 rounded-2xl sm:rounded-3xl p-4 sm:p-10 relative overflow-hidden shadow-sm"
             onClick={(e) => {
               // Prevent clicks on container from triggering any actions
               // Only allow clicks on actual buttons
@@ -252,7 +252,6 @@ export default function Home() {
               }
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-ptw-500/0 via-ptw-500/0 to-ptw-500/0 group-hover:from-ptw-500/5 group-hover:via-ptw-500/3 group-hover:to-ptw-500/5 transition-all duration-500 pointer-events-none rounded-3xl" />
             <div className="flex flex-col items-center">
               {/* Duration Display */}
               {isRecording && (
