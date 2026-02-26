@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { Mic, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -73,6 +73,8 @@ function HistoryPageContent() {
   const searchParams = useSearchParams();
   const [isTranscriptionExpanded, setIsTranscriptionExpanded] = useState(false);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+  /** Remember which recording ID we already applied from URL, so we don't override user's selection when they switch recordings */
+  const appliedUrlRecordingIdRef = useRef<string | null>(null);
 
   // Custom hooks
   const {
@@ -145,29 +147,33 @@ function HistoryPageContent() {
     setIsMobileModalOpen(false);
   }, []);
 
-  // Auto-select recording from query parameter and scroll to it
+  // Auto-select recording from query parameter only when landing with ?recording=... or when the URL recording id changes (don't override when user selects another recording)
   useEffect(() => {
     const recordingId = searchParams.get('recording');
-    if (recordingId && recordings.length > 0) {
-      const recording = recordings.find((r) => r.id === recordingId);
-      if (recording && recording.id !== selectedRecording?.id) {
-        handleView(recording);
-
-        // Scroll to the recording element after a short delay
-        const timeoutId = setTimeout(() => {
-          const element = recordingRefs.current.get(recordingId);
-          if (element) {
-            element.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-            });
-          }
-        }, 100);
-
-        return () => clearTimeout(timeoutId);
-      }
+    if (!recordingId || recordings.length === 0) {
+      appliedUrlRecordingIdRef.current = null;
+      return;
     }
-  }, [searchParams, recordings, selectedRecording, handleView, recordingRefs]);
+    const recording = recordings.find((r) => r.id === recordingId);
+    if (!recording) return;
+    // Only apply URL selection if we haven't applied this id yet, or the URL param changed to a different id
+    if (appliedUrlRecordingIdRef.current === recordingId) return;
+    appliedUrlRecordingIdRef.current = recordingId;
+
+    handleView(recording);
+
+    const timeoutId = setTimeout(() => {
+      const element = recordingRefs.current.get(recordingId);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchParams, recordings, handleView, recordingRefs]);
 
   // Close mobile modal when window is resized to desktop size or when no recording is selected
   useEffect(() => {
