@@ -150,7 +150,7 @@ export function RAGChat({ onSourceClick, className = '' }: RAGChatProps) {
             <div
               className={`max-w-[85%] sm:max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-gradient-to-br from-ptw-500 to-ptw-600 text-white rounded-2xl rounded-tr-md'
+                  ? 'bg-dark-100 border border-dark-200 text-dark-800 rounded-2xl rounded-tr-md'
                   : 'bg-white border border-dark-200 text-dark-800 rounded-2xl rounded-tl-md shadow-sm'
               } px-4 py-3`}
             >
