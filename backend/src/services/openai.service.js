@@ -188,6 +188,67 @@ class OpenAIService {
   }
 
   /**
+   * Named speakers: LLM assigns descriptive names to diarized segments (e.g. Interviewer, Bewerber).
+   * Pipeline: Audio → Deepgram STT + diarization → speaker clustering → this step.
+   * @param {Array<{ speaker: number; text: string }>} segments - Diarized segments from STT
+   * @param {Object} options - { language?: string }
+   * @returns {Promise<{ segments: Array<{ speaker: number; text: string; speakerName: string }>, usage?: Object }>}
+   */
+  async nameSpeakersFromTranscript(segments, options = {}) {
+    const language = options.language || 'de';
+    if (!Array.isArray(segments) || segments.length === 0) {
+      return { segments: [] };
+    }
+
+    const transcript = segments
+      .map((s) => `Sprecher ${s.speaker}: ${(s.text || '').trim()}`)
+      .filter((line) => line.length > 10)
+      .join('\n');
+
+    if (!transcript.trim()) {
+      return {
+        segments: segments.map((s) => ({ ...s, speakerName: `Sprecher ${s.speaker + 1}` })),
+      };
+    }
+
+    const systemPrompt = `Du bist ein Assistent für Meeting- und Gesprächsanalyse.
+Deine Aufgabe: Ordne jedem Sprecher (0, 1, 2, ...) einen kurzen, beschreibenden Namen zu, der zur Rolle passt (z.B. "Interviewer", "Bewerber", "Moderator", "Teilnehmerin", "Kunde", "Support").
+Antworte NUR mit einem JSON-Objekt in diesem exakten Format, ohne anderen Text:
+{"speakerNames": {"0": "Name für Sprecher 0", "1": "Name für Sprecher 1", ...}}
+Sprache der Bezeichnungen: ${language === 'de' ? 'Deutsch' : 'Englisch'}.`;
+
+    const userMessage = `Transkript:\n${transcript}`;
+
+    const result = await this.generateCompletion(systemPrompt, userMessage, {
+      model: 'gpt-4o-mini',
+      temperature: 0.3,
+      maxTokens: 500,
+    });
+
+    let speakerNames = {};
+    try {
+      const content = (result.content || '').trim();
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        speakerNames = parsed.speakerNames || {};
+      }
+    } catch (e) {
+      logger.warn('nameSpeakersFromTranscript: could not parse LLM response', e);
+    }
+
+    const segmentsWithNames = segments.map((s) => ({
+      ...s,
+      speakerName: speakerNames[String(s.speaker)] || `Sprecher ${s.speaker + 1}`,
+    }));
+
+    return {
+      segments: segmentsWithNames,
+      usage: result.usage,
+    };
+  }
+
+  /**
    * Check if OpenAI API is configured
    * @returns {boolean}
    */

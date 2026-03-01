@@ -21,6 +21,8 @@ const env = {
 
   // OpenAI
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  DEEPGRAM_API_KEY: process.env.DEEPGRAM_API_KEY,
+  DEEPGRAM_LIVE_MODEL: process.env.DEEPGRAM_LIVE_MODEL,
 
   // Storage – base dir for uploads (persistent disk on Render: /var/data/uploads)
   UPLOADS_DIR: process.env.UPLOADS_DIR || defaultUploadsDir,

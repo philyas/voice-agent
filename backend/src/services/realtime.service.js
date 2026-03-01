@@ -1,18 +1,22 @@
 /**
- * OpenAI Realtime API Service
+ * Deepgram Realtime API Service
  * Handles live transcription streaming via WebSocket
  */
 
+const WebSocket = require('ws');
 const { env } = require('../config/env');
 
 class RealtimeService {
   constructor() {
-    this.apiKey = env.OPENAI_API_KEY;
-    this.baseUrl = 'https://api.openai.com/v1/realtime';
+    this.apiKey = env.DEEPGRAM_API_KEY;
+    this.baseUrl = 'wss://api.deepgram.com/v1/listen';
+    this.sampleRate = 16000;
+    // nova-2: unterstützt DE + Streaming + Diarization; nova-2-meeting oft nur EN
+    this.defaultModel = env.DEEPGRAM_LIVE_MODEL || 'nova-2';
   }
 
   /**
-   * Check if OpenAI API is configured
+   * Check if Deepgram API is configured
    * @returns {boolean}
    */
   isConfigured() {
@@ -20,89 +24,57 @@ class RealtimeService {
   }
 
   /**
-   * Create a WebSocket connection to OpenAI Realtime API (transcription-only mode)
+   * Create a WebSocket connection to Deepgram Realtime API
    * @param {string} language - Language code (default: 'de')
+   * @param {string} model - Deepgram model (default: nova-2)
+   * @param {number} [sampleRate] - Audio sample rate (default: 16000). Must match client audio.
    * @returns {WebSocket}
    */
-  createConnection(language = 'de') {
+  createConnection(language = 'de', model = this.defaultModel, sampleRate = this.sampleRate) {
     if (!this.isConfigured()) {
-      throw new Error('OpenAI API key is not configured');
+      throw new Error('Deepgram API key is not configured');
     }
 
-    // Use transcription-only intent
-    const ws = new (require('ws'))(
-      `wss://api.openai.com/v1/realtime?intent=transcription`,
-      {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-      }
-    );
+    const rate = Number(sampleRate) || this.sampleRate;
+    const params = new URLSearchParams({
+      model,
+      language,
+      encoding: 'linear16',
+      sample_rate: String(rate),
+      channels: '1',
+      interim_results: 'true',
+      diarize: 'true',
+      utterances: 'true',
+      punctuate: 'true',
+      smart_format: 'true',
+      endpointing: '300',
+      utterance_end_ms: '1200',
+    });
 
-    return ws;
-  }
-
-  /**
-   * Initialize session for transcription-only mode
-   * @param {WebSocket} ws - WebSocket connection
-   * @param {string} language - Language code
-   */
-  initializeSession(ws, language = 'de') {
-    const sessionConfig = {
-      type: 'session.update',
-      session: {
-        type: 'transcription',
-        audio: {
-          input: {
-            format: {
-              type: 'audio/pcm',
-              rate: 24000,
-            },
-            transcription: {
-              model: 'gpt-4o-mini-transcribe',
-              prompt: '',
-              language: language,
-            },
-            turn_detection: {
-              type: 'server_vad',
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 500,
-            },
-            noise_reduction: {
-              type: 'near_field',
-            },
-          },
-        },
-        include: ['item.input_audio_transcription.logprobs'],
+    return new WebSocket(`${this.baseUrl}?${params.toString()}`, {
+      headers: {
+        Authorization: `Token ${this.apiKey}`,
       },
-    };
-
-    ws.send(JSON.stringify(sessionConfig));
+    });
   }
 
   /**
-   * Send audio data to OpenAI
+   * Send audio data to Deepgram
    * @param {WebSocket} ws - WebSocket connection
    * @param {Buffer} audioData - PCM16 audio data
    */
   sendAudio(ws, audioData) {
-    const audioEvent = {
-      type: 'input_audio_buffer.append',
-      audio: audioData.toString('base64'),
-    };
-    ws.send(JSON.stringify(audioEvent));
+    ws.send(audioData, { binary: true });
   }
 
   /**
-   * Commit audio buffer (finalize current speech turn)
+   * Ask Deepgram to finalize current buffered utterance
    * @param {WebSocket} ws - WebSocket connection
    */
-  commitAudio(ws) {
-    const commitEvent = {
-      type: 'input_audio_buffer.commit',
-    };
-    ws.send(JSON.stringify(commitEvent));
+  finalizeAudio(ws) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'Finalize' }));
+    }
   }
 
   /**
@@ -110,7 +82,7 @@ class RealtimeService {
    * @param {WebSocket} ws - WebSocket connection
    */
   closeConnection(ws) {
-    if (ws.readyState === ws.OPEN) {
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
       ws.close();
     }
   }

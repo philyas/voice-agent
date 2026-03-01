@@ -4,16 +4,102 @@
  */
 
 const express = require('express');
-const http = require('http');
 const WebSocket = require('ws');
 const realtimeService = require('../services/realtime.service');
 const openaiService = require('../services/openai.service');
-const { env } = require('../config/env');
 
 const router = express.Router();
 
 // Store active WebSocket connections
 const activeConnections = new Map();
+
+function appendTokenWithSpacing(currentText, token) {
+  if (!token) return currentText;
+
+  if (!currentText) return token;
+
+  // Avoid adding spaces before punctuation marks.
+  if (/^[,.;:!?)]/.test(token)) {
+    return `${currentText}${token}`;
+  }
+
+  return `${currentText} ${token}`;
+}
+
+function extractSpeakerSegments(words = []) {
+  if (!Array.isArray(words) || words.length === 0) {
+    return [];
+  }
+
+  const segments = [];
+
+  for (const entry of words) {
+    const speaker = Number.isInteger(entry.speaker) ? entry.speaker : 0;
+    const token = entry.punctuated_word || entry.word || '';
+    if (!token) continue;
+
+    const lastSegment = segments[segments.length - 1];
+    if (!lastSegment || lastSegment.speaker !== speaker) {
+      segments.push({ speaker, text: token });
+      continue;
+    }
+
+    lastSegment.text = appendTokenWithSpacing(lastSegment.text, token);
+  }
+
+  return segments;
+}
+
+/** Minimum words to keep a speaker turn (avoids flip-flop from single words). */
+const MIN_WORDS_PER_TURN = 2;
+
+/**
+ * Speaker clustering cleanup: merge consecutive same-speaker segments,
+ * and merge very short segments into the dominant neighbor to reduce diarization noise.
+ * @param {Array<{ speaker: number; text: string }>} segments
+ * @returns {Array<{ speaker: number; text: string }>}
+ */
+function speakerClusteringCleanup(segments) {
+  if (!Array.isArray(segments) || segments.length === 0) return segments;
+
+  const merged = [];
+  for (const seg of segments) {
+    const text = (seg.text || '').trim();
+    if (!text) continue;
+    const last = merged[merged.length - 1];
+    if (last && last.speaker === seg.speaker) {
+      last.text = appendTokenWithSpacing(last.text, text);
+      continue;
+    }
+    merged.push({ speaker: seg.speaker, text });
+  }
+
+  const wordCount = (s) => (s.text || '').trim().split(/\s+/).filter(Boolean).length;
+  if (merged.length < 3) return merged;
+
+  const smoothed = [];
+  for (let i = 0; i < merged.length; i++) {
+    const curr = merged[i];
+    const words = wordCount(curr);
+    const prev = merged[i - 1];
+    const next = merged[i + 1];
+    if (words <= MIN_WORDS_PER_TURN && prev && next && prev.speaker === next.speaker && prev.speaker !== curr.speaker) {
+      const last = smoothed[smoothed.length - 1];
+      if (last && last.speaker === prev.speaker) {
+        last.text = appendTokenWithSpacing(last.text, curr.text);
+      } else {
+        smoothed.push({ speaker: prev.speaker, text: appendTokenWithSpacing(prev.text, curr.text) });
+      }
+      continue;
+    }
+    if (smoothed.length > 0 && smoothed[smoothed.length - 1].speaker === curr.speaker) {
+      smoothed[smoothed.length - 1].text = appendTokenWithSpacing(smoothed[smoothed.length - 1].text, curr.text);
+      continue;
+    }
+    smoothed.push({ ...curr });
+  }
+  return smoothed;
+}
 
 /**
  * Setup WebSocket server for live transcription
@@ -26,92 +112,113 @@ function setupWebSocketServer(server) {
 
   wss.on('connection', (clientWs, req) => {
     const connectionId = req.headers['x-connection-id'] || `conn_${Date.now()}`;
-    let openaiWs = null;
+    let deepgramWs = null;
     let language = 'de';
+    let model = 'nova-2';
 
     console.log(`[Realtime] New client connection: ${connectionId}`);
 
-    // Parse language from query string
+    // Parse language, model, and sample rate from query string
     const url = new URL(req.url, `http://${req.headers.host}`);
     language = url.searchParams.get('language') || 'de';
+    model = url.searchParams.get('model') || realtimeService.defaultModel;
+    const sampleRate = url.searchParams.get('sample_rate') || null;
 
-    // Check if OpenAI is configured
+    // Check if Deepgram is configured
     if (!realtimeService.isConfigured()) {
       clientWs.send(JSON.stringify({
         type: 'error',
-        error: 'OpenAI API key is not configured',
+        error: 'Deepgram API key is not configured',
       }));
       clientWs.close();
       return;
     }
 
     try {
-      // Create connection to OpenAI Realtime API
-      openaiWs = realtimeService.createConnection(language);
+      // Create connection to Deepgram Realtime API (pass sample_rate so it matches client audio)
+      deepgramWs = realtimeService.createConnection(language, model, sampleRate || undefined);
 
-      openaiWs.on('open', () => {
-        console.log(`[Realtime] OpenAI connection established for ${connectionId}`);
-        
-        // Initialize session for transcription
-        realtimeService.initializeSession(openaiWs, language);
-
-        // Send ready event to client
+      deepgramWs.on('open', () => {
+        console.log(`[Realtime] Deepgram connection established for ${connectionId}`);
         clientWs.send(JSON.stringify({
           type: 'ready',
           connectionId,
+          model,
+          language,
         }));
       });
 
-      openaiWs.on('message', (data) => {
+      deepgramWs.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
 
-          // Handle transcription events
-          if (message.type === 'conversation.item.input_audio_transcription.delta') {
-            // Partial transcription update
-            clientWs.send(JSON.stringify({
-              type: 'transcription.delta',
-              text: message.delta || message.transcript || '',
-              item_id: message.item_id,
-            }));
-          } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
-            // Final transcription for a speech turn
-            clientWs.send(JSON.stringify({
-              type: 'transcription.completed',
-              text: message.transcript || message.text || '',
-              item_id: message.item_id,
-            }));
-          } else if (message.type === 'error') {
-            console.error(`[Realtime] OpenAI error for ${connectionId}:`, message.error);
-            clientWs.send(JSON.stringify({
-              type: 'error',
-              error: message.error?.message || message.error || 'OpenAI API error',
-            }));
-          } else if (message.type === 'session.created' || message.type === 'session.updated') {
-            // Session ready
-            console.log(`[Realtime] Session ready for ${connectionId}`);
+          if (message.type === 'Metadata') {
+            console.log(`[Realtime] Metadata received for ${connectionId}`);
             clientWs.send(JSON.stringify({
               type: 'session.ready',
             }));
-          } else if (message.type === 'input_audio_buffer.committed') {
-            // Audio buffer committed - transcription will follow
-            console.log(`[Realtime] Audio buffer committed for ${connectionId}`);
+            return;
+          }
+
+          if (message.type === 'UtteranceEnd') {
+            clientWs.send(JSON.stringify({
+              type: 'transcription.utterance_end',
+            }));
+            return;
+          }
+
+          if (message.type === 'Results') {
+            const alternative = message.channel?.alternatives?.[0];
+            const transcript = (alternative?.transcript || '').trim();
+
+            if (!transcript) {
+              return;
+            }
+
+            const rawSegments = extractSpeakerSegments(alternative?.words || []);
+            const speakerSegments = message.is_final
+              ? speakerClusteringCleanup(rawSegments)
+              : rawSegments;
+            const payload = {
+              text: transcript,
+              speakerSegments,
+              isFinal: !!message.is_final,
+            };
+
+            if (message.is_final) {
+              clientWs.send(JSON.stringify({
+                type: 'transcription.completed',
+                ...payload,
+              }));
+              return;
+            }
+
+            clientWs.send(JSON.stringify({
+              type: 'transcription.delta',
+              ...payload,
+            }));
+          } else if (message.type === 'Error') {
+            console.error(`[Realtime] Deepgram error for ${connectionId}:`, message);
+            clientWs.send(JSON.stringify({
+              type: 'error',
+              error: message.description || 'Deepgram API error',
+            }));
           }
         } catch (err) {
-          console.error(`[Realtime] Error parsing OpenAI message:`, err);
+          console.error(`[Realtime] Error parsing Deepgram message:`, err);
         }
       });
 
-      openaiWs.on('error', (error) => {
-        console.error(`[Realtime] OpenAI WebSocket error for ${connectionId}:`, error);
+      deepgramWs.on('error', (error) => {
+        console.error(`[Realtime] Deepgram WebSocket error for ${connectionId}:`, error);
         clientWs.send(JSON.stringify({
           type: 'error',
-          error: error.message || 'OpenAI connection error',
+          error: error.message || 'Deepgram connection error',
         }));
       });
 
-      openaiWs.on('close', () => {
-        console.log(`[Realtime] OpenAI connection closed for ${connectionId}`);
+      deepgramWs.on('close', () => {
+        console.log(`[Realtime] Deepgram connection closed for ${connectionId}`);
         if (clientWs.readyState === WebSocket.OPEN) {
           clientWs.close();
         }
@@ -123,20 +230,21 @@ function setupWebSocketServer(server) {
           const message = JSON.parse(data.toString());
 
           if (message.type === 'audio') {
-            // Convert base64 audio to buffer and send to OpenAI
-            if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+            // Convert base64 audio to buffer and send to Deepgram
+            if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
               const audioBuffer = Buffer.from(message.data, 'base64');
-              realtimeService.sendAudio(openaiWs, audioBuffer);
+              realtimeService.sendAudio(deepgramWs, audioBuffer);
             }
           } else if (message.type === 'commit') {
-            // Commit current audio buffer
-            if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
-              realtimeService.commitAudio(openaiWs);
+            // Ask Deepgram to flush an utterance
+            if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
+              realtimeService.finalizeAudio(deepgramWs);
             }
           } else if (message.type === 'close') {
             // Close connection
-            if (openaiWs) {
-              realtimeService.closeConnection(openaiWs);
+            if (deepgramWs) {
+              realtimeService.finalizeAudio(deepgramWs);
+              realtimeService.closeConnection(deepgramWs);
             }
             clientWs.close();
           }
@@ -151,21 +259,22 @@ function setupWebSocketServer(server) {
 
       clientWs.on('close', () => {
         console.log(`[Realtime] Client connection closed: ${connectionId}`);
-        if (openaiWs) {
-          realtimeService.closeConnection(openaiWs);
+        if (deepgramWs) {
+          realtimeService.finalizeAudio(deepgramWs);
+          realtimeService.closeConnection(deepgramWs);
         }
         activeConnections.delete(connectionId);
       });
 
       clientWs.on('error', (error) => {
         console.error(`[Realtime] Client WebSocket error for ${connectionId}:`, error);
-        if (openaiWs) {
-          realtimeService.closeConnection(openaiWs);
+        if (deepgramWs) {
+          realtimeService.closeConnection(deepgramWs);
         }
         activeConnections.delete(connectionId);
       });
 
-      activeConnections.set(connectionId, { clientWs, openaiWs });
+      activeConnections.set(connectionId, { clientWs, deepgramWs });
     } catch (error) {
       console.error(`[Realtime] Error setting up connection for ${connectionId}:`, error);
       clientWs.send(JSON.stringify({
@@ -182,6 +291,54 @@ function setupWebSocketServer(server) {
 
   return wss;
 }
+
+/**
+ * POST /api/v1/realtime/name-speakers
+ * Pipeline: diarized segments → speaker clustering cleanup → LLM → named speakers
+ * Body: { segments: [{ speaker: number, text: string }], language?: string }
+ */
+router.post('/name-speakers', async (req, res) => {
+  try {
+    const { segments = [], language = 'de' } = req.body;
+
+    if (!Array.isArray(segments) || segments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'segments array is required' },
+      });
+    }
+
+    if (!openaiService.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: { code: 'SERVICE_UNAVAILABLE', message: 'OpenAI API key is not configured' },
+      });
+    }
+
+    const cleaned = speakerClusteringCleanup(segments.map((s) => ({
+      speaker: Number(s.speaker) || 0,
+      text: typeof s.text === 'string' ? s.text : '',
+    })));
+    const result = await openaiService.nameSpeakersFromTranscript(cleaned, { language });
+
+    return res.json({
+      success: true,
+      data: {
+        segments: result.segments,
+        usage: result.usage,
+      },
+    });
+  } catch (err) {
+    console.error('[Realtime] name-speakers error:', err);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err.message || 'Named speakers failed',
+      },
+    });
+  }
+});
 
 /**
  * POST /api/v1/realtime/translate

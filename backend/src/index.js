@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const http = require('http');
 const app = require('./app');
@@ -37,6 +37,7 @@ async function startServer() {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📝 Environment: ${env.NODE_ENV}`);
       console.log(`🔌 WebSocket server ready for live transcription`);
+      console.log(env.DEEPGRAM_API_KEY ? '🎤 Deepgram: configured (live transcription)' : '⚠️  Deepgram: not set – add DEEPGRAM_API_KEY to .env in project root');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message || error);

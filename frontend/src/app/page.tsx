@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, Keyboard, X, Upload } from 'lucide-react';
-import { useAudioRecorder, useElectron, useHotkeyListener } from '@/hooks';
-import { RecordButton, AudioPlayer, TranscriptionCard, StatusMessage, Waveform, Navigation } from '@/components';
+import { useAudioRecorder, useElectron, useHotkeyListener, useLiveTranscription } from '@/hooks';
+import { RecordButton, AudioPlayer, TranscriptionCard, Waveform, Navigation } from '@/components';
 import { api } from '@/lib/api';
 import type { EnrichmentType, Transcription, Enrichment } from '@/lib/types';
 import { formatDurationSeconds } from '@/lib/utils';
@@ -36,6 +36,15 @@ export default function Home() {
   } = useAudioRecorder();
 
   const { isElectron, platform, notifyRecordingState, openSystemPreferences } = useElectron();
+  const {
+    liveText,
+    liveSegments,
+    isConnected: isLiveConnected,
+    error: liveError,
+    startTranscription,
+    stopTranscription,
+  } = useLiveTranscription();
+  const liveStartedRef = useRef(false);
   const router = useRouter();
 
   const [processing, setProcessing] = useState<ProcessingState>({
@@ -69,6 +78,25 @@ export default function Home() {
   useEffect(() => {
     notifyRecordingState(isRecording);
   }, [isRecording, notifyRecordingState]);
+
+  // Start/stop live transcription based on recording lifecycle.
+  useEffect(() => {
+    if (isRecording && audioStream && !liveStartedRef.current) {
+      liveStartedRef.current = true;
+      startTranscription(audioStream, 'de');
+    }
+
+    if ((!isRecording || !audioStream) && liveStartedRef.current) {
+      stopTranscription();
+      liveStartedRef.current = false;
+    }
+  }, [isRecording, audioStream, startTranscription, stopTranscription]);
+
+  useEffect(() => {
+    return () => {
+      stopTranscription();
+    };
+  }, [stopTranscription]);
 
   // Use the centralized utility function
   const formatDuration = formatDurationSeconds;
@@ -164,6 +192,8 @@ export default function Home() {
 
   const hasAudio = (audioUrl && !isRecording) || uploadedAudio;
   const canProcess = (audioBlob ?? uploadedAudio?.blob) && !isRecording && processing.step === 'idle';
+  const hasLiveTranscript = liveSegments.length > 0 || liveText.trim().length > 0;
+  const visibleLiveSegments = liveSegments.slice(-8);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -270,6 +300,52 @@ export default function Home() {
                       isRecording={isRecording}
                       isPaused={isPaused}
                     />
+                  </div>
+                </div>
+              )}
+
+              {isRecording && (
+                <div className="w-full max-w-3xl mt-2 sm:mt-4 transition-smooth animate-fade-in">
+                  <div className="bg-dark-50/80 border border-dark-200 rounded-2xl p-4 sm:p-5 text-left">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <h3 className="text-sm sm:text-base font-semibold text-dark-900">Live-Transkription</h3>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                          isLiveConnected
+                            ? 'bg-green-500/10 text-green-700 border border-green-500/30'
+                            : 'bg-dark-200 text-dark-600 border border-dark-300'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isLiveConnected ? 'bg-green-600' : 'bg-dark-500'}`} />
+                        {isLiveConnected ? 'Verbunden' : 'Verbinde...'}
+                      </span>
+                    </div>
+
+                    {liveError && (
+                      <p className="text-xs sm:text-sm text-red-500 mb-3">{liveError}</p>
+                    )}
+
+                    {hasLiveTranscript ? (
+                      <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        {visibleLiveSegments.map((segment, index) => (
+                          <div
+                            key={`${segment.speaker}-${index}-${segment.text.slice(0, 20)}`}
+                            className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                              segment.isFinal
+                                ? 'bg-white border border-dark-200 text-dark-800'
+                                : 'bg-ptw-500/10 border border-ptw-500/20 text-dark-700'
+                            }`}
+                          >
+                            <span className="text-[11px] font-semibold text-ptw-600 uppercase tracking-wide mr-2">
+                              Sprecher {segment.speaker + 1}
+                            </span>
+                            <span>{segment.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-dark-500">Sprich einfach los - der Text erscheint hier live.</p>
+                    )}
                   </div>
                 </div>
               )}
