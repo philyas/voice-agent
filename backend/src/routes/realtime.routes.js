@@ -50,12 +50,18 @@ function extractSpeakerSegments(words = []) {
   return segments;
 }
 
-/** Minimum words to keep a speaker turn (avoids flip-flop from single words). */
+/** Minimum words to keep a speaker turn (merge shorter into neighbor). */
 const MIN_WORDS_PER_TURN = 2;
+/** Hysteresis: only accept speaker change if new speaker has at least this many words. */
+const MIN_WORDS_FOR_SPEAKER_SWITCH = 4;
+
+const wordCount = (s) => (s.text || '').trim().split(/\s+/).filter(Boolean).length;
 
 /**
- * Speaker clustering cleanup: merge consecutive same-speaker segments,
- * and merge very short segments into the dominant neighbor to reduce diarization noise.
+ * Speaker clustering cleanup with hysteresis:
+ * - Merge consecutive same-speaker segments.
+ * - Require MIN_WORDS_FOR_SPEAKER_SWITCH words before accepting a new speaker (reduces flip-flop).
+ * - Merge very short segments into the dominant neighbor.
  * @param {Array<{ speaker: number; text: string }>} segments
  * @returns {Array<{ speaker: number; text: string }>}
  */
@@ -74,15 +80,35 @@ function speakerClusteringCleanup(segments) {
     merged.push({ speaker: seg.speaker, text });
   }
 
-  const wordCount = (s) => (s.text || '').trim().split(/\s+/).filter(Boolean).length;
-  if (merged.length < 3) return merged;
+  if (merged.length === 0) return merged;
 
-  const smoothed = [];
+  // Hysteresis: short segments that would switch speaker get merged into previous turn
+  const afterHysteresis = [];
   for (let i = 0; i < merged.length; i++) {
     const curr = merged[i];
     const words = wordCount(curr);
-    const prev = merged[i - 1];
-    const next = merged[i + 1];
+    const prev = afterHysteresis[afterHysteresis.length - 1];
+    const isSpeakerChange = prev && prev.speaker !== curr.speaker;
+    if (isSpeakerChange && words < MIN_WORDS_FOR_SPEAKER_SWITCH) {
+      prev.text = appendTokenWithSpacing(prev.text, curr.text);
+      continue;
+    }
+    if (prev && prev.speaker === curr.speaker) {
+      prev.text = appendTokenWithSpacing(prev.text, curr.text);
+      continue;
+    }
+    afterHysteresis.push({ ...curr });
+  }
+
+  if (afterHysteresis.length < 3) return afterHysteresis;
+
+  // Merge very short "island" segments into dominant neighbor
+  const smoothed = [];
+  for (let i = 0; i < afterHysteresis.length; i++) {
+    const curr = afterHysteresis[i];
+    const words = wordCount(curr);
+    const prev = afterHysteresis[i - 1];
+    const next = afterHysteresis[i + 1];
     if (words <= MIN_WORDS_PER_TURN && prev && next && prev.speaker === next.speaker && prev.speaker !== curr.speaker) {
       const last = smoothed[smoothed.length - 1];
       if (last && last.speaker === prev.speaker) {

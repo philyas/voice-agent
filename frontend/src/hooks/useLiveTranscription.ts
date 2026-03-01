@@ -54,7 +54,7 @@ export function useLiveTranscription(): UseLiveTranscriptionReturn {
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | AudioWorkletNode | null>(null);
   const updateCallbackRef = useRef<((payload: { text: string; segments: LiveSpeakerSegment[] }) => void) | null>(null);
   const finalizedSegmentsRef = useRef<LiveSpeakerSegment[]>([]);
   const interimSegmentsRef = useRef<LiveSpeakerSegment[]>([]);
@@ -174,38 +174,56 @@ export function useLiveTranscription(): UseLiveTranscriptionReturn {
         checkReady();
       });
 
-      // Use same sample rate as we sent to backend (browser default so audio is actually processed)
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = audioContext;
-
       const source = audioContext.createMediaStreamSource(audioStream);
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
 
-      processor.onaudioprocess = (event) => {
+      const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      };
+
+      const sendPcm = (pcmBuffer: ArrayBuffer) => {
         if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'audio', data: arrayBufferToBase64(pcmBuffer) }));
+        }
+      };
+
+      let useWorklet = typeof audioContext.audioWorklet !== 'undefined';
+      if (useWorklet) {
+        try {
+          await audioContext.audioWorklet.addModule('/live-audio-processor.js');
+          const workletNode = new AudioWorkletNode(audioContext, 'live-audio-processor');
+          workletNode.port.onmessage = (e: MessageEvent) => {
+            if (e.data?.type === 'pcm' && e.data.data) sendPcm(e.data.data);
+          };
+          source.connect(workletNode);
+          workletNode.connect(audioContext.destination);
+          processorRef.current = workletNode;
+        } catch (workletErr) {
+          console.warn('[LiveTranscription] AudioWorklet failed, using ScriptProcessor fallback', workletErr);
+          useWorklet = false;
+        }
+      }
+
+      if (!useWorklet) {
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+        processor.onaudioprocess = (event: AudioProcessingEvent) => {
           const inputData = event.inputBuffer.getChannelData(0);
           const pcm16 = new Int16Array(inputData.length);
           for (let i = 0; i < inputData.length; i++) {
             const s = Math.max(-1, Math.min(1, inputData[i]));
-            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
           }
-          const uint8Array = new Uint8Array(pcm16.buffer);
-          let binary = '';
-          for (let i = 0; i < uint8Array.length; i++) {
-            binary += String.fromCharCode(uint8Array[i]);
-          }
-          ws.send(JSON.stringify({
-            type: 'audio',
-            data: btoa(binary),
-          }));
-        }
-      };
+          sendPcm(pcm16.buffer);
+        };
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+      }
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-
-      // Required in most browsers: resume context so audio is processed (user gesture already happened)
       await audioContext.resume();
 
     } catch (err) {
